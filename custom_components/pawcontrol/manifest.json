@@ -1,0 +1,12 @@
+{
+  "domain": "pawcontrol",
+  "name": "Paw Control",
+  "codeowners": ["@BigDaddy1990"],
+  "config_flow": true,
+  "dependencies": [],
+  "documentation": "https://github.com/BigDaddy1990/pawcontrol",
+  "iot_class": "local_polling",
+  "issue_tracker": "https://github.com/BigDaddy1990/pawcontrol/issues",
+  "requirements": [],
+  "version": "1.0.0"
+}
