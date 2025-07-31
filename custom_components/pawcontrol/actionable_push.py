@@ -2,7 +2,7 @@ from homeassistant.core import HomeAssistant, ServiceCall
 import logging
 
 _LOGGER = logging.getLogger(__name__)
-DOMAIN = "paw_control"
+DOMAIN = "pawcontrol"
 
 async def handle_send_notification(call: ServiceCall):
     hass: HomeAssistant = call.hass
@@ -38,7 +38,7 @@ async def handle_send_notification(call: ServiceCall):
         "actions": actions,
         "tag": f"{dog_name}_frage",
         "group": f"paw_control_{dog_name}",
-        "clickAction": "/lovelace/paw_control"
+        "clickAction": "/lovelace/pawcontrol"
     }
 
     for notify_target in notify_targets:

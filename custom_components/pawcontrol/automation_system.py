@@ -1,4 +1,4 @@
-"""Automation system for Paw Control integration - SMART DOG CARE."""
+"""Automation system for Paw Control integration - SMART DOG CARE - REPARIERT."""
 from __future__ import annotations
 
 import logging
@@ -11,19 +11,15 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.event import async_track_state_change_event, async_track_time_interval
 from homeassistant.helpers.restore_state import RestoreEntity
-from homeassistant.components.automation import AutomationEntity
-from homeassistant.helpers.script import Script
 from homeassistant.helpers.template import Template
 
 from .const import (
     DOMAIN,
     CONF_DOG_NAME,
     ICONS,
-    ENTITIES,
     FEEDING_TYPES,
     MEAL_TYPES,
     STATUS_MESSAGES,
-    HEALTH_THRESHOLDS,
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -62,7 +58,7 @@ class PawControlAutomationManager(RestoreEntity):
         self._dog_name = dog_name
         self._attr_unique_id = f"{DOMAIN}_{dog_name}_automation_manager"
         self._attr_name = f"{dog_name.title()} Automation Manager"
-        self._attr_icon = ICONS["automation"]
+        self._attr_icon = "mdi:robot"
         
         # Track all automation listeners for cleanup
         self._listeners: List[Callable[[], None]] = []
@@ -165,10 +161,6 @@ class PawControlAutomationManager(RestoreEntity):
     async def _setup_feeding_automations(self) -> None:
         """Set up feeding-related automations."""
         
-        # Automation: Feeding reminder based on scheduled times
-        feeding_reminder_entities = [f"input_datetime.{self._dog_name}_feeding_{meal}_time" for meal in FEEDING_TYPES]
-        feeding_status_entities = [f"input_boolean.{self._dog_name}_feeding_{meal}" for meal in FEEDING_TYPES]
-        
         def create_feeding_automation(meal_type: str):
             @callback
             def feeding_reminder_trigger(event: Event) -> None:
@@ -186,65 +178,25 @@ class PawControlAutomationManager(RestoreEntity):
             time_entity = f"input_datetime.{self._dog_name}_feeding_{meal}_time"
             status_entity = f"input_boolean.{self._dog_name}_feeding_{meal}"
             
-            # Register automation
-            self._automation_registry[automation_id] = {
-                "type": "feeding",
-                "meal_type": meal,
-                "trigger_entities": [time_entity, status_entity],
-                "description": f"Feeding reminder for {MEAL_TYPES.get(meal, meal)}",
-                "active": True,
-            }
-            
-            # Set up state change tracking
-            remove_listener = async_track_state_change_event(
-                self.hass, [time_entity, status_entity], 
-                create_feeding_automation(meal)
-            )
-            self._listeners.append(remove_listener)
-        
-        # Automation: Overdue feeding alert
-        overdue_entities = [f"binary_sensor.{self._dog_name}_overdue_feeding"]
-        
-        @callback
-        def overdue_feeding_trigger(event: Event) -> None:
-            """Trigger overdue feeding automation."""
-            self.hass.async_create_task(self._handle_overdue_feeding(event))
-        
-        if overdue_entities[0]:  # Check if entity exists
-            remove_listener = async_track_state_change_event(
-                self.hass, overdue_entities, overdue_feeding_trigger
-            )
-            self._listeners.append(remove_listener)
-            
-            self._automation_registry["overdue_feeding_alert"] = {
-                "type": "feeding",
-                "trigger_entities": overdue_entities,
-                "description": "Alert for overdue feedings",
-                "active": True,
-            }
+            if self.hass.states.get(time_entity) or self.hass.states.get(status_entity):
+                # Register automation
+                self._automation_registry[automation_id] = {
+                    "type": "feeding",
+                    "meal_type": meal,
+                    "trigger_entities": [time_entity, status_entity],
+                    "description": f"Feeding reminder for {MEAL_TYPES.get(meal, meal)}",
+                    "active": True,
+                }
+                
+                # Set up state change tracking
+                remove_listener = async_track_state_change_event(
+                    self.hass, [time_entity, status_entity], 
+                    create_feeding_automation(meal)
+                )
+                self._listeners.append(remove_listener)
 
     async def _setup_activity_automations(self) -> None:
         """Set up activity-related automations."""
-        
-        # Automation: Inactivity warning
-        inactivity_entities = [f"binary_sensor.{self._dog_name}_inactivity_warning"]
-        
-        @callback
-        def inactivity_trigger(event: Event) -> None:
-            """Trigger inactivity automation."""
-            self.hass.async_create_task(self._handle_inactivity_warning(event))
-        
-        remove_listener = async_track_state_change_event(
-            self.hass, inactivity_entities, inactivity_trigger
-        )
-        self._listeners.append(remove_listener)
-        
-        self._automation_registry["inactivity_warning"] = {
-            "type": "activity",
-            "trigger_entities": inactivity_entities,
-            "description": "Warning for extended inactivity",
-            "active": True,
-        }
         
         # Automation: Activity milestone celebrations
         activity_counters = [
@@ -253,22 +205,26 @@ class PawControlAutomationManager(RestoreEntity):
             f"counter.{self._dog_name}_training_count",
         ]
         
-        @callback
-        def activity_milestone_trigger(event: Event) -> None:
-            """Trigger activity milestone automation."""
-            self.hass.async_create_task(self._handle_activity_milestone(event))
+        # Filter for existing entities
+        existing_counters = [entity for entity in activity_counters if self.hass.states.get(entity)]
         
-        remove_listener = async_track_state_change_event(
-            self.hass, activity_counters, activity_milestone_trigger
-        )
-        self._listeners.append(remove_listener)
-        
-        self._automation_registry["activity_milestones"] = {
-            "type": "activity",
-            "trigger_entities": activity_counters,
-            "description": "Celebrate activity milestones",
-            "active": True,
-        }
+        if existing_counters:
+            @callback
+            def activity_milestone_trigger(event: Event) -> None:
+                """Trigger activity milestone automation."""
+                self.hass.async_create_task(self._handle_activity_milestone(event))
+            
+            remove_listener = async_track_state_change_event(
+                self.hass, existing_counters, activity_milestone_trigger
+            )
+            self._listeners.append(remove_listener)
+            
+            self._automation_registry["activity_milestones"] = {
+                "type": "activity",
+                "trigger_entities": existing_counters,
+                "description": "Celebrate activity milestones",
+                "active": True,
+            }
 
     async def _setup_health_automations(self) -> None:
         """Set up health-related automations."""
@@ -280,45 +236,26 @@ class PawControlAutomationManager(RestoreEntity):
             f"sensor.{self._dog_name}_health_score",
         ]
         
-        @callback
-        def health_status_trigger(event: Event) -> None:
-            """Trigger health status automation."""
-            self.hass.async_create_task(self._handle_health_status_change(event))
+        # Filter for existing entities
+        existing_health_entities = [entity for entity in health_entities if self.hass.states.get(entity)]
         
-        remove_listener = async_track_state_change_event(
-            self.hass, health_entities, health_status_trigger
-        )
-        self._listeners.append(remove_listener)
-        
-        self._automation_registry["health_monitoring"] = {
-            "type": "health",
-            "trigger_entities": health_entities,
-            "description": "Monitor health status changes",
-            "active": True,
-        }
-        
-        # Automation: Medication reminders
-        medication_entities = [
-            f"input_boolean.{self._dog_name}_medication_given",
-            f"input_datetime.{self._dog_name}_medication_time",
-        ]
-        
-        @callback
-        def medication_reminder_trigger(event: Event) -> None:
-            """Trigger medication reminder automation."""
-            self.hass.async_create_task(self._handle_medication_reminder(event))
-        
-        remove_listener = async_track_state_change_event(
-            self.hass, medication_entities, medication_reminder_trigger
-        )
-        self._listeners.append(remove_listener)
-        
-        self._automation_registry["medication_reminders"] = {
-            "type": "health",
-            "trigger_entities": medication_entities,
-            "description": "Medication reminder system",
-            "active": True,
-        }
+        if existing_health_entities:
+            @callback
+            def health_status_trigger(event: Event) -> None:
+                """Trigger health status automation."""
+                self.hass.async_create_task(self._handle_health_status_change(event))
+            
+            remove_listener = async_track_state_change_event(
+                self.hass, existing_health_entities, health_status_trigger
+            )
+            self._listeners.append(remove_listener)
+            
+            self._automation_registry["health_monitoring"] = {
+                "type": "health",
+                "trigger_entities": existing_health_entities,
+                "description": "Monitor health status changes",
+                "active": True,
+            }
 
     async def _setup_emergency_automations(self) -> None:
         """Set up emergency-related automations."""
@@ -326,45 +263,29 @@ class PawControlAutomationManager(RestoreEntity):
         # Automation: Emergency mode activation
         emergency_entities = [
             f"input_boolean.{self._dog_name}_emergency_mode",
-            f"binary_sensor.{self._dog_name}_emergency_status",
+            f"binary_sensor.{self._dog_name}_needs_attention",
         ]
         
-        @callback
-        def emergency_trigger(event: Event) -> None:
-            """Trigger emergency automation."""
-            self.hass.async_create_task(self._handle_emergency_activation(event))
+        # Filter for existing entities
+        existing_emergency_entities = [entity for entity in emergency_entities if self.hass.states.get(entity)]
         
-        remove_listener = async_track_state_change_event(
-            self.hass, emergency_entities, emergency_trigger
-        )
-        self._listeners.append(remove_listener)
-        
-        self._automation_registry["emergency_response"] = {
-            "type": "emergency",
-            "trigger_entities": emergency_entities,
-            "description": "Emergency response system",
-            "active": True,
-        }
-        
-        # Automation: Needs attention alerts
-        attention_entities = [f"binary_sensor.{self._dog_name}_needs_attention"]
-        
-        @callback
-        def attention_trigger(event: Event) -> None:
-            """Trigger attention needed automation."""
-            self.hass.async_create_task(self._handle_attention_needed(event))
-        
-        remove_listener = async_track_state_change_event(
-            self.hass, attention_entities, attention_trigger
-        )
-        self._listeners.append(remove_listener)
-        
-        self._automation_registry["attention_alerts"] = {
-            "type": "emergency",
-            "trigger_entities": attention_entities,
-            "description": "Attention needed alert system",
-            "active": True,
-        }
+        if existing_emergency_entities:
+            @callback
+            def emergency_trigger(event: Event) -> None:
+                """Trigger emergency automation."""
+                self.hass.async_create_task(self._handle_emergency_activation(event))
+            
+            remove_listener = async_track_state_change_event(
+                self.hass, existing_emergency_entities, emergency_trigger
+            )
+            self._listeners.append(remove_listener)
+            
+            self._automation_registry["emergency_response"] = {
+                "type": "emergency",
+                "trigger_entities": existing_emergency_entities,
+                "description": "Emergency response system",
+                "active": True,
+            }
 
     async def _setup_visitor_automations(self) -> None:
         """Set up visitor-related automations."""
@@ -372,25 +293,28 @@ class PawControlAutomationManager(RestoreEntity):
         # Automation: Visitor mode management
         visitor_entities = [
             f"input_boolean.{self._dog_name}_visitor_mode_input",
-            f"binary_sensor.{self._dog_name}_visitor_mode",
         ]
         
-        @callback
-        def visitor_mode_trigger(event: Event) -> None:
-            """Trigger visitor mode automation."""
-            self.hass.async_create_task(self._handle_visitor_mode_change(event))
+        # Filter for existing entities
+        existing_visitor_entities = [entity for entity in visitor_entities if self.hass.states.get(entity)]
         
-        remove_listener = async_track_state_change_event(
-            self.hass, visitor_entities, visitor_mode_trigger
-        )
-        self._listeners.append(remove_listener)
-        
-        self._automation_registry["visitor_management"] = {
-            "type": "visitor",
-            "trigger_entities": visitor_entities,
-            "description": "Visitor mode management",
-            "active": True,
-        }
+        if existing_visitor_entities:
+            @callback
+            def visitor_mode_trigger(event: Event) -> None:
+                """Trigger visitor mode automation."""
+                self.hass.async_create_task(self._handle_visitor_mode_change(event))
+            
+            remove_listener = async_track_state_change_event(
+                self.hass, existing_visitor_entities, visitor_mode_trigger
+            )
+            self._listeners.append(remove_listener)
+            
+            self._automation_registry["visitor_management"] = {
+                "type": "visitor",
+                "trigger_entities": existing_visitor_entities,
+                "description": "Visitor mode management",
+                "active": True,
+            }
 
     async def _setup_maintenance_automations(self) -> None:
         """Set up maintenance-related automations."""
@@ -485,49 +409,6 @@ class PawControlAutomationManager(RestoreEntity):
         except Exception as e:
             _LOGGER.error("Error in feeding reminder automation for %s: %s", self._dog_name, e)
 
-    async def _handle_overdue_feeding(self, event: Event) -> None:
-        """Handle overdue feeding automation."""
-        try:
-            self._update_stats("feeding_triggers")
-            
-            entity_id = event.data.get("entity_id")
-            new_state = event.data.get("new_state")
-            
-            if not new_state or new_state.state != "on":
-                return
-            
-            # Get overdue feeding details
-            if new_state.attributes:
-                overdue_meals = new_state.attributes.get("overdue_meals", [])
-                overall_severity = new_state.attributes.get("overall_severity", "low")
-                
-                if overdue_meals:
-                    await self._send_overdue_feeding_alert(overdue_meals, overall_severity)
-                    
-        except Exception as e:
-            _LOGGER.error("Error in overdue feeding automation for %s: %s", self._dog_name, e)
-
-    async def _handle_inactivity_warning(self, event: Event) -> None:
-        """Handle inactivity warning automation."""
-        try:
-            self._update_stats("activity_triggers")
-            
-            new_state = event.data.get("new_state")
-            
-            if not new_state or new_state.state != "on":
-                return
-            
-            # Get inactivity details
-            if new_state.attributes:
-                warning_triggers = new_state.attributes.get("warning_triggers", [])
-                overall_severity = new_state.attributes.get("overall_severity", "low")
-                
-                if warning_triggers:
-                    await self._send_inactivity_alert(warning_triggers, overall_severity)
-                    
-        except Exception as e:
-            _LOGGER.error("Error in inactivity warning automation for %s: %s", self._dog_name, e)
-
     async def _handle_activity_milestone(self, event: Event) -> None:
         """Handle activity milestone automation."""
         try:
@@ -574,8 +455,6 @@ class PawControlAutomationManager(RestoreEntity):
                 await self._handle_health_status_specific_change(new_state.state, old_state.state)
             elif "mood" in entity_id:
                 await self._handle_mood_change(new_state.state, old_state.state)
-            elif "health_score" in entity_id:
-                await self._handle_health_score_change(new_state.state, old_state.state)
                 
         except Exception as e:
             _LOGGER.error("Error in health status automation for %s: %s", self._dog_name, e)
@@ -595,26 +474,6 @@ class PawControlAutomationManager(RestoreEntity):
             
         except Exception as e:
             _LOGGER.error("Error in emergency activation automation for %s: %s", self._dog_name, e)
-
-    async def _handle_attention_needed(self, event: Event) -> None:
-        """Handle attention needed automation."""
-        try:
-            self._update_stats("emergency_triggers")
-            
-            new_state = event.data.get("new_state")
-            
-            if not new_state or new_state.state != "on":
-                return
-            
-            # Get attention details
-            if new_state.attributes:
-                priority_level = new_state.attributes.get("priority_level", "low")
-                attention_reasons = new_state.attributes.get("attention_reasons", [])
-                
-                await self._send_attention_alert(priority_level, attention_reasons)
-                
-        except Exception as e:
-            _LOGGER.error("Error in attention needed automation for %s: %s", self._dog_name, e)
 
     async def _handle_visitor_mode_change(self, event: Event) -> None:
         """Handle visitor mode change automation."""
@@ -644,12 +503,9 @@ class PawControlAutomationManager(RestoreEntity):
             # Get daily summary data
             summary_sensor = self.hass.states.get(f"sensor.{self._dog_name}_daily_summary")
             
-            if summary_sensor and summary_sensor.attributes:
-                daily_rating = summary_sensor.attributes.get("daily_rating", "Unbekannt")
-                overall_score = float(summary_sensor.state) if summary_sensor.state.replace('.', '').isdigit() else 0
-                recommendations = summary_sensor.attributes.get("recommendations", [])
-                
-                await self._send_daily_summary_notification(daily_rating, overall_score, recommendations)
+            if summary_sensor:
+                summary_text = summary_sensor.state
+                await self._send_daily_summary_notification(summary_text)
                 
         except Exception as e:
             _LOGGER.error("Error in daily summary automation for %s: %s", self._dog_name, e)
@@ -657,32 +513,183 @@ class PawControlAutomationManager(RestoreEntity):
     async def _handle_system_health_check(self) -> None:
         """Handle periodic system health check."""
         try:
-            # Check system health sensor
-            health_sensor = self.hass.states.get(f"binary_sensor.{self._dog_name}_system_health")
+            # Simple system health check - verify key entities exist
+            key_entities = [
+                f"input_boolean.{self._dog_name}_feeding_morning",
+                f"input_boolean.{self._dog_name}_outside",
+                f"counter.{self._dog_name}_walk_count",
+            ]
             
-            if health_sensor and health_sensor.state == "on":  # System has issues
-                if health_sensor.attributes:
-                    health_issues = health_sensor.attributes.get("health_issues", [])
-                    health_score = health_sensor.attributes.get("health_score", 0)
-                    
-                    if health_score < 80:  # Only alert for significant issues
-                        await self._send_system_health_alert(health_issues, health_score)
+            missing_entities = []
+            for entity_id in key_entities:
+                if not self.hass.states.get(entity_id):
+                    missing_entities.append(entity_id)
+            
+            if missing_entities:
+                await self._send_system_health_alert(missing_entities)
                         
         except Exception as e:
             _LOGGER.error("Error in system health check automation for %s: %s", self._dog_name, e)
 
-    # NOTIFICATION HELPERS
+    # UTILITY METHODS
+    
+    def _update_stats(self, stat_type: str) -> None:
+        """Update automation statistics."""
+        self._automation_stats["total_triggers"] += 1
+        self._automation_stats[stat_type] += 1
+        self._automation_stats["last_trigger"] = datetime.now().isoformat()
+
+    def _extract_activity_type(self, entity_id: str) -> str:
+        """Extract activity type from entity_id."""
+        if "walk" in entity_id:
+            return "Spaziergang"
+        elif "play" in entity_id:
+            return "Spielzeit"
+        elif "training" in entity_id:
+            return "Training"
+        else:
+            return "Aktivität"
+
+    # NOTIFICATION METHODS
     
     async def _send_feeding_reminder(self, meal_name: str, scheduled_time: str) -> None:
         """Send feeding reminder notification."""
         try:
-            await self.hass.services.async_call(
-                "persistent_notification", "create",
-                {
-                    "title": f"🍽️ Fütterung - {self._dog_name.title()}",
-                    "message": f"Erinnerung: {meal_name} ist für {scheduled_time[:5]} geplant",
-                    "notification_id": f"feeding_reminder_{self._dog_name}_{meal_name.lower()}",
-                }
-            )
+            if self.hass.services.has_service("persistent_notification", "create"):
+                await self.hass.services.async_call(
+                    "persistent_notification", "create",
+                    {
+                        "title": f"🍽️ Fütterung - {self._dog_name.title()}",
+                        "message": f"Erinnerung: {meal_name} ist für {scheduled_time[:5]} geplant",
+                        "notification_id": f"feeding_reminder_{self._dog_name}_{meal_name.lower()}",
+                    }
+                )
         except Exception as e:
             _LOGGER.error("Error sending feeding reminder: %s", e)
+
+    async def _send_milestone_celebration(self, activity_type: str, milestone: int) -> None:
+        """Send milestone celebration notification."""
+        try:
+            if self.hass.services.has_service("persistent_notification", "create"):
+                await self.hass.services.async_call(
+                    "persistent_notification", "create",
+                    {
+                        "title": f"🏆 Meilenstein - {self._dog_name.title()}",
+                        "message": f"Glückwunsch! {milestone}. {activity_type} erreicht! 🎉",
+                        "notification_id": f"milestone_{self._dog_name}_{activity_type}_{milestone}",
+                    }
+                )
+        except Exception as e:
+            _LOGGER.error("Error sending milestone celebration: %s", e)
+
+    async def _send_visitor_mode_notification(self, activated: bool, visitor_name: str) -> None:
+        """Send visitor mode notification."""
+        try:
+            if self.hass.services.has_service("persistent_notification", "create"):
+                status = "aktiviert" if activated else "deaktiviert"
+                visitor_text = f" für {visitor_name}" if visitor_name else ""
+                
+                await self.hass.services.async_call(
+                    "persistent_notification", "create",
+                    {
+                        "title": f"👥 Besuchermodus - {self._dog_name.title()}",
+                        "message": f"Besuchermodus {status}{visitor_text}",
+                        "notification_id": f"visitor_mode_{self._dog_name}",
+                    }
+                )
+        except Exception as e:
+            _LOGGER.error("Error sending visitor mode notification: %s", e)
+
+    async def _send_daily_summary_notification(self, summary_text: str) -> None:
+        """Send daily summary notification."""
+        try:
+            if self.hass.services.has_service("persistent_notification", "create"):
+                await self.hass.services.async_call(
+                    "persistent_notification", "create",
+                    {
+                        "title": f"📊 Tagesbericht - {self._dog_name.title()}",
+                        "message": summary_text,
+                        "notification_id": f"daily_summary_{self._dog_name}",
+                    }
+                )
+        except Exception as e:
+            _LOGGER.error("Error sending daily summary notification: %s", e)
+
+    async def _send_system_health_alert(self, missing_entities: List[str]) -> None:
+        """Send system health alert."""
+        try:
+            if self.hass.services.has_service("persistent_notification", "create"):
+                await self.hass.services.async_call(
+                    "persistent_notification", "create",
+                    {
+                        "title": f"⚠️ System-Problem - {self._dog_name.title()}",
+                        "message": f"Fehlende Entitäten erkannt: {len(missing_entities)} Probleme",
+                        "notification_id": f"system_health_{self._dog_name}",
+                    }
+                )
+        except Exception as e:
+            _LOGGER.error("Error sending system health alert: %s", e)
+
+    async def _execute_emergency_protocol(self) -> None:
+        """Execute emergency protocol."""
+        try:
+            if self.hass.services.has_service("persistent_notification", "create"):
+                await self.hass.services.async_call(
+                    "persistent_notification", "create",
+                    {
+                        "title": f"🚨 NOTFALL - {self._dog_name.title()}",
+                        "message": "Notfallprotokoll aktiviert! Sofortige Aufmerksamkeit erforderlich!",
+                        "notification_id": f"emergency_{self._dog_name}",
+                    }
+                )
+        except Exception as e:
+            _LOGGER.error("Error executing emergency protocol: %s", e)
+
+    async def _handle_health_status_specific_change(self, new_status: str, old_status: str) -> None:
+        """Handle specific health status changes."""
+        try:
+            # Define health status severity levels
+            severity_levels = {
+                "Ausgezeichnet": 5,
+                "Sehr gut": 4,
+                "Gut": 3,
+                "Normal": 2,
+                "Unwohl": 1,
+                "Krank": 0,
+            }
+            
+            new_severity = severity_levels.get(new_status, 2)
+            old_severity = severity_levels.get(old_status, 2)
+            
+            # Alert if health deteriorated significantly
+            if new_severity < old_severity - 1:
+                if self.hass.services.has_service("persistent_notification", "create"):
+                    await self.hass.services.async_call(
+                        "persistent_notification", "create",
+                        {
+                            "title": f"🏥 Gesundheitsänderung - {self._dog_name.title()}",
+                            "message": f"Gesundheitsstatus von '{old_status}' zu '{new_status}' verschlechtert",
+                            "notification_id": f"health_change_{self._dog_name}",
+                        }
+                    )
+        except Exception as e:
+            _LOGGER.error("Error handling health status change: %s", e)
+
+    async def _handle_mood_change(self, new_mood: str, old_mood: str) -> None:
+        """Handle mood changes."""
+        try:
+            # Alert for negative mood changes
+            negative_moods = ["😟 Traurig", "😠 Ärgerlich", "😰 Ängstlich"]
+            
+            if new_mood in negative_moods and old_mood not in negative_moods:
+                if self.hass.services.has_service("persistent_notification", "create"):
+                    await self.hass.services.async_call(
+                        "persistent_notification", "create",
+                        {
+                            "title": f"😟 Stimmungsänderung - {self._dog_name.title()}",
+                            "message": f"Stimmung hat sich zu '{new_mood}' geändert - Aufmerksamkeit empfohlen",
+                            "notification_id": f"mood_change_{self._dog_name}",
+                        }
+                    )
+        except Exception as e:
+            _LOGGER.error("Error handling mood change: %s", e)

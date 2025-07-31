@@ -1,43 +1,18 @@
 {
-  "domain": "paw_control",
+  "domain": "pawcontrol",
   "name": "Paw Control",
-  "codeowners": [
-    "@bigdaddy1990"
-  ],
+  "version": "1.0.0",
   "config_flow": true,
+  "documentation": "https://github.com/BigDaddy1990/pawcontrol",
+  "issue_tracker": "https://github.com/BigDaddy1990/pawcontrol/issues",
+  "codeowners": ["@bigdaddy1990"],
   "dependencies": [
-    "input_boolean",
-    "input_datetime", 
-    "input_number",
-    "input_select",
-    "input_text",
-    "counter",
-    "automation",
-    "script",
-    "template",
-    "persistent_notification"
+    "input_boolean", "input_datetime", "input_number", "input_select",
+    "input_text", "counter", "automation", "script", "template", "persistent_notification"
   ],
-  "documentation": "https://github.com/BigDaddy1990/paw_control",
   "integration_type": "service",
   "iot_class": "local_polling",
-  "issue_tracker": "https://github.com/BigDaddy1990/paw_control/issues",
-  "loggers": [
-    "custom_components.paw_control"
-  ],
+  "loggers": ["custom_components.pawcontrol"],
   "requirements": [],
-  "ssdp": [],
-  "version": "1.0.0",
-  "homeassistant": "2024.3.3",
-  "homekit": {},
-  "zeroconf": [],
-  "dhcp": [],
-  "usb": [],
-  "after_dependencies": [
-    "input_boolean",
-    "input_datetime",
-    "input_number", 
-    "input_select",
-    "input_text",
-    "counter"
-  ]
+  "homeassistant": "2024.3.3"
 }
