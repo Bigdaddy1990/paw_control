@@ -1,83 +1,458 @@
 feed_dog:
   description: Füttert den Hund und aktualisiert die Fütterungsstatistiken.
+  target:
+    entity:
+      domain: sensor
+      integration: paw_control
   fields:
-    dog_name:
-      description: Name des Hundes
-      example: "buddy"
-      required: true
-      selector:
-        text:
-    meal_type:
-      description: Art der Mahlzeit
-      example: "morning"
-      default: "morning"
+    food_type:
+      description: Art des Futters
+      example: "Trockenfutter"
+      default: "Trockenfutter"
       selector:
         select:
           options:
-            - "morning"
-            - "launch"
-            - "evening"
-            - "snack"
-    amount:
-      description: Futtermenge in Gramm
+            - "Trockenfutter"
+            - "Nassfutter"
+            - "BARF"
+            - "Leckerli"
+            - "Kauknochen"
+            - "Sonstiges"
+    food_amount:
+      description: Menge des Futters in Gramm
       example: 200
-      default: 100
+      default: 200
       selector:
         number:
-          min: 10
-          max: 1000
+          min: 1
+          max: 2000
           step: 10
           unit_of_measurement: "g"
-
-start_walk:
-  description: Startet einen neuen Spaziergang.
-  fields:
-    dog_name:
-      description: Name des Hundes
-      example: "buddy"
-      required: true
+    notes:
+      description: Zusätzliche Notizen zur Fütterung
+      example: "Hat das Futter sehr gerne gefressen"
       selector:
         text:
+          multiline: true
+
+start_walk:
+  description: Startet einen neuen Spaziergang und aktiviert das Tracking.
+  target:
+    entity:
+      domain: sensor
+      integration: paw_control
+  fields:
     walk_type:
       description: Art des Spaziergangs
-      example: "normal"
-      default: "normal"
+      example: "Normal"
+      default: "Normal"
       selector:
         select:
           options:
-            - "short"
-            - "normal"
-            - "long"
-
-end_walk:
-  description: Beendet den aktuellen Spaziergang.
-  fields:
-    dog_name:
-      description: Name des Hundes
-      example: "buddy"
-      required: true
+            - "Kurz"
+            - "Normal"
+            - "Lang"
+            - "Training"
+            - "Freilauf"
+            - "Sozialisierung"
+    location:
+      description: Startort des Spaziergangs
+      example: "Park am See"
       selector:
         text:
+    notes:
+      description: Zusätzliche Notizen zum Spaziergang
+      example: "Schönes Wetter heute"
+      selector:
+        text:
+          multiline: true
+
+end_walk:
+  description: Beendet den aktuellen Spaziergang und speichert die Statistiken.
+  target:
+    entity:
+      domain: sensor
+      integration: paw_control
+  fields:
+    rating:
+      description: Bewertung des Spaziergangs (1-5)
+      example: 5
+      default: 5
+      selector:
+        number:
+          min: 1
+          max: 5
+          step: 1
     duration:
       description: Dauer des Spaziergangs in Minuten
       example: 30
-      default: 30
       selector:
         number:
           min: 1
           max: 300
           step: 1
           unit_of_measurement: "min"
+    notes:
+      description: Zusätzliche Notizen zum Spaziergang
+      example: "Viele andere Hunde getroffen"
+      selector:
+        text:
+          multiline: true
 
-update_gps:
-  description: Aktualisiert die GPS-Position des Hundes.
+log_health_data:
+  description: Erfasst Gesundheitsdaten wie Gewicht, Temperatur und Symptome.
+  target:
+    entity:
+      domain: sensor
+      integration: paw_control
   fields:
-    dog_name:
-      description: Name des Hundes
-      example: "buddy"
+    weight:
+      description: Aktuelles Gewicht in kg
+      example: 25.5
+      selector:
+        number:
+          min: 0.5
+          max: 100.0
+          step: 0.1
+          unit_of_measurement: "kg"
+    temperature:
+      description: Körpertemperatur in °C
+      example: 38.5
+      selector:
+        number:
+          min: 35.0
+          max: 42.0
+          step: 0.1
+          unit_of_measurement: "°C"
+    energy_level:
+      description: Aktuelles Energielevel
+      example: "Normal"
+      default: "Normal"
+      selector:
+        select:
+          options:
+            - "Sehr niedrig"
+            - "Niedrig"
+            - "Normal"
+            - "Hoch"
+            - "Sehr hoch"
+    symptoms:
+      description: Beobachtete Symptome
+      example: "Müde, wenig Appetit"
+      selector:
+        text:
+          multiline: true
+    notes:
+      description: Zusätzliche Gesundheitsnotizen
+      example: "Allgemein guter Zustand"
+      selector:
+        text:
+          multiline: true
+
+set_mood:
+  description: Setzt die aktuelle Stimmung des Hundes.
+  target:
+    entity:
+      domain: sensor
+      integration: paw_control
+  fields:
+    mood:
+      description: Aktuelle Stimmung des Hundes
+      example: "😊 Fröhlich"
+      default: "😊 Fröhlich"
+      required: true
+      selector:
+        select:
+          options:
+            - "😄 Sehr fröhlich"
+            - "😊 Fröhlich"
+            - "😐 Neutral"
+            - "😟 Traurig"
+            - "😠 Ärgerlich"
+            - "😴 Müde"
+            - "😰 Ängstlich"
+    reason:
+      description: Grund für die Stimmung
+      example: "Neues Spielzeug bekommen"
+      selector:
+        text:
+    notes:
+      description: Zusätzliche Notizen zur Stimmung
+      example: "Sehr verspielt heute"
+      selector:
+        text:
+          multiline: true
+
+start_training:
+  description: Startet eine neue Trainingseinheit.
+  target:
+    entity:
+      domain: sensor
+      integration: paw_control
+  fields:
+    training_type:
+      description: Art des Trainings
+      example: "Grundgehorsam"
+      default: "Grundgehorsam"
+      required: true
+      selector:
+        select:
+          options:
+            - "Grundgehorsam"
+            - "Leinenführigkeit"
+            - "Apportieren"
+            - "Tricks"
+            - "Sozialisierung"
+            - "Agility"
+            - "Suchspiele"
+            - "Impulskontrolle"
+    duration_planned:
+      description: Geplante Dauer in Minuten
+      example: 15
+      default: 15
+      selector:
+        number:
+          min: 5
+          max: 120
+          step: 5
+          unit_of_measurement: "min"
+    location:
+      description: Trainingsort
+      example: "Garten"
+      selector:
+        text:
+    notes:
+      description: Zusätzliche Notizen zum Training
+      example: "Fokus auf Sitz und Bleib"
+      selector:
+        text:
+          multiline: true
+
+end_training:
+  description: Beendet die aktuelle Trainingseinheit und speichert Ergebnisse.
+  target:
+    entity:
+      domain: sensor
+      integration: paw_control
+  fields:
+    success_rating:
+      description: Bewertung des Trainingserfolgs (1-5)
+      example: 4
+      default: 3
+      selector:
+        number:
+          min: 1
+          max: 5
+          step: 1
+    learned_commands:
+      description: Neu gelernte oder geübte Kommandos
+      example: "Sitz, Platz, Bleib"
+      selector:
+        text:
+    duration:
+      description: Tatsächliche Dauer in Minuten
+      example: 20
+      selector:
+        number:
+          min: 1
+          max: 120
+          step: 1
+          unit_of_measurement: "min"
+    notes:
+      description: Zusätzliche Notizen zum Training
+      example: "Sehr aufmerksam und lernbereit"
+      selector:
+        text:
+          multiline: true
+
+log_medication:
+  description: Erfasst die Gabe von Medikamenten.
+  target:
+    entity:
+      domain: sensor
+      integration: paw_control
+  fields:
+    medication_name:
+      description: Name des Medikaments
+      example: "Rimadyl"
       required: true
       selector:
         text:
+    medication_amount:
+      description: Dosierung des Medikaments
+      example: 50
+      required: true
+      selector:
+        number:
+          min: 0.1
+          max: 1000
+          step: 0.1
+    medication_unit:
+      description: Einheit der Dosierung
+      example: "mg"
+      default: "mg"
+      selector:
+        select:
+          options:
+            - "mg"
+            - "ml"
+            - "Tabletten"
+            - "Tropfen"
+            - "Kapseln"
+    notes:
+      description: Zusätzliche Notizen zur Medikamentengabe
+      example: "Mit dem Futter gegeben"
+      selector:
+        text:
+          multiline: true
+
+schedule_vet_visit:
+  description: Plant einen Tierarztbesuch und setzt Erinnerungen.
+  target:
+    entity:
+      domain: sensor
+      integration: paw_control
+  fields:
+    vet_name:
+      description: Name des Tierarztes oder der Praxis
+      example: "Dr. Müller Tierarztpraxis"
+      required: true
+      selector:
+        text:
+    vet_date:
+      description: Datum und Uhrzeit des Termins
+      example: "2024-12-15 10:30:00"
+      required: true
+      selector:
+        datetime:
+    vet_reason:
+      description: Grund für den Besuch
+      example: "Routineuntersuchung"
+      default: "Routineuntersuchung"
+      selector:
+        select:
+          options:
+            - "Routineuntersuchung"
+            - "Impfung"
+            - "Krankheit"
+            - "Verletzung"
+            - "Zahnreinigung"
+            - "Operation"
+            - "Nachkontrolle"
+            - "Beratung"
+    notes:
+      description: Zusätzliche Notizen zum Termin
+      example: "Jährliche Impfung fällig"
+      selector:
+        text:
+          multiline: true
+
+start_playtime:
+  description: Startet eine neue Spielzeit-Session.
+  target:
+    entity:
+      domain: sensor
+      integration: paw_control
+  fields:
+    play_type:
+      description: Art des Spiels
+      example: "Ball spielen"
+      default: "Freies Spiel"
+      selector:
+        select:
+          options:
+            - "Freies Spiel"
+            - "Ball spielen"
+            - "Frisbee"
+            - "Zerrspiele"
+            - "Verstecken"
+            - "Intelligenzspiele"
+            - "Wasserspiele"
+            - "Schnüffelspiele"
+    location:
+      description: Spielort
+      example: "Garten"
+      default: "Zuhause"
+      selector:
+        text:
+    notes:
+      description: Zusätzliche Notizen zur Spielzeit
+      example: "Neues Spielzeug ausprobiert"
+      selector:
+        text:
+          multiline: true
+
+end_playtime:
+  description: Beendet die aktuelle Spielzeit und speichert Statistiken.
+  target:
+    entity:
+      domain: sensor
+      integration: paw_control
+  fields:
+    duration:
+      description: Dauer der Spielzeit in Minuten
+      example: 25
+      selector:
+        number:
+          min: 1
+          max: 180
+          step: 1
+          unit_of_measurement: "min"
+    fun_rating:
+      description: Bewertung des Spaßfaktors (1-5)
+      example: 5
+      default: 5
+      selector:
+        number:
+          min: 1
+          max: 5
+          step: 1
+    energy_afterwards:
+      description: Energielevel nach dem Spielen
+      example: "Entspannt"
+      default: "Entspannt"
+      selector:
+        select:
+          options:
+            - "Sehr müde"
+            - "Müde"
+            - "Entspannt"
+            - "Noch energiegeladen"
+            - "Hyperaktiv"
+    notes:
+      description: Zusätzliche Notizen zur Spielzeit
+      example: "Hat viel Spaß gehabt"
+      selector:
+        text:
+          multiline: true
+
+reset_all_data:
+  description: Setzt alle täglichen Daten zurück (VORSICHT!).
+  target:
+    entity:
+      domain: sensor
+      integration: paw_control
+  fields:
+    confirm_reset:
+      description: Geben Sie 'RESET' ein, um zu bestätigen
+      example: "RESET"
+      required: true
+      selector:
+        text:
+    backup_data:
+      description: Erstellt eine Sicherung vor dem Zurücksetzen
+      example: true
+      default: true
+      selector:
+        boolean:
+
+update_gps_simple:
+  description: Aktualisiert die GPS-Position manuell.
+  target:
+    entity:
+      domain: sensor
+      integration: paw_control
+  fields:
     latitude:
       description: GPS Breitengrad
       example: 52.233333
@@ -98,55 +473,481 @@ update_gps:
           step: 0.000001
     accuracy:
       description: GPS Genauigkeit in Metern
-      example: 10
-      default: 10
+      example: 5
+      default: 0
       selector:
         number:
-          min: 1
+          min: 0
           max: 1000
           step: 1
           unit_of_measurement: "m"
+    source_info:
+      description: Quelle der GPS-Daten
+      example: "Smartphone"
+      default: "manual"
+      selector:
+        text:
 
-health_check:
-  description: Führt einen Gesundheitscheck durch.
+setup_automatic_gps:
+  description: Konfiguriert automatisches GPS-Tracking.
+  target:
+    entity:
+      domain: sensor
+      integration: paw_control
   fields:
-    dog_name:
-      description: Name des Hundes
-      example: "buddy"
+    gps_entity:
+      description: Entity für GPS-Daten
+      example: "device_tracker.hund_gps"
+      selector:
+        entity:
+          domain: device_tracker
+    tracking_sensitivity:
+      description: Empfindlichkeit des GPS-Trackings
+      example: "medium"
+      default: "medium"
+      selector:
+        select:
+          options:
+            - label: "Niedrig"
+              value: "low"
+            - label: "Mittel" 
+              value: "medium"
+            - label: "Hoch"
+              value: "high"
+    movement_threshold:
+      description: Schwellenwert für Bewegungserkennung in Metern
+      example: 50
+      default: 50
+      selector:
+        number:
+          min: 10
+          max: 500
+          step: 10
+          unit_of_measurement: "m"
+    auto_start_walk:
+      description: Automatisch Spaziergang starten bei Bewegung
+      example: true
+      default: true
+      selector:
+        boolean:
+    auto_end_walk:
+      description: Automatisch Spaziergang beenden bei Heimkehr
+      example: true
+      default: true
+      selector:
+        boolean:
+    home_zone_radius:
+      description: Radius der Heimzone in Metern
+      example: 100
+      default: 100
+      selector:
+        number:
+          min: 50
+          max: 1000
+          step: 10
+          unit_of_measurement: "m"
+    track_route:
+      description: Detaillierte Route des Spaziergangs verfolgen
+      example: true
+      default: true
+      selector:
+        boolean:
+    calculate_stats:
+      description: Automatisch Statistiken berechnen
+      example: true
+      default: true
+      selector:
+        boolean:
+
+start_walk_tracking:
+  description: Startet GPS-basierte Spaziergang-Verfolgung.
+  target:
+    entity:
+      domain: sensor
+      integration: paw_control
+  fields:
+    walk_name:
+      description: Name für diesen Spaziergang
+      example: "Morgendlicher Parkspaziergang"
+      selector:
+        text:
+    expected_duration:
+      description: Erwartete Dauer in Minuten
+      example: 30
+      selector:
+        number:
+          min: 5
+          max: 300
+          step: 5
+          unit_of_measurement: "min"
+    track_detailed_route:
+      description: Detaillierte Route verfolgen
+      example: true
+      default: true
+      selector:
+        boolean:
+
+end_walk_tracking:
+  description: Beendet GPS-basierte Spaziergang-Verfolgung.
+  target:
+    entity:
+      domain: sensor
+      integration: paw_control
+  fields:
+    walk_rating:
+      description: Bewertung des Spaziergangs (1-5)
+      example: 4
+      selector:
+        number:
+          min: 1
+          max: 5
+          step: 1
+    notes:
+      description: Notizen zum Spaziergang
+      example: "Schöne Route durch den Wald"
+      selector:
+        text:
+          multiline: true
+    save_route:
+      description: Route für spätere Verwendung speichern
+      example: false
+      default: false
+      selector:
+        boolean:
+trigger_feeding_reminder:
+  name: Trigger Feeding Reminder
+  description: Send feeding reminder notification
+  target:
+    entity:
+      domain: input_boolean
+  fields:
+    meal_type:
+      name: Meal Type
+      description: Which meal reminder to send
+      selector:
+        select:
+          options:
+            - "Frühstück"
+            - "Mittagessen"
+            - "Abendessen"
+            - "Leckerli"
+    urgent:
+      name: Urgent
+      description: Mark as urgent reminder
+      default: false
+      selector:
+        boolean:
+
+daily_reset:
+  name: Daily Reset
+  description: Perform daily reset of all counters
+  target:
+    entity:
+      domain: input_boolean
+
+send_notification:
+  name: Send Notification
+  description: Send custom notification
+  target:
+    entity:
+      domain: input_boolean
+  fields:
+    message:
+      name: Message
+      description: Notification message
       required: true
       selector:
         text:
-    temperature:
-      description: Körpertemperatur in °C
-      example: 38.5
+    title:
+      name: Title
+      description: Notification title
       selector:
-        number:
-          min: 35.0
-          max: 42.0
-          step: 0.1
-          unit_of_measurement: "°C"
-    weight:
-      description: Aktuelles Gewicht in kg
-      example: 25.5
+        text:
+    urgent:
+      name: Urgent
+      description: Mark as urgent
+      default: false
       selector:
-        number:
-          min: 0.5
-          max: 100.0
-          step: 0.1
-          unit_of_measurement: "kg"
+        boolean:
+
+set_visitor_mode:
+  name: Set Visitor Mode
+  description: Enable/disable visitor mode
+  target:
+    entity:
+      domain: input_boolean
+  fields:
+    enabled:
+      name: Enabled
+      description: Enable visitor mode
+      default: true
+      selector:
+        boolean:
+    visitor_name:
+      name: Visitor Name
+      description: Name of the visitor/sitter
+      selector:
+        text:
     notes:
-      description: Gesundheitsnotizen
-      example: "Allgemein guter Zustand"
+      name: Notes
+      description: Special instructions for visitor
+      selector:
+        text:
+          multiline: true
+          
+log_activity:
+  name: Log Activity
+  description: Log custom activity
+  target:
+    entity:
+      domain: input_boolean
+  fields:
+    activity_type:
+      name: Activity Type
+      description: Type of activity
+      required: true
+      selector:
+        text:
+    duration:
+      name: Duration
+      description: Duration in minutes
+      selector:
+        number:
+          min: 1
+          max: 480
+          unit_of_measurement: "min"
+    location:
+      name: Location
+      description: Activity location
+      selector:
+        text:
+    rating:
+      name: Rating
+      description: Rate the activity (1-5)
+      selector:
+        number:
+          min: 1
+          max: 5
+    notes:
+      name: Notes
+      description: Activity notes
       selector:
         text:
           multiline: true
 
-daily_reset:
-  description: Setzt alle täglichen Daten zurück.
+# GPS Services
+update_gps_location:
+  name: Update GPS Location
+  description: Update dog's GPS location
+  target:
+    entity:
+      domain: input_boolean
   fields:
-    dog_name:
-      description: Name des Hundes
-      example: "buddy"
+    latitude:
+      name: Latitude
+      description: GPS latitude
+      required: true
+      selector:
+        number:
+          min: -90
+          max: 90
+          step: 0.000001
+    longitude:
+      name: Longitude
+      description: GPS longitude
+      required: true
+      selector:
+        number:
+          min: -180
+          max: 180
+          step: 0.000001
+    accuracy:
+      name: Accuracy
+      description: GPS accuracy in meters
+      selector:
+        number:
+          min: 1
+          max: 1000
+          unit_of_measurement: "m"
+
+# Emergency Services
+emergency_contact:
+  name: Emergency Contact
+  description: Send emergency notification to all contacts
+  target:
+    entity:
+      domain: input_boolean
+  fields:
+    emergency_type:
+      name: Emergency Type
+      description: Type of emergency
+      required: true
+      selector:
+        select:
+          options:
+            - "Medical Emergency"
+            - "Lost Dog"
+            - "Accident"
+            - "Other Emergency"
+    message:
+      name: Message
+      description: Emergency message
       required: true
       selector:
         text:
+          multiline: true
+    location:
+      name: Location
+      description: Current location
+      selector:
+        text:
+
+# Health Monitoring
+health_check:
+  name: Health Check
+  description: Perform comprehensive health check
+  target:
+    entity:
+      domain: input_boolean
+  fields:
+    check_type:
+      name: Check Type
+      description: Type of health check
+      default: "Routine"
+      selector:
+        select:
+          options:
+            - "Routine"
+            - "Symptom Check"
+            - "Post-Activity"
+            - "Medication Check"
+    notes:
+      name: Notes
+      description: Health check notes
+      selector:
+        text:
+          multiline: true
+# Test Services
+test_notification:
+  name: Test Notification
+  description: Test notification system
+  target:
+    entity:
+      domain: input_boolean
+      
+verify_installation:
+  description: Überprüft und repariert die Paw Control Installation.
+  target:
+    entity:
+      domain: sensor
+      integration: paw_control
+  fields:
+    force_check:
+      description: Vollständige Überprüfung durchführen
+      example: false
+      default: false
+      selector:
+        boolean:
+    create_missing_entities:
+      description: Automatisch fehlende Entities erstellen
+      example: true
+      default: true
+      selector:
+        boolean:
+    send_notification:
+      description: Benachrichtigung über Ergebnis senden
+      example: true
+      default: true
+      selector:
+        boolean:
+    detailed_report:
+      description: Ausführlichen Statusbericht erstellen
+      example: false
+      default: false
+      selector:
+        boolean:
+log_vaccination:
+  description: Erfasst eine durchgeführte Impfung und aktualisiert Erinnerungen.
+  target:
+    entity:
+      domain: sensor
+      integration: paw_control
+  fields:
+    vaccination_type:
+      description: Art der Impfung
+      example: "rabies"
+      required: true
+      selector:
+        select:
+          options:
+            - label: "Tollwut"
+              value: "rabies"
+            - label: "Staupe"
+              value: "distemper"
+            - label: "Hepatitis"
+              value: "hepatitis"
+            - label: "Parvovirose"
+              value: "parvovirus"
+            - label: "Parainfluenza"
+              value: "parainfluenza"
+            - label: "Leptospirose"
+              value: "leptospirosis"
+            - label: "Zwingerhusten"
+              value: "bordetella"
+    vaccination_date:
+      description: Datum der Impfung
+      example: "2024-01-15"
+      required: true
+      selector:
+        date:
+    veterinarian:
+      description: Name des Tierarztes
+      example: "Dr. Müller"
+      selector:
+        text:
+    batch_number:
+      description: Impfstoff Chargennummer
+      example: "ABC123"
+      selector:
+        text:
+    next_due_date:
+      description: Nächste Impfung fällig am
+      example: "2027-01-15"
+      selector:
+        date:
+    notes:
+      description: Zusätzliche Notizen zur Impfung
+      example: "Gut vertragen, keine Nebenwirkungen"
+      selector:
+        text:
+          multiline: true
+
+check_vaccination_status:
+  description: Überprüft den aktuellen Impfstatus und setzt Erinnerungen.
+  target:
+    entity:
+      domain: sensor
+      integration: paw_control
+  fields:
+    send_notifications:
+      description: Benachrichtigungen bei fälligen Impfungen senden
+      example: true
+      default: true
+      selector:
+        boolean:
+    update_reminders:
+      description: Automatische Erinnerungen für fällige Impfungen setzen
+      example: true
+      default: true
+      selector:
+        boolean:
+    check_overdue_days:
+      description: Anzahl Tage für Überfällig-Warnung
+      example: 30
+      default: 30
+      selector:
+        number:
+          min: 1
+          max: 365
+          step: 1
+          unit_of_measurement: "days"

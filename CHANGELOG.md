@@ -126,9 +126,9 @@ Dieses Projekt steht unter der MIT-Lizenz - siehe [LICENSE](LICENSE) für Detail
 ## 🎯 **Release Notes**
 
 ### **📦 Download Links**
-- **[GitHub Release](https://github.com/BigDaddy1990/pawcontrol/releases/latest)**
-- **[HACS Installation](https://github.com/BigDaddy1990/pawcontrol)**
-- **[Dokumentation](https://github.com/BigDaddy1990/pawcontrol/wiki)**
+- **[GitHub Release](https://github.com/BigDaddy1990/paw_control/releases/latest)**
+- **[HACS Installation](https://github.com/BigDaddy1990/paw_control)**
+- **[Dokumentation](https://github.com/BigDaddy1990/paw_control/wiki)**
 
 ### **⚡ Schnellstart**
 1. **HACS öffnen** → **Custom Repository** hinzufügen
@@ -145,4 +145,4 @@ Nach monatelanger Entwicklung ist **Paw Control** endlich da! Dies ist erst der 
 ---
 
 **Hinweis**: Dieses Changelog wird automatisch bei jedem Release aktualisiert. 
-Für die neuesten Änderungen siehe die [GitHub Releases](https://github.com/BigDaddy1990/pawcontrol/releases)
+Für die neuesten Änderungen siehe die [GitHub Releases](https://github.com/BigDaddy1990/paw_control/releases)

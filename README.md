@@ -3,13 +3,13 @@
 <div align="center">
 
 [![HACS](https://img.shields.io/badge/HACS-Custom-orange.svg?style=for-the-badge)](https://github.com/hacs/integration)
-[![GitHub Release](https://img.shields.io/github/release/BigDaddy1990/pawcontrol.svg?style=for-the-badge)](https://github.com/BigDaddy1990/pawcontrol/releases)
-[![License](https://img.shields.io/github/license/BigDaddy1990/pawcontrol.svg?style=for-the-badge)](LICENSE)
-[![Downloads](https://img.shields.io/github/downloads/BigDaddy1990/pawcontrol/total.svg?style=for-the-badge)](https://github.com/BigDaddy1990/pawcontrol/releases)
+[![GitHub Release](https://img.shields.io/github/release/BigDaddy1990/paw_control.svg?style=for-the-badge)](https://github.com/BigDaddy1990/paw_control/releases)
+[![License](https://img.shields.io/github/license/BigDaddy1990/paw_control.svg?style=for-the-badge)](LICENSE)
+[![Downloads](https://img.shields.io/github/downloads/BigDaddy1990/paw_control/total.svg?style=for-the-badge)](https://github.com/BigDaddy1990/paw_control/releases)
 
 **🐶 Die smarteste Home Assistant Integration für Hundebesitzer**
 
-Haustier-Assistenzsystem für deinen Hund in Home Assistant– mit Gassi-Erkennung, Kot-Tracking, Fütterungslogik, Dogsitter-Funktion, Tages-/Wochenstatistik und vielem mehr- alles in einer Integration!
+Verwalten Sie Fütterung, GPS-Tracking, Gesundheit und Training Ihres Hundes - alles in einer Integration!
 
 [🚀 Installation](#-installation) •
 [✨ Features](#-features) •
@@ -24,7 +24,7 @@ Haustier-Assistenzsystem für deinen Hund in Home Assistant– mit Gassi-Erkennu
 
 ## 🎯 **Was ist Paw Control?**
 
-**Paw Control** ist die **erste umfassende** Home Assistant Integration für Hundebesitzer mit modernster GPS-Technologie. Mit **automatisch erstellten Entities**, **Services** und **intelligentente Automatisierungen** haben Sie die komplette Kontrolle über das Wohlbefinden Ihres vierbeinigen Freundes.
+**Paw Control** ist die **erste umfassende** Home Assistant Integration für Hundebesitzer mit modernster GPS-Technologie. Mit über **100 automatisch erstellten Entities**, **25+ Services** und **intelligentente Automatisierungen** haben Sie die komplette Kontrolle über das Wohlbefinden Ihres vierbeinigen Freundes.
 
 ### 🏆 **Warum Paw Control wählen?**
 
@@ -98,7 +98,7 @@ Alles was Sie brauchen in einer Integration
 2. **Integrationen** → **⋮** → **Benutzerdefinierte Repositories**
 3. **Repository hinzufügen**:
    ```
-   URL: https://github.com/BigDaddy1990/pawcontrol
+   URL: https://github.com/BigDaddy1990/paw_control
    Kategorie: Integration
    ```
 4. **"Paw Control"** suchen und **installieren**
@@ -123,8 +123,10 @@ Paw Control ist kostenlos und Open Source. Wenn es Ihnen und Ihrem Hund hilft, f
 
 💝 **Was Ihre Spende bewirkt:**
 - 🚀 Neue GPS-Tracker Integrationen
+- 📱 Mobile App Entwicklung  
 - 🤖 KI-basierte Gesundheitsempfehlungen
 - 🌍 Weitere Sprachen und Länder
+- 🔧 24/7 Support und Updates
 
 </div>
 
@@ -200,17 +202,17 @@ Ja! Paw Control unterstützt **unbegrenzt viele Hunde**:
 
 1. **📖 Dokumentation** - Prüfen Sie zuerst unsere [ausführliche Dokumentation](docs/)
 2. **🔍 FAQ** - Schauen Sie in die häufig gestellten Fragen (siehe oben)
-3. **🐛 GitHub Issues** - [Melden Sie Bugs oder Probleme](https://github.com/BigDaddy1990/pawcontrol/issues)
-4. **💬 Community** - [Diskutieren Sie mit anderen Nutzern](https://github.com/BigDaddy1990/pawcontrol/discussions)
+3. **🐛 GitHub Issues** - [Melden Sie Bugs oder Probleme](https://github.com/BigDaddy1990/paw_control/issues)
+4. **💬 Community** - [Diskutieren Sie mit anderen Nutzern](https://github.com/BigDaddy1990/paw_control/discussions)
 
 ## 🤝 **Community**
 
 ### **💬 Support & Diskussion**
 
-- 🐛 **[Bug Reports](https://github.com/BigDaddy1990/pawcontrol/issues)** - Fehler melden
-- 💡 **[Feature Requests](https://github.com/BigDaddy1990/pawcontrol/discussions)** - Neue Ideen vorschlagen
-- ❓ **[Q&A Forum](https://github.com/BigDaddy1990/pawcontrol/discussions/categories/q-a)** - Fragen stellen
-- 📢 **[Ankündigungen](https://github.com/BigDaddy1990/pawcontrol/discussions/categories/announcements)** - Neuigkeiten erfahren
+- 🐛 **[Bug Reports](https://github.com/BigDaddy1990/paw_control/issues)** - Fehler melden
+- 💡 **[Feature Requests](https://github.com/BigDaddy1990/paw_control/discussions)** - Neue Ideen vorschlagen
+- ❓ **[Q&A Forum](https://github.com/BigDaddy1990/paw_control/discussions/categories/q-a)** - Fragen stellen
+- 📢 **[Ankündigungen](https://github.com/BigDaddy1990/paw_control/discussions/categories/announcements)** - Neuigkeiten erfahren
 
 
 ### **🤝 Mitmachen**
@@ -265,8 +267,8 @@ FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
 ---
 
 [![HACS](https://img.shields.io/badge/HACS-Custom-orange.svg?style=for-the-badge)](https://github.com/hacs/integration)
-[![GitHub Release](https://img.shields.io/github/release/BigDaddy1990/pawcontrol.svg?style=for-the-badge)](https://github.com/BigDaddy1990/pawcontrol/releases)
-[![License](https://img.shields.io/github/license/BigDaddy1990/pawcontrol.svg?style=for-the-badge)](LICENSE)
+[![GitHub Release](https://img.shields.io/github/release/BigDaddy1990/paw_control.svg?style=for-the-badge)](https://github.com/BigDaddy1990/paw_control/releases)
+[![License](https://img.shields.io/github/license/BigDaddy1990/paw_control.svg?style=for-the-badge)](LICENSE)
 
 **⭐ Geben Sie uns einen Stern, wenn Ihnen Paw Control gefällt! ⭐**
 
