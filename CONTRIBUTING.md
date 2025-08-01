@@ -159,18 +159,18 @@ git checkout -b feature/amazing-gps-feature
 ### **2. Code Quality Checks**
 ```bash
 # Code formatieren
-black custom_components/paw_control/
-isort custom_components/paw_control/
+black custom_components/pawcontrol/
+isort custom_components/pawcontrol/
 
 # Linting
-pylint custom_components/paw_control/
-flake8 custom_components/paw_control/
+pylint custom_components/pawcontrol/
+flake8 custom_components/pawcontrol/
 
 # Type checking
-mypy custom_components/paw_control/
+mypy custom_components/pawcontrol/
 
 # Tests ausführen
-pytest tests/ -v --cov=custom_components/paw_control
+pytest tests/ -v --cov=custom_components/pawcontrol
 ```
 
 ---
