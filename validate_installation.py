@@ -9,7 +9,7 @@ from typing import List, Dict, Any
 def validate_manifest() -> List[str]:
     """Validate manifest.json structure."""
     errors = []
-    manifest_path = Path("custom_components/paw_control/manifest.json")
+    manifest_path = Path("custom_components/pawcontrol/manifest.json")
     
     if not manifest_path.exists():
         return ["❌ manifest.json not found"]
@@ -44,7 +44,7 @@ def validate_manifest() -> List[str]:
 def validate_services() -> List[str]:
     """Validate services.yaml structure."""
     errors = []
-    services_path = Path("custom_components/paw_control/services.yaml")
+    services_path = Path("custom_components/pawcontrol/services.yaml")
     
     if not services_path.exists():
         return ["⚠️ services.yaml not found (optional)"]
@@ -67,7 +67,7 @@ def validate_services() -> List[str]:
 def validate_strings() -> List[str]:
     """Validate strings.json structure."""
     errors = []
-    strings_path = Path("custom_components/paw_control/strings.json")
+    strings_path = Path("custom_components/pawcontrol/strings.json")
     
     if not strings_path.exists():
         return ["⚠️ strings.json not found (optional)"]
@@ -89,7 +89,7 @@ def validate_strings() -> List[str]:
 def validate_python_files() -> List[str]:
     """Validate Python files for syntax errors."""
     errors = []
-    python_files = list(Path("custom_components/paw_control").glob("*.py"))
+    python_files = list(Path("custom_components/pawcontrol").glob("*.py"))
     
     if not python_files:
         return ["❌ No Python files found in integration"]
@@ -110,8 +110,8 @@ def validate_required_files() -> List[str]:
     """Check for required files."""
     errors = []
     required_files = [
-        "custom_components/paw_control/__init__.py",
-        "custom_components/paw_control/manifest.json",
+        "custom_components/pawcontrol/__init__.py",
+        "custom_components/pawcontrol/manifest.json",
         "README.md",
         "CHANGELOG.md",
     ]
