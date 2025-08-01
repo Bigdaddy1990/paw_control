@@ -9,7 +9,6 @@ def validate_manifest() -> list[str]:
     """Validate manifest.json structure."""
     errors = []
     manifest_path = Path("custom_components/pawcontrol/manifest.json")
-
     if not manifest_path.exists():
         return ["❌ manifest.json not found"]
 
@@ -44,7 +43,6 @@ def validate_services() -> list[str]:
     """Validate services.yaml structure."""
     errors = []
     services_path = Path("custom_components/pawcontrol/services.yaml")
-
     if not services_path.exists():
         return ["⚠️ services.yaml not found (optional)"]
 
@@ -67,7 +65,6 @@ def validate_strings() -> list[str]:
     """Validate strings.json structure."""
     errors = []
     strings_path = Path("custom_components/pawcontrol/strings.json")
-
     if not strings_path.exists():
         return ["⚠️ strings.json not found (optional)"]
 
@@ -89,7 +86,6 @@ def validate_python_files() -> list[str]:
     """Validate Python files for syntax errors."""
     errors = []
     python_files = list(Path("custom_components/pawcontrol").glob("*.py"))
-
     if not python_files:
         return ["❌ No Python files found in integration"]
 

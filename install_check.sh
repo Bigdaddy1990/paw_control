@@ -45,9 +45,9 @@ fi
 # Check required files
 echo -e "\n📁 Checking required files..."
 REQUIRED_FILES=(
-    "custom_components/paw_control/__init__.py"
-    "custom_components/paw_control/manifest.json"
-    "custom_components/paw_control/const.py"
+    "custom_components/pawcontrol/__init__.py"
+    "custom_components/pawcontrol/manifest.json"
+    "custom_components/pawcontrol/const.py"
     "README.md"
     "CHANGELOG.md"
     "pyproject.toml"
@@ -63,18 +63,18 @@ done
 
 # Check manifest.json validity
 echo -e "\n📋 Checking manifest.json..."
-if [ -f "custom_components/paw_control/manifest.json" ]; then
-    if python3 -m json.tool custom_components/paw_control/manifest.json > /dev/null 2>&1; then
+if [ -f "custom_components/pawcontrol/manifest.json" ]; then
+    if python3 -m json.tool custom_components/pawcontrol/manifest.json > /dev/null 2>&1; then
         print_status "SUCCESS" "manifest.json is valid JSON"
         
         # Check required fields
-        DOMAIN=$(python3 -c "import json; print(json.load(open('custom_components/paw_control/manifest.json')).get('domain', ''))" 2>/dev/null)
-        VERSION=$(python3 -c "import json; print(json.load(open('custom_components/paw_control/manifest.json')).get('version', ''))" 2>/dev/null)
+        DOMAIN=$(python3 -c "import json; print(json.load(open('custom_components/pawcontrol/manifest.json')).get('domain', ''))" 2>/dev/null)
+        VERSION=$(python3 -c "import json; print(json.load(open('custom_components/pawcontrol/manifest.json')).get('version', ''))" 2>/dev/null)
         
-        if [ "$DOMAIN" = "paw_control" ]; then
+        if [ "$DOMAIN" = "pawcontrol" ]; then
             print_status "SUCCESS" "Domain is correct: $DOMAIN"
         else
-            print_status "ERROR" "Domain is incorrect: $DOMAIN (should be: paw_control)"
+            print_status "ERROR" "Domain is incorrect: $DOMAIN (should be: pawcontrol)"
         fi
         
         if [ -n "$VERSION" ]; then
@@ -89,7 +89,7 @@ fi
 
 # Check Python syntax
 echo -e "\n🐍 Checking Python syntax..."
-for py_file in custom_components/paw_control/*.py; do
+for py_file in custom_components/pawcontrol/*.py; do
     if [ -f "$py_file" ]; then
         if python3 -m py_compile "$py_file" 2>/dev/null; then
             print_status "SUCCESS" "$(basename $py_file) syntax is valid"
@@ -134,7 +134,7 @@ echo "=========="
 if [ $ERRORS -eq 0 ]; then
     print_status "SUCCESS" "Installation check passed! Ready for installation."
     echo -e "\n🚀 Next steps:"
-    echo "1. Copy the custom_components/paw_control folder to your Home Assistant config/custom_components/ directory"
+    echo "1. Copy the custom_components/pawcontrol folder to your Home Assistant config/custom_components/ directory"
     echo "2. Restart Home Assistant"
     echo "3. Go to Settings > Devices & Services > Add Integration"
     echo "4. Search for 'Paw Control' and follow the setup wizard"
