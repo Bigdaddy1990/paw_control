@@ -58,6 +58,18 @@ SERVICE_SEND_NOTIFICATION = "send_notification"
 SERVICE_LOG_ACTIVITY = "log_activity"
 SERVICE_SET_WEIGHT = "set_weight"
 
+# Service parameter keys used in service calls
+SERVICE_FOOD_TYPE = "meal_type"
+SERVICE_FOOD_AMOUNT = "amount"
+SERVICE_DURATION = "duration"
+SERVICE_WEIGHT = "weight"
+SERVICE_TEMPERATURE = "temperature"
+SERVICE_ENERGY_LEVEL = "energy_level"
+SERVICE_SYMPTOMS = "symptoms"
+SERVICE_NOTES = "notes"
+SERVICE_MOOD = "mood"
+SERVICE_VET_DATE = "vet_date"
+
 # Für die optionale Modularisierung: Alle Feature-Flags zentral gesammelt
 ALL_MODULE_FLAGS = [
     CONF_GPS_ENABLE,
