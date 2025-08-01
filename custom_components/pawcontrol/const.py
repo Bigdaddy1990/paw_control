@@ -66,3 +66,126 @@ ALL_MODULE_FLAGS = [
     CONF_WALK_MODULE,
     CONF_CREATE_DASHBOARD,
 ]
+
+# -----------------------------------------------------------------------------
+# Additional configuration and validation constants
+# -----------------------------------------------------------------------------
+
+# Dog profile validation limits
+MIN_DOG_NAME_LENGTH = 2
+MAX_DOG_NAME_LENGTH = 30
+MIN_DOG_WEIGHT = 0.5
+MAX_DOG_WEIGHT = 100.0
+MIN_DOG_AGE = 0
+MAX_DOG_AGE = 25
+
+# Allowed characters for dog names
+DOG_NAME_PATTERN = r"^[a-zA-ZäöüÄÖÜß0-9\s\-_.]+$"
+
+# GPS related defaults
+GPS_ACCURACY_THRESHOLDS = {
+    "excellent": 5,
+    "good": 15,
+    "acceptable": 50,
+}
+
+DEFAULT_HOME_COORDINATES = (0.0, 0.0)
+
+GPS_CONFIG = {
+    "movement_threshold": 3.0,
+    "stationary_time": 300,
+    "walk_detection_distance": 10.0,
+    "min_walk_duration": 5,
+    "home_zone_radius": 50,
+}
+
+GEOFENCE_MIN_RADIUS = 10
+GEOFENCE_MAX_RADIUS = 10000
+
+# Icon mapping used across the integration
+ICONS = {
+    "automation": "mdi:robot",
+    "battery": "mdi:battery",
+    "emergency": "mdi:alert",
+    "evening": "mdi:weather-night",
+    "food": "mdi:food",
+    "gps": "mdi:crosshairs-gps",
+    "grooming": "mdi:scissors-cutting",
+    "health": "mdi:heart",
+    "home": "mdi:home",
+    "location": "mdi:map-marker",
+    "lunch": "mdi:food",
+    "medication": "mdi:pill",
+    "mood": "mdi:emoticon",
+    "morning": "mdi:weather-sunny",
+    "outside": "mdi:dog-side",
+    "play": "mdi:tennis-ball",
+    "poop": "mdi:dog-side",
+    "settings": "mdi:cog",
+    "signal": "mdi:signal",
+    "statistics": "mdi:chart-bar",
+    "status": "mdi:information",
+    "temperature": "mdi:thermometer",
+    "training": "mdi:school",
+    "vet": "mdi:stethoscope",
+    "visitor": "mdi:account-group",
+    "walk": "mdi:walk",
+    "weight": "mdi:weight",
+}
+
+# Feeding and meal definitions
+FEEDING_TYPES = ["morning", "lunch", "evening", "snack"]
+MEAL_TYPES = {
+    "morning": "Frühstück",
+    "lunch": "Mittag",
+    "evening": "Abend",
+    "snack": "Snack",
+}
+
+# Status texts used by automations and scripts
+STATUS_MESSAGES = {
+    "ok": "Alles ok",
+    "needs_food": "Fütterung ausstehend",
+    "needs_walk": "Spaziergang ausstehend",
+}
+
+# Generic validation rules for numeric service data
+VALIDATION_RULES = {
+    "weight": {"min": MIN_DOG_WEIGHT, "max": MAX_DOG_WEIGHT, "unit": "kg"},
+    "age": {"min": MIN_DOG_AGE, "max": MAX_DOG_AGE, "unit": "years"},
+}
+
+# Default entity blueprint used when creating helper entities
+ENTITIES = {
+    "input_boolean": {
+        "feeding_morning": {"name": "Frühstück gegeben", "icon": "mdi:food"},
+        "feeding_evening": {"name": "Abendessen gegeben", "icon": "mdi:food"},
+        "walk_in_progress": {"name": "Spaziergang läuft", "icon": "mdi:walk"},
+    },
+    "counter": {
+        "walk_count": {"name": "Spaziergänge", "initial": 0, "step": 1, "icon": "mdi:walk"},
+    },
+    "input_text": {
+        "notes": {"name": "Notizen", "max": 255, "icon": "mdi:note-text"},
+    },
+    "input_datetime": {
+        "last_walk": {"name": "Letzter Spaziergang", "has_date": True, "has_time": True, "icon": "mdi:walk"},
+    },
+    "input_number": {
+        "weight": {
+            "name": "Gewicht",
+            "min": MIN_DOG_WEIGHT,
+            "max": MAX_DOG_WEIGHT,
+            "step": 0.1,
+            "unit": "kg",
+            "icon": "mdi:weight",
+        },
+    },
+    "input_select": {
+        "health_status": {
+            "name": "Gesundheitsstatus",
+            "options": ["gut", "mittel", "schlecht"],
+            "icon": "mdi:heart",
+        },
+    },
+}
