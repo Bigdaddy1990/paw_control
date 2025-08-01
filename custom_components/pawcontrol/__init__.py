@@ -2,8 +2,16 @@
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 
-from .const import *
-from . import gps, push, health, walk, dashboard
+from . import dashboard, gps, health, push, walk
+from .const import (
+    CONF_CREATE_DASHBOARD,
+    CONF_DOG_NAME,
+    CONF_GPS_ENABLE,
+    CONF_HEALTH_MODULE,
+    CONF_NOTIFICATIONS_ENABLED,
+    CONF_WALK_MODULE,
+)
+
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
     """Setze die Integration samt aller gewählten Module auf."""
