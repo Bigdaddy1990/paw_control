@@ -1,6 +1,10 @@
 """Dashboard-Generator für Paw Control – erstellt eine Dashboard-Vorlage als YAML im System."""
-
+from homeassistant.core import HomeAssistant
+from homeassistant.config_entries import ConfigEntry
 from .const import *
+import logging
+
+_LOGGER = logging.getLogger(__name__)
 
 async def create_dashboard(hass, dog_name):
     """Erstellt ein Lovelace-Dashboard als YAML (Sensor), das alle aktiven Module abbildet."""
@@ -49,3 +53,52 @@ views:
         dashboard_yaml,
         {"friendly_name": f"{dog_name} Dashboard-Vorlage (Kopieren für Lovelace)"}
     )
+
+DEFAULT_DASHBOARD_NAME = "PawControl"
+
+MODULE_CARDS = {
+    "gps": {
+        "type": "map",
+        "entities": ["device_tracker.paw_control_gps"],
+        "title": "GPS-Tracking"
+    },
+    "health": {
+        "type": "entities",
+        "entities": [
+            "sensor.paw_control_health_status",
+            "sensor.paw_control_last_checkup"
+        ],
+        "title": "Gesundheit"
+    },
+    "walk": {
+        "type": "history-graph",
+        "entities": [
+            "sensor.paw_control_last_walk",
+            "sensor.paw_control_walk_count"
+        ],
+        "title": "Gassi"
+    }
+}
+
+async def async_create_dashboard(hass: HomeAssistant, entry: ConfigEntry):
+    modules = entry.options.get("modules", ["gps"])
+    cards = []
+    for module in modules:
+        card = MODULE_CARDS.get(module)
+        if card:
+            cards.append(card)
+    if not cards:
+        _LOGGER.warning("No module cards selected for dashboard generation.")
+        return
+    view = {
+        "title": DEFAULT_DASHBOARD_NAME,
+        "path": "pawcontrol",
+        "icon": "mdi:paw",
+        "cards": cards
+    }
+    _LOGGER.info(f"Generated PawControl dashboard: {view}")
+    return view
+
+async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
+    await async_create_dashboard(hass, entry)
+    return True
