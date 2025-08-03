@@ -20,10 +20,18 @@ from .const import (
     DEFAULT_WALK_DURATION,
     DOMAIN,
 )
+
+import voluptuous as vol
+from homeassistant import config_entries
+from homeassistant.core import callback
+
+from .const import *
+
 from .module_registry import MODULES
 
 class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     """Handle initial configuration for Paw Control."""
+
 
     async def async_step_user(
         self, user_input: dict[str, Any] | None = None
@@ -48,9 +56,11 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         errors: dict[str, str] = {}
         if user_input is not None:
             # Hier können Validierungen ergänzt werden!
+
             return self.async_create_entry(
                 title=user_input[CONF_DOG_NAME], data=user_input
             )
+            return self.async_create_entry(title=user_input[CONF_DOG_NAME], data=user_input)
 
         schema = {
             vol.Required(CONF_DOG_NAME): str,
@@ -75,15 +85,14 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     @callback
     def async_get_options_flow(config_entry):
         """Create an options flow handler for an existing config entry.
-
         Args:
             config_entry: The configuration entry for which the options flow
                 should be opened.
-
         Returns:
             An ``OptionsFlowHandler`` instance that manages the options flow.
         """
 
+        """Return the options flow handler."""
         return OptionsFlowHandler(config_entry)
 
 
@@ -91,8 +100,8 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
     """Handle option flow for Paw Control to enable/disable modules."""
 
     def __init__(self, config_entry: config_entries.ConfigEntry) -> None:
-        """Store the config entry so existing options can be loaded.
 
+        """Store the config entry so existing options can be loaded.
         Args:
             config_entry: Entry whose options will be edited. Existing options
                 are used as defaults when presenting the form.
@@ -104,7 +113,6 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
         self, user_input: dict[str, Any] | None = None
     ) -> FlowResult:  # pragma: no cover - HA handles step name
         """Show and persist module options during configuration.
-
         When presented without ``user_input`` the method displays a form with a
         toggle for every known module. Each toggle defaults to the value stored in
         the existing options or, if never set, the module's predefined default.
@@ -122,6 +130,10 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
         """
 
         # Use existing options if present so changes persist across restarts
+        self.config_entry = config_entry
+
+    async def async_step_init(self, user_input=None):  # pragma: no cover - HA handles step name
+
         data = self.config_entry.options or self.config_entry.data
 
         if user_input is not None:
