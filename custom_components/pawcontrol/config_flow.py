@@ -6,6 +6,24 @@ import voluptuous as vol
 from homeassistant import config_entries
 from homeassistant.core import callback
 from homeassistant.data_entry_flow import FlowResult
+from .const import (
+    CONF_CREATE_DASHBOARD,
+    CONF_DOG_AGE,
+    CONF_DOG_BREED,
+    CONF_DOG_NAME,
+    CONF_DOG_WEIGHT,
+    CONF_FEEDING_TIMES,
+    CONF_VET_CONTACT,
+    CONF_WALK_DURATION,
+    DEFAULT_FEEDING_TIMES,
+    DEFAULT_WALK_DURATION,
+    DOMAIN,
+)
+
+import voluptuous as vol
+from homeassistant import config_entries
+from homeassistant.core import callback
+from homeassistant.data_entry_flow import FlowResult
 
 from .const import (
     CONF_CREATE_DASHBOARD,
@@ -20,6 +38,13 @@ from .const import (
     DEFAULT_WALK_DURATION,
     DOMAIN,
 )
+
+import voluptuous as vol
+from homeassistant import config_entries
+from homeassistant.core import callback
+
+from .const import *
+
 from .module_registry import MODULES
 
 class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
@@ -52,6 +77,38 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 title=user_input[CONF_DOG_NAME], data=user_input
             )
 
+
+
+    async def async_step_user(
+        self, user_input: dict[str, Any] | None = None
+    ) -> FlowResult:
+        """Handle the initial step of the config flow.
+
+        The form allows users to enter basic dog information and enables a
+        checkbox for every registered module.  Submitted values are stored in the
+        config entry's data so the integration starts with the selected modules
+        activated.
+
+        Args:
+            user_input: Values provided by the user when the form is submitted,
+                or ``None`` to show the form for the first time.
+
+        Returns:
+            A ``FlowResult`` describing the next step in the flow. This is either
+            a form to be displayed again or an entry creation result when the user
+            has completed the setup.
+        """
+
+        errors: dict[str, str] = {}
+        if user_input is not None:
+            # Hier können Validierungen ergänzt werden!
+
+            return self.async_create_entry(
+                title=user_input[CONF_DOG_NAME], data=user_input
+            )
+            return self.async_create_entry(title=user_input[CONF_DOG_NAME], data=user_input)
+
+
         schema = {
             vol.Required(CONF_DOG_NAME): str,
             vol.Optional(CONF_DOG_BREED, default=""): str,
@@ -80,19 +137,27 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             config_entry: The configuration entry for which the options flow
                 should be opened.
 
+        Args:
+            config_entry: The configuration entry for which the options flow
+                should be opened.
         Returns:
             An ``OptionsFlowHandler`` instance that manages the options flow.
         """
 
-        return OptionsFlowHandler(config_entry)
+
+        """Return the options flow handler."""
 
 
 class OptionsFlowHandler(config_entries.OptionsFlow):
     """Handle option flow for Paw Control to enable/disable modules."""
 
     def __init__(self, config_entry: config_entries.ConfigEntry) -> None:
+
         """Store the config entry so existing options can be loaded.
 
+
+
+        """Store the config entry so existing options can be loaded.
         Args:
             config_entry: Entry whose options will be edited. Existing options
                 are used as defaults when presenting the form.
@@ -122,6 +187,11 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
         """
 
         # Use existing options if present so changes persist across restarts
+
+        self.config_entry = config_entry
+
+    async def async_step_init(self, user_input=None):  # pragma: no cover - HA handles step name
+
         data = self.config_entry.options or self.config_entry.data
 
         if user_input is not None:
