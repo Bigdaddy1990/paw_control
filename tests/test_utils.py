@@ -8,6 +8,7 @@ sys.path.insert(0, os.path.abspath('.'))
 from custom_components.pawcontrol.utils import (
     calculate_dog_calories_per_day,
     format_distance,
+    format_duration,
 )
 
 
@@ -29,3 +30,24 @@ def test_format_distance_handles_various_inputs():
     assert format_distance(1000) == "1km"
     assert format_distance(-100) == "0m"
     assert format_distance("oops") == "0m"
+
+
+@pytest.mark.parametrize("value", [None, "10", 5.5, -1, 0])
+def test_format_duration_invalid_types_and_values(value):
+    """Invalid types or non-positive durations should return '0 min'."""
+    assert format_duration(value) == "0 min"
+
+
+def test_format_duration_under_an_hour():
+    """Durations under an hour should be shown in minutes."""
+    assert format_duration(45) == "45 min"
+
+
+def test_format_duration_exact_hours():
+    """Exact multiples of an hour should omit minutes."""
+    assert format_duration(120) == "2h"
+
+
+def test_format_duration_hours_and_minutes():
+    """Durations with remaining minutes should show hours and minutes."""
+    assert format_duration(125) == "2h 5min"
