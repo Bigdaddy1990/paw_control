@@ -1,14 +1,16 @@
 import os
 import sys
+
 import pytest
 
 # Ensure custom component package is importable
-sys.path.insert(0, os.path.abspath('.'))
+sys.path.insert(0, os.path.abspath("."))
 
 from custom_components.pawcontrol.utils import (
     calculate_dog_calories_per_day,
     format_distance,
     format_duration,
+    format_weight,
 )
 
 
@@ -30,6 +32,13 @@ def test_format_distance_handles_various_inputs():
     assert format_distance(1000) == "1km"
     assert format_distance(-100) == "0m"
     assert format_distance("oops") == "0m"
+
+
+def test_format_weight_handles_various_inputs():
+    """Weights should be formatted and invalid values handled gracefully."""
+    assert format_weight(10) == "10.0kg"
+    assert format_weight("bad") == "0.0kg"
+    assert format_weight(-5) == "0.0kg"
 
 
 @pytest.mark.parametrize("value", [None, "10", 5.5, -1, 0])
