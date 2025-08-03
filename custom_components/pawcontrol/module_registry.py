@@ -1,6 +1,7 @@
-"""Registry for optional Paw Control modules."""
+"""Registry and helpers for optional Paw Control modules."""
 from __future__ import annotations
 
+from dataclasses import dataclass
 from typing import Awaitable, Callable, Dict, Optional
 
 from homeassistant.config_entries import ConfigEntry
@@ -18,20 +19,14 @@ from . import gps, push, health, walk
 ModuleFunc = Callable[..., Awaitable[None]]
 
 
+@dataclass
 class Module:
     """Container for module handlers."""
 
-    def __init__(
-        self,
-        setup: ModuleFunc,
-        teardown: Optional[ModuleFunc] = None,
-        ensure_helpers: Optional[ModuleFunc] = None,
-        default: bool = True,
-    ) -> None:
-        self.setup = setup
-        self.teardown = teardown
-        self.ensure_helpers = ensure_helpers
-        self.default = default
+    setup: ModuleFunc
+    teardown: Optional[ModuleFunc] = None
+    ensure_helpers: Optional[ModuleFunc] = None
+    default: bool = True
 
 
 MODULES: Dict[str, Module] = {
@@ -62,6 +57,7 @@ MODULES: Dict[str, Module] = {
 
 
 async def ensure_helpers(hass: HomeAssistant, opts: Dict[str, bool]) -> None:
+  
     """Ensure helpers for all enabled modules."""
     for key, module in MODULES.items():
         if opts.get(key, module.default) and module.ensure_helpers:
@@ -72,6 +68,7 @@ async def setup_modules(
     hass: HomeAssistant, entry: ConfigEntry, opts: Dict[str, bool]
 ) -> None:
     """Set up or tear down modules based on options."""
+
     for key, module in MODULES.items():
         if opts.get(key, module.default):
             await module.setup(hass, entry)
@@ -81,6 +78,7 @@ async def setup_modules(
 
 async def unload_modules(hass: HomeAssistant, entry: ConfigEntry) -> None:
     """Unload all modules that define a teardown handler."""
+
     for module in MODULES.values():
         if module.teardown:
             await module.teardown(hass, entry)
