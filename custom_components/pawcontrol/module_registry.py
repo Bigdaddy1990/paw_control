@@ -82,3 +82,9 @@ async def unload_modules(hass: HomeAssistant, entry: ConfigEntry) -> None:
     for module in MODULES.values():
         if module.teardown:
             await module.teardown(hass, entry)
+
+
+# Backwards compatible aliases used by the tests and legacy code
+async_ensure_helpers = ensure_helpers
+async_setup_modules = setup_modules
+async_unload_modules = unload_modules
