@@ -2,6 +2,11 @@
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 
+from .installation_manager import InstallationManager
+
+
+manager = InstallationManager()
+
 from . import dashboard
 from .const import (
     CONF_CREATE_DASHBOARD,
@@ -35,14 +40,16 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
     # 2. Modul-Setup je nach Opt-in/Opt-out
     await async_setup_modules(hass, entry, opts)
 
-    if opts.get(CONF_CREATE_DASHBOARD, False):
-        await dashboard.create_dashboard(hass, opts[CONF_DOG_NAME])
+async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
+    """Setze die Integration samt aller gewählten Module auf."""
+    return await manager.setup_entry(hass, entry)
 
-    return True
 
 
 async def async_unload_entry(hass, entry):
     """Beim Entfernen der Integration: alle Module/Helper aufräumen."""
+ 
+    return await manager.unload_entry(hass, entry)
 
     await module_unload_modules(hass, entry)
 
