@@ -1,39 +1,24 @@
-"""Helper functions to manage optional Paw Control modules.
+"""Compatibility wrapper for module helper functions.
 
-This module centralizes logic for setting up, unloading and ensuring
-helper entities for the optional modules defined in ``module_registry``.
+Historically Paw Control exposed helper functions through a dedicated
+``module_manager`` module. The actual implementation now lives in
+``module_registry``. This module simply re-exports those helpers so existing
+imports continue to function while keeping the logic in a single place.
 """
+
 from __future__ import annotations
 
-from typing import Any, Dict
+from .module_registry import (
+    MODULES,
+    async_ensure_helpers,
+    async_setup_modules,
+    async_unload_modules,
+)
 
-from homeassistant.config_entries import ConfigEntry
-from homeassistant.core import HomeAssistant
-
-from .module_registry import MODULES
-
-
-async def async_setup_modules(
-    hass: HomeAssistant, entry: ConfigEntry, opts: Dict[str, Any]
-) -> None:
-    """Set up all enabled modules based on provided options."""
-    for key, module in MODULES.items():
-        if opts.get(key, module.default):
-            await module.setup(hass, entry)
-        elif module.teardown:
-            await module.teardown(hass, entry)
-
-
-async def async_unload_modules(hass: HomeAssistant, entry: ConfigEntry) -> None:
-    """Unload all modules that define a teardown handler."""
-    for module in MODULES.values():
-        if module.teardown:
-            await module.teardown(hass, entry)
-
-
-async def async_ensure_helpers(hass: HomeAssistant, opts: Dict[str, Any]) -> None:
-    """Ensure helper entities for all enabled modules."""
-    for key, module in MODULES.items():
-        if opts.get(key, module.default) and module.ensure_helpers:
-            await module.ensure_helpers(hass, opts)
+__all__ = [
+    "MODULES",
+    "async_ensure_helpers",
+    "async_setup_modules",
+    "async_unload_modules",
+]
 

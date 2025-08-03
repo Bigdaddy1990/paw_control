@@ -88,3 +88,11 @@ async def unload_modules(hass: HomeAssistant, entry: ConfigEntry) -> None:
 async_ensure_helpers = ensure_helpers
 async_setup_modules = setup_modules
 async_unload_modules = unload_modules
+
+__all__ = [
+    "Module",
+    "MODULES",
+    "async_ensure_helpers",
+    "async_setup_modules",
+    "async_unload_modules",
+]

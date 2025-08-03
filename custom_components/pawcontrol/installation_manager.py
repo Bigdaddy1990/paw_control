@@ -6,7 +6,7 @@ from homeassistant.core import HomeAssistant
 
 from . import dashboard
 from .const import CONF_CREATE_DASHBOARD, CONF_DOG_NAME
-from .module_manager import (
+from .module_registry import (
     async_ensure_helpers,
     async_setup_modules,
     async_unload_modules,
