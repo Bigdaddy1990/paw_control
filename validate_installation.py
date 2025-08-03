@@ -1,13 +1,17 @@
 #!/usr/bin/env python3
 """Validation script for Paw Control installation."""
+from __future__ import annotations
+
 import json
 import sys
+from dataclasses import dataclass
 from pathlib import Path
+from typing import Callable, List
 
 
 def validate_manifest() -> list[str]:
     """Validate manifest.json structure."""
-    errors = []
+    errors: list[str] = []
     manifest_path = Path("custom_components/pawcontrol/manifest.json")
     if not manifest_path.exists():
         return ["❌ manifest.json not found"]
@@ -41,7 +45,7 @@ def validate_manifest() -> list[str]:
 
 def validate_services() -> list[str]:
     """Validate services.yaml structure."""
-    errors = []
+    errors: list[str] = []
     services_path = Path("custom_components/pawcontrol/services.yaml")
     if not services_path.exists():
         return ["⚠️ services.yaml not found (optional)"]
@@ -63,7 +67,7 @@ def validate_services() -> list[str]:
 
 def validate_strings() -> list[str]:
     """Validate strings.json structure."""
-    errors = []
+    errors: list[str] = []
     strings_path = Path("custom_components/pawcontrol/strings.json")
     if not strings_path.exists():
         return ["⚠️ strings.json not found (optional)"]
@@ -84,7 +88,7 @@ def validate_strings() -> list[str]:
 
 def validate_python_files() -> list[str]:
     """Validate Python files for syntax errors."""
-    errors = []
+    errors: list[str] = []
     python_files = list(Path("custom_components/pawcontrol").glob("*.py"))
     if not python_files:
         return ["❌ No Python files found in integration"]
@@ -103,7 +107,7 @@ def validate_python_files() -> list[str]:
 
 def validate_required_files() -> list[str]:
     """Check for required files."""
-    errors = []
+    errors: list[str] = []
     required_files = [
         "custom_components/pawcontrol/__init__.py",
         "custom_components/pawcontrol/manifest.json",
@@ -118,41 +122,48 @@ def validate_required_files() -> list[str]:
     return errors
 
 
-def main():
+@dataclass
+class Validation:
+    """Single validation step."""
+
+    name: str
+    func: Callable[[], list[str]]
+
+
+VALIDATIONS: List[Validation] = [
+    Validation("Required Files", validate_required_files),
+    Validation("Manifest", validate_manifest),
+    Validation("Services", validate_services),
+    Validation("Strings", validate_strings),
+    Validation("Python Syntax", validate_python_files),
+]
+
+
+def main() -> None:
     """Run all validations."""
     print("🔍 Validating Paw Control installation...\n")
 
-    all_errors = []
+    all_errors: list[str] = []
 
-    # Run all validations
-    validations = [
-        ("Required Files", validate_required_files),
-        ("Manifest", validate_manifest),
-        ("Services", validate_services),
-        ("Strings", validate_strings),
-        ("Python Syntax", validate_python_files),
-    ]
-
-    for name, validator in validations:
-        print(f"📋 Checking {name}...")
-        errors = validator()
+    for validation in VALIDATIONS:
+        print(f"📋 Checking {validation.name}...")
+        errors = validation.func()
         if errors:
             all_errors.extend(errors)
             for error in errors:
                 print(f"  {error}")
         else:
-            print(f"  ✅ {name} validation passed")
+            print(f"  ✅ {validation.name} validation passed")
         print()
 
-    # Summary
     if all_errors:
         print(f"❌ Validation failed with {len(all_errors)} errors:")
         for error in all_errors:
             print(f"  {error}")
         sys.exit(1)
-    else:
-        print("✅ All validations passed! Installation is ready.")
-        sys.exit(0)
+
+    print("✅ All validations passed! Installation is ready.")
+    sys.exit(0)
 
 
 if __name__ == "__main__":
