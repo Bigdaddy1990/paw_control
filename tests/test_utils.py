@@ -1,5 +1,6 @@
 import os
 import sys
+from datetime import datetime, timedelta, timezone
 
 import pytest
 
@@ -11,6 +12,7 @@ from custom_components.pawcontrol.utils import (
     format_distance,
     format_duration,
     format_weight,
+    time_since_last_activity,
 )
 
 
@@ -60,3 +62,28 @@ def test_format_duration_exact_hours():
 def test_format_duration_hours_and_minutes():
     """Durations with remaining minutes should show hours and minutes."""
     assert format_duration(125) == "2h 5min"
+
+
+def test_time_since_last_activity_handles_naive_and_aware():
+    """Ensure time_since_last_activity works for naive and timezone-aware inputs."""
+    tolerance = timedelta(seconds=1)
+
+    # Naive timestamp without timezone info
+    past_naive = datetime.now() - timedelta(minutes=5)
+    naive_result = time_since_last_activity(past_naive.isoformat())
+    expected_naive = datetime.now() - past_naive
+    assert isinstance(naive_result, timedelta)
+    assert abs(naive_result - expected_naive) <= tolerance
+
+    # UTC timestamp with trailing 'Z'
+    past_utc = datetime.now(timezone.utc) - timedelta(minutes=5)
+    utc_result = time_since_last_activity(past_utc.isoformat().replace("+00:00", "Z"))
+    expected_utc = datetime.now(timezone.utc) - past_utc
+    assert abs(utc_result - expected_utc) <= tolerance
+
+    # Timestamp with explicit timezone offset
+    tz = timezone(timedelta(hours=2))
+    past_offset = datetime.now(tz) - timedelta(minutes=5)
+    offset_result = time_since_last_activity(past_offset.isoformat())
+    expected_offset = datetime.now(tz) - past_offset
+    assert abs(offset_result - expected_offset) <= tolerance
