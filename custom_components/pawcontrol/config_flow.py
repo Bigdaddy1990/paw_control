@@ -16,7 +16,6 @@ from homeassistant.core import callback
 from homeassistant.data_entry_flow import FlowResult
 
 from .const import (
-    CONF_CREATE_DASHBOARD,
     CONF_DOG_AGE,
     CONF_DOG_BREED,
     CONF_DOG_NAME,
@@ -28,7 +27,7 @@ from .const import (
     DEFAULT_WALK_DURATION,
     DOMAIN,
 )
-from .module_registry import MODULES
+from .config_helpers import build_module_schema
 
 
 class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
@@ -55,10 +54,8 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             vol.Optional(CONF_WALK_DURATION, default=DEFAULT_WALK_DURATION): int,
             vol.Optional(CONF_VET_CONTACT, default=""): str,
         }
-        # Add a toggle for every registered module
-        for key, module in MODULES.items():
-            schema[vol.Optional(key, default=module.default)] = bool
-        schema[vol.Optional(CONF_CREATE_DASHBOARD, default=False)] = bool
+        # Add toggles for modules and dashboard creation
+        schema.update(build_module_schema())
 
         return self.async_show_form(
             step_id="user",
@@ -90,13 +87,7 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
         if user_input is not None:
             return self.async_create_entry(title="", data=user_input)
 
-        schema: dict[Any, Any] = {}
-        for key, module in MODULES.items():
-            schema[vol.Optional(key, default=data.get(key, module.default))] = bool
-        schema[vol.Optional(
-            CONF_CREATE_DASHBOARD,
-            default=data.get(CONF_CREATE_DASHBOARD, False),
-        )] = bool
+        schema = build_module_schema(data)
 
         return self.async_show_form(step_id="init", data_schema=vol.Schema(schema))
 
