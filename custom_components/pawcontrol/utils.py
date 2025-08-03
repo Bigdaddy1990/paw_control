@@ -4,7 +4,7 @@ from __future__ import annotations
 import re
 import logging
 from datetime import datetime, timedelta
-from math import radians, sin, cos, sqrt, atan2
+from math import radians, sin, cos, sqrt, atan2, isfinite
 from typing import List, Dict, Tuple, Optional, Any
 
 from homeassistant.core import HomeAssistant
@@ -48,11 +48,12 @@ def validate_dog_name(name: str) -> bool:
 
 
 def validate_weight(weight: float) -> bool:
-    """Check that weight can be converted to a positive float."""
+    """Check that weight can be converted to a positive, finite float."""
     try:
-        return float(weight) > 0
+        value = float(weight)
     except (TypeError, ValueError):
         return False
+    return value > 0 and isfinite(value)
 
 
 def validate_age(age: int) -> bool:
@@ -127,7 +128,8 @@ def format_distance(meters: float) -> str:
     except (TypeError, ValueError):
         return "0m"
 
-    if meters < 0:
+    # Reject NaN or infinite values and normalise negatives
+    if not isfinite(meters) or meters < 0:
         meters = 0
 
     if meters < 1000:
