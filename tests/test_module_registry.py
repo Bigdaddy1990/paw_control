@@ -189,3 +189,44 @@ def test_options_flow_defaults_and_persistence():
 
     import asyncio
     asyncio.run(run_test())
+
+
+def test_module_error_handling(caplog):
+    """Modules raising errors should be logged and not stop processing."""
+
+    async def run_test():
+        failing = module_registry.Module(
+            setup=AsyncMock(side_effect=Exception("boom")),
+            teardown=AsyncMock(side_effect=Exception("boom")),
+            ensure_helpers=AsyncMock(side_effect=Exception("boom")),
+        )
+        working = module_registry.Module(
+            setup=AsyncMock(),
+            teardown=AsyncMock(),
+            ensure_helpers=AsyncMock(),
+        )
+
+        hass = object()
+        entry = object()
+        opts = {"fail": True, "ok": True}
+
+        with patch.dict(module_registry.MODULES, {"fail": failing, "ok": working}, clear=True):
+            with caplog.at_level(logging.ERROR):
+                await module_registry.async_ensure_helpers(hass, opts)
+                await module_registry.async_setup_modules(hass, entry, opts)
+                await module_registry.async_unload_modules(hass, entry)
+
+        failing.ensure_helpers.assert_called_once_with(hass, opts)
+        failing.setup.assert_called_once_with(hass, entry)
+        failing.teardown.assert_called_once_with(hass, entry)
+        working.ensure_helpers.assert_called_once_with(hass, opts)
+        working.setup.assert_called_once_with(hass, entry)
+        working.teardown.assert_called_once_with(hass, entry)
+
+        assert "Error ensuring helpers for module fail" in caplog.text
+        assert "Error setting up module fail" in caplog.text
+        assert "Error tearing down module fail" in caplog.text
+
+    import asyncio
+    import logging
+    asyncio.run(run_test())
