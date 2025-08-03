@@ -108,17 +108,22 @@ def calculate_distance(coord1: Tuple[float, float], coord2: Tuple[float, float])
 
 
 def format_duration(minutes: int) -> str:
-    """Format duration in minutes to human readable string."""
+    """Format duration in minutes to a human readable string."""
+    if not isinstance(minutes, int):
+        return "0 min"
+
+    if minutes <= 0:
+        return "0 min"
+
     if minutes < 60:
         return f"{minutes} min"
-    
+
     hours = minutes // 60
     remaining_minutes = minutes % 60
-    
+
     if remaining_minutes == 0:
         return f"{hours}h"
-    else:
-        return f"{hours}h {remaining_minutes}min"
+    return f"{hours}h {remaining_minutes}min"
 
 
 def format_distance(meters: float) -> str:
