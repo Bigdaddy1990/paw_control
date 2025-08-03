@@ -150,7 +150,19 @@ def format_distance(meters: float) -> str:
 
 
 def format_weight(kg: float) -> str:
-    """Format weight to human readable string."""
+    """Format weight to a human readable string.
+
+    Ensures invalid, non-numeric or negative values are handled gracefully
+    instead of raising errors or returning misleading results.
+    """
+    try:
+        kg = float(kg)
+    except (TypeError, ValueError):
+        return "0.0kg"
+
+    if not isfinite(kg) or kg < 0:
+        kg = 0.0
+
     return f"{kg:.1f}kg"
 
 
