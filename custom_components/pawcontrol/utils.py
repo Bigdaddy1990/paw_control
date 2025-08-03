@@ -517,11 +517,24 @@ def get_health_status_color(status: str) -> str:
 
 def calculate_feeding_amount_by_weight(weight_kg: float, meals_per_day: int = 2) -> int:
     """Calculate daily feeding amount in grams based on weight."""
+    # Validate weight to avoid math errors with invalid or negative values
+    if not validate_weight(weight_kg):
+        return 0
+
     # Rough guideline: 2-3% of body weight per day
-    daily_amount = weight_kg * 25  # 2.5% in grams
-    
+    daily_amount = float(weight_kg) * 25  # 2.5% in grams
+
+    # Safely handle meal count; default to 1 if invalid to avoid division errors
+    try:
+        meals = int(meals_per_day)
+    except (TypeError, ValueError):
+        meals = 1
+
+    if meals <= 0:
+        meals = 1
+
     # Adjust for number of meals
-    return int(daily_amount / meals_per_day)
+    return int(daily_amount / meals)
 
 
 def is_emergency_situation(health_data: Dict[str, Any]) -> bool:
