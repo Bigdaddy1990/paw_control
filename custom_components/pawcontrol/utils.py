@@ -294,13 +294,19 @@ def format_coordinates(latitude: float, longitude: float, precision: int = 6) ->
 
 def calculate_speed_kmh(distance_m: float, time_seconds: float) -> float:
     """Calculate speed in km/h from distance in meters and time in seconds."""
-    if time_seconds <= 0:
+    try:
+        distance = float(distance_m)
+        seconds = float(time_seconds)
+    except (TypeError, ValueError):
         return 0.0
-    
+
+    if seconds <= 0 or distance < 0 or not isfinite(distance) or not isfinite(seconds):
+        return 0.0
+
     # Convert to km/h
-    speed_ms = distance_m / time_seconds
+    speed_ms = distance / seconds
     speed_kmh = speed_ms * 3.6
-    
+
     return round(speed_kmh, 1)
 
 

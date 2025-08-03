@@ -9,6 +9,7 @@ sys.path.insert(0, os.path.abspath("."))
 
 from custom_components.pawcontrol.utils import (
     calculate_dog_calories_per_day,
+    calculate_speed_kmh,
     format_distance,
     format_duration,
     format_weight,
@@ -41,6 +42,15 @@ def test_format_weight_handles_various_inputs():
     assert format_weight(10) == "10.0kg"
     assert format_weight("bad") == "0.0kg"
     assert format_weight(-5) == "0.0kg"
+
+
+def test_calculate_speed_kmh_handles_invalid_inputs():
+    """Speed calculations should handle invalid or negative values gracefully."""
+    assert calculate_speed_kmh(1000, 3600) == 1.0
+    assert calculate_speed_kmh(-100, 10) == 0.0
+    assert calculate_speed_kmh(100, 0) == 0.0
+    assert calculate_speed_kmh("bad", 10) == 0.0
+    assert calculate_speed_kmh(100, "bad") == 0.0
 
 
 @pytest.mark.parametrize("value", [None, "10", 5.5, -1, 0])
