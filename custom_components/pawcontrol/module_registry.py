@@ -3,6 +3,9 @@ from __future__ import annotations
 
 from typing import Awaitable, Callable, Dict, Optional
 
+from homeassistant.config_entries import ConfigEntry
+from homeassistant.core import HomeAssistant
+
 from .const import (
     CONF_GPS_ENABLE,
     CONF_NOTIFICATIONS_ENABLED,
@@ -56,3 +59,28 @@ MODULES: Dict[str, Module] = {
         default=True,
     ),
 }
+
+
+async def ensure_helpers(hass: HomeAssistant, opts: Dict[str, bool]) -> None:
+    """Ensure helpers for all enabled modules."""
+    for key, module in MODULES.items():
+        if opts.get(key, module.default) and module.ensure_helpers:
+            await module.ensure_helpers(hass, opts)
+
+
+async def setup_modules(
+    hass: HomeAssistant, entry: ConfigEntry, opts: Dict[str, bool]
+) -> None:
+    """Set up or tear down modules based on options."""
+    for key, module in MODULES.items():
+        if opts.get(key, module.default):
+            await module.setup(hass, entry)
+        elif module.teardown:
+            await module.teardown(hass, entry)
+
+
+async def unload_modules(hass: HomeAssistant, entry: ConfigEntry) -> None:
+    """Unload all modules that define a teardown handler."""
+    for module in MODULES.values():
+        if module.teardown:
+            await module.teardown(hass, entry)
