@@ -122,11 +122,19 @@ def format_duration(minutes: int) -> str:
 
 def format_distance(meters: float) -> str:
     """Format distance in meters to human readable string."""
+    try:
+        meters = float(meters)
+    except (TypeError, ValueError):
+        return "0m"
+
+    if meters < 0:
+        meters = 0
+
     if meters < 1000:
         return f"{int(meters)}m"
-    else:
-        km = meters / 1000
-        return f"{km:.1f}km"
+
+    km = meters / 1000
+    return f"{km:.1f}km"
 
 
 def format_weight(kg: float) -> str:
