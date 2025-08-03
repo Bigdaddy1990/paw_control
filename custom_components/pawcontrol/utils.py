@@ -14,8 +14,6 @@ from homeassistant.util import slugify
 from .const import (
     MIN_DOG_NAME_LENGTH,
     MAX_DOG_NAME_LENGTH,
-    MIN_DOG_WEIGHT,
-    MAX_DOG_WEIGHT,
     MIN_DOG_AGE,
     MAX_DOG_AGE,
     DOG_NAME_PATTERN,
@@ -50,11 +48,10 @@ def validate_dog_name(name: str) -> bool:
 
 
 def validate_weight(weight: float) -> bool:
-    """Validate dog weight."""
+    """Check that weight can be converted to a positive float."""
     try:
-        weight = float(weight)
-        return MIN_DOG_WEIGHT <= weight <= MAX_DOG_WEIGHT
-    except (ValueError, TypeError):
+        return float(weight) > 0
+    except (TypeError, ValueError):
         return False
 
 
@@ -151,18 +148,24 @@ def get_gps_accuracy_level(accuracy: float) -> str:
 
 def calculate_dog_calories_per_day(weight_kg: float, activity_level: str = "normal") -> int:
     """Calculate daily calorie needs for a dog based on weight and activity level."""
+    # Validate weight to avoid math errors with invalid or negative values
+    if not validate_weight(weight_kg):
+        return 0
+
+    weight = float(weight_kg)
+
     # Base formula: RER = 70 * (weight in kg)^0.75
-    rer = 70 * (weight_kg ** 0.75)
-    
+    rer = 70 * (weight ** 0.75)
+
     # Activity multipliers
     multipliers = {
         "very_low": 1.2,
         "low": 1.4,
         "normal": 1.6,
         "high": 1.8,
-        "very_high": 2.0
+        "very_high": 2.0,
     }
-    
+
     multiplier = multipliers.get(activity_level, 1.6)
     return int(rer * multiplier)
 
