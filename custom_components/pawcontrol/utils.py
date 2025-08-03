@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import re
 import logging
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from math import radians, sin, cos, sqrt, atan2, isfinite
 from typing import List, Dict, Tuple, Optional, Any
 
@@ -328,10 +328,17 @@ def time_since_last_activity(last_activity_time: str) -> timedelta:
     try:
         if not last_activity_time or last_activity_time in ["unknown", "unavailable"]:
             return timedelta(days=999)  # Very long time if unknown
-        
+
         last_time = datetime.fromisoformat(last_activity_time.replace("Z", "+00:00"))
-        return datetime.now() - last_time
-        
+
+        if last_time.tzinfo:
+            now = datetime.now(timezone.utc)
+            last_time = last_time.astimezone(timezone.utc)
+        else:
+            now = datetime.now()
+
+        return now - last_time
+
     except (ValueError, TypeError):
         return timedelta(days=999)
 
