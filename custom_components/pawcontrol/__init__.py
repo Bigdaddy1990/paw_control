@@ -1,68 +1,72 @@
-"""Initialisierung und Setup für Paw Control."""
+"""Initialisierung von PawControl."""
+
+import logging
+
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.core import HomeAssistant
+from homeassistant.core import HomeAssistant, ServiceCall
 
-from . import dashboard, gps, health, push, walk
-from .const import (
-    CONF_CREATE_DASHBOARD,
-    CONF_DOG_NAME,
-    CONF_GPS_ENABLE,
-    CONF_HEALTH_MODULE,
-    CONF_NOTIFICATIONS_ENABLED,
-    CONF_WALK_MODULE,
-)
+from . import dashboard
+from .const import CONF_DOG_NAME, DOMAIN
+
+_LOGGER = logging.getLogger(__name__)
+
+# Map configuration options to their corresponding implementation modules.
+# The modules follow the '<feature>_system' naming convention.
+AVAILABLE_MODULES = {
+    "gps": "gps_system",
+    "health": "health_system",
+    "walk": "walk_system",
+    "push": "push",
+}
 
 
-async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
-    """Setze die Integration samt aller gewählten Module auf."""
-    opts = entry.options if entry.options else entry.data
+async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
+    """Set up PawControl from a config entry."""
+    _LOGGER.debug("Setting up PawControl Integration.")
+    user_options = entry.options or {}
+    enabled_modules = user_options.get("modules", ["gps"])
+    for module_key in enabled_modules:
+        module_name = AVAILABLE_MODULES.get(module_key)
+        if module_name:
+            module = __import__(
+                f".{module_name}", globals(), locals(), ["async_setup_entry"], 1
+            )
+            setup_func = getattr(module, "async_setup_entry", None)
+            if setup_func is None:
+                setup_func = getattr(module, f"setup_{module_key}", None)
+            if setup_func:
+                await setup_func(hass, entry)
+            else:
+                _LOGGER.warning("Module %s has no setup function", module_name)
 
-    # 1. Alle benötigten Helper automatisch prüfen/erstellen (je nach Modulstatus)
-    await ensure_helpers(hass, opts)
+    async def handle_create_dashboard(_call: ServiceCall) -> None:
+        create_fn = getattr(dashboard, "create_dashboard", None)
+        if not create_fn:
+            _LOGGER.error("Dashboard module missing create_dashboard function")
+            return
 
-    # 2. Modul-Setup je nach Opt-in/Opt-out
-    if opts.get(CONF_GPS_ENABLE, True):
-        await gps.setup_gps(hass, entry)
-    else:
-        await gps.teardown_gps(hass, entry)
+        dog_name = entry.data.get(CONF_DOG_NAME)
+        await create_fn(hass, dog_name)
 
-    if opts.get(CONF_NOTIFICATIONS_ENABLED, True):
-        await push.setup_push(hass, entry)
-    else:
-        await push.teardown_push(hass, entry)
-
-    if opts.get(CONF_HEALTH_MODULE, True):
-        await health.setup_health(hass, entry)
-    else:
-        await health.teardown_health(hass, entry)
-
-    if opts.get(CONF_WALK_MODULE, True):
-        await walk.setup_walk(hass, entry)
-    else:
-        await walk.teardown_walk(hass, entry)
-
-    if opts.get(CONF_CREATE_DASHBOARD, False):
-        await dashboard.create_dashboard(hass, opts[CONF_DOG_NAME])
-
+    hass.services.async_register(DOMAIN, "create_dashboard", handle_create_dashboard)
     return True
 
-async def async_unload_entry(hass, entry):
-    """Beim Entfernen der Integration: alle Module/Helper aufräumen."""
-    await gps.teardown_gps(hass, entry)
-    await push.teardown_push(hass, entry)
-    await health.teardown_health(hass, entry)
-    await walk.teardown_walk(hass, entry)
-    # Dashboard bleibt, falls es nicht explizit entfernt werden soll.
-    return True
 
-async def ensure_helpers(hass, opts):
-    """Prüft und legt alle für aktivierte Module nötigen Helper/Sensoren an."""
-    # Beispiel: Health-Status, Walk-Counter, GPS-Status, ...
-    # (Diese Logik ruft die Helper-Init der jeweiligen Module auf.)
-    if opts.get(CONF_HEALTH_MODULE, True):
-        await health.ensure_helpers(hass, opts)
-    if opts.get(CONF_WALK_MODULE, True):
-        await walk.ensure_helpers(hass, opts)
-    if opts.get(CONF_GPS_ENABLE, True):
-        await gps.ensure_helpers(hass, opts)
-    # Usw. für weitere Module
+async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
+    """Unload PawControl config entry."""
+    user_options = entry.options or {}
+    enabled_modules = user_options.get("modules", ["gps"])
+    for module_key in enabled_modules:
+        module_name = AVAILABLE_MODULES.get(module_key)
+        if module_name:
+            module = __import__(
+                f".{module_name}", globals(), locals(), ["async_unload_entry"], 1
+            )
+            unload_func = getattr(module, "async_unload_entry", None)
+            if unload_func is None:
+                unload_func = getattr(module, f"teardown_{module_key}", None)
+            if unload_func:
+                await unload_func(hass, entry)
+            else:
+                _LOGGER.warning("Module %s has no unload function", module_name)
+    return True
