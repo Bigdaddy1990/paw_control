@@ -96,6 +96,33 @@ def test_module_enable_disable(monkeypatch, module_key):
     asyncio.run(run_test())
 
 
+def test_module_helpers_and_unload():
+    """Verify helper creation, setup and unload utilities."""
+
+    async def run_test():
+        test_module = module_registry.Module(
+            setup=AsyncMock(),
+            teardown=AsyncMock(),
+            ensure_helpers=AsyncMock(),
+        )
+        hass = object()
+        entry = object()
+        opts = {"test": True}
+
+        with patch.dict(module_registry.MODULES, {"test": test_module}, clear=True):
+            await module_registry.async_ensure_helpers(hass, opts)
+            test_module.ensure_helpers.assert_called_once_with(hass, opts)
+
+            await module_registry.async_setup_modules(hass, entry, opts)
+            test_module.setup.assert_called_once_with(hass, entry)
+
+            await module_registry.async_unload_modules(hass, entry)
+            test_module.teardown.assert_called_once_with(hass, entry)
+
+    import asyncio
+    asyncio.run(run_test())
+
+
 def test_options_flow_defaults_and_persistence():
     """Ensure options flow shows correct defaults and persists selections."""
 
