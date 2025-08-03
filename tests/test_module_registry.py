@@ -60,10 +60,10 @@ def test_module_enable_disable(monkeypatch, module_key):
         helper_mock.reset_mock()
 
         options_input = {key: False for key in module_registry.MODULES.keys()}
-        flow2 = config_flow.ConfigFlow()
-        flow2.hass = hass
-        with patch.object(config_flow.ConfigFlow, 'async_create_entry', return_value={'data': options_input}):
-            result2 = await flow2.async_step_options(options_input)
+        options_flow = config_flow.OptionsFlowHandler(entry)
+        options_flow.hass = hass
+        with patch.object(config_flow.OptionsFlowHandler, 'async_create_entry', return_value={'data': options_input}):
+            result2 = await options_flow.async_step_init(options_input)
 
         entry.options = result2['data']
 
