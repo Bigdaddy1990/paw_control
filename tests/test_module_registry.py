@@ -1,6 +1,8 @@
 import os
 import sys
 
+import logging
+
 import pytest
 from unittest.mock import AsyncMock, patch
 from types import SimpleNamespace
@@ -192,7 +194,7 @@ def test_options_flow_defaults_and_persistence():
 
 
 def test_module_error_handling(caplog):
-    """Modules raising errors should be logged and not stop processing."""
+    """Modules raising errors should log exceptions and not stop processing."""
 
     async def run_test():
         failing = module_registry.Module(
@@ -211,10 +213,13 @@ def test_module_error_handling(caplog):
         opts = {"fail": True, "ok": True}
 
         with patch.dict(module_registry.MODULES, {"fail": failing, "ok": working}, clear=True):
-            with caplog.at_level(logging.ERROR):
-                await module_registry.async_ensure_helpers(hass, opts)
-                await module_registry.async_setup_modules(hass, entry, opts)
-                await module_registry.async_unload_modules(hass, entry)
+            with patch.object(
+                module_registry._LOGGER, "exception", wraps=module_registry._LOGGER.exception
+            ) as log_exc:
+                with caplog.at_level(logging.ERROR):
+                    await module_registry.async_ensure_helpers(hass, opts)
+                    await module_registry.async_setup_modules(hass, entry, opts)
+                    await module_registry.async_unload_modules(hass, entry)
 
         failing.ensure_helpers.assert_called_once_with(hass, opts)
         failing.setup.assert_called_once_with(hass, entry)
@@ -223,10 +228,69 @@ def test_module_error_handling(caplog):
         working.setup.assert_called_once_with(hass, entry)
         working.teardown.assert_called_once_with(hass, entry)
 
+        assert log_exc.call_count == 3
+        log_exc.assert_any_call("Error ensuring helpers for module %s", "fail")
+        log_exc.assert_any_call("Error %s module %s", "setting up", "fail")
+        log_exc.assert_any_call("Error tearing down module %s", "fail")
+
         assert "Error ensuring helpers for module fail" in caplog.text
         assert "Error setting up module fail" in caplog.text
         assert "Error tearing down module fail" in caplog.text
 
     import asyncio
-    import logging
+    asyncio.run(run_test())
+
+
+def test_default_opt_precedence():
+    """Defaults and opts determine module enablement."""
+
+    async def run_test():
+        default_on = module_registry.Module(
+            setup=AsyncMock(),
+            teardown=AsyncMock(),
+            ensure_helpers=AsyncMock(),
+            default=True,
+        )
+        default_off = module_registry.Module(
+            setup=AsyncMock(),
+            teardown=AsyncMock(),
+            ensure_helpers=AsyncMock(),
+            default=False,
+        )
+
+        hass = object()
+        entry = object()
+
+        with patch.dict(module_registry.MODULES, {"on": default_on, "off": default_off}, clear=True):
+            # No opts provided -> use defaults
+            await module_registry.async_ensure_helpers(hass, {})
+            await module_registry.async_setup_modules(hass, entry, {})
+
+            default_on.ensure_helpers.assert_called_once_with(hass, {})
+            default_on.setup.assert_called_once_with(hass, entry)
+            default_on.teardown.assert_not_called()
+            default_off.ensure_helpers.assert_not_called()
+            default_off.setup.assert_not_called()
+            default_off.teardown.assert_called_once_with(hass, entry)
+
+            default_on.ensure_helpers.reset_mock()
+            default_on.setup.reset_mock()
+            default_on.teardown.reset_mock()
+            default_off.ensure_helpers.reset_mock()
+            default_off.setup.reset_mock()
+            default_off.teardown.reset_mock()
+
+            # opts override defaults
+            opts = {"on": False, "off": True}
+            await module_registry.async_ensure_helpers(hass, opts)
+            await module_registry.async_setup_modules(hass, entry, opts)
+
+            default_on.ensure_helpers.assert_not_called()
+            default_on.setup.assert_not_called()
+            default_on.teardown.assert_called_once_with(hass, entry)
+            default_off.ensure_helpers.assert_called_once_with(hass, opts)
+            default_off.setup.assert_called_once_with(hass, entry)
+            default_off.teardown.assert_not_called()
+
+    import asyncio
     asyncio.run(run_test())
