@@ -87,3 +87,13 @@ def test_time_since_last_activity_handles_naive_and_aware():
     offset_result = time_since_last_activity(past_offset.isoformat())
     expected_offset = datetime.now(tz) - past_offset
     assert abs(offset_result - expected_offset) <= tolerance
+
+
+def test_time_since_last_activity_accepts_datetime_object():
+    """Datetime objects should be handled directly without requiring conversion."""
+    tolerance = timedelta(seconds=1)
+    past_time = datetime.now() - timedelta(minutes=5)
+    result = time_since_last_activity(past_time)
+    expected = datetime.now() - past_time
+    assert isinstance(result, timedelta)
+    assert abs(result - expected) <= tolerance
