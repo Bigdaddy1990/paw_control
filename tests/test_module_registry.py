@@ -52,7 +52,11 @@ def test_module_enable_disable(monkeypatch, module_key):
 
         setup_mock, teardown_mock, helper_mock = patched[module_key]
         setup_mock.assert_called_once_with(hass, entry)
-        helper_mock.assert_called_once_with(hass, result['data'])
+        helper_mock.assert_called_once()
+        called_hass, called_opts = helper_mock.call_args[0]
+        assert called_hass is hass
+        assert called_opts[module_key] is True
+        assert called_opts[CONF_DOG_NAME] == 'Fido'
         teardown_mock.assert_not_called()
 
         setup_mock.reset_mock()
@@ -89,7 +93,11 @@ def test_module_enable_disable(monkeypatch, module_key):
         await integration.async_setup_entry(hass, entry)
 
         setup_mock.assert_called_once_with(hass, entry)
-        helper_mock.assert_called_once_with(hass, entry.options)
+        helper_mock.assert_called_once()
+        called_hass2, called_opts2 = helper_mock.call_args[0]
+        assert called_hass2 is hass
+        assert called_opts2[module_key] is True
+        assert called_opts2[CONF_DOG_NAME] == 'Fido'
         teardown_mock.assert_not_called()
 
     import asyncio
