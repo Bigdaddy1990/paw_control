@@ -323,13 +323,21 @@ def estimate_calories_burned(distance_km: float, weight_kg: float, activity_inte
     return max(1, int(calories))
 
 
-def time_since_last_activity(last_activity_time: str) -> timedelta:
-    """Calculate time since last activity."""
+def time_since_last_activity(last_activity_time: str | datetime) -> timedelta:
+    """Calculate time since last activity.
+
+    Accepts ISO formatted strings or ``datetime`` objects. Any parsing errors
+    result in a large ``timedelta`` so callers can treat unknown values
+    consistently.
+    """
     try:
         if not last_activity_time or last_activity_time in ["unknown", "unavailable"]:
             return timedelta(days=999)  # Very long time if unknown
 
-        last_time = datetime.fromisoformat(last_activity_time.replace("Z", "+00:00"))
+        if isinstance(last_activity_time, datetime):
+            last_time = last_activity_time
+        else:
+            last_time = datetime.fromisoformat(str(last_activity_time).replace("Z", "+00:00"))
 
         if last_time.tzinfo:
             now = datetime.now(timezone.utc)
