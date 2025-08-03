@@ -7,7 +7,8 @@ from .const import (
     CONF_CREATE_DASHBOARD,
     CONF_DOG_NAME,
 )
-from .module_registry import (
+
+from .module_manager import (
     async_ensure_helpers,
     async_setup_modules,
     async_unload_modules,
