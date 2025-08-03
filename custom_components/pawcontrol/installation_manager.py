@@ -25,14 +25,25 @@ class InstallationManager:
         # Merge config entry data and options, with options taking precedence
         opts = {**entry.data, **entry.options}
 
+        # Some parts of the integration – especially helper creation – expect a
+        # dog name to be present.  The title of the entry is the dog name in the
+        # config flow, so fall back to that if the name is missing from the
+        # stored data. This allows setup to proceed without crashing when the
+        # data is incomplete while still making the name available to modules.
+        dog_present = CONF_DOG_NAME in opts
+        opts.setdefault(CONF_DOG_NAME, entry.title)
+        dog_name = opts.get(CONF_DOG_NAME)
+
         # Ensure helper entities for enabled modules then set them up
         await async_ensure_helpers(hass, opts)
         await async_setup_modules(hass, entry, opts)
 
-        # Create dashboard if requested (requires dog name)
+        # Create dashboard if requested. Only honour the request when the dog
+        # name was explicitly provided in the stored data/options.  This avoids
+        # creating dashboards accidentally if we only inferred the name from the
+        # entry title above.
         if opts.get(CONF_CREATE_DASHBOARD, False):
-            dog_name = opts.get(CONF_DOG_NAME)
-            if dog_name:
+            if dog_present and dog_name:
                 await dashboard.create_dashboard(hass, dog_name)
             else:
                 _LOGGER.warning(
