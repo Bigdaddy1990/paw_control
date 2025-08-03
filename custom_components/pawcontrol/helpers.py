@@ -748,3 +748,111 @@ async def cleanup_dog_entities(hass: HomeAssistant, dog_name: str) -> None:
         
     except Exception as e:
         _LOGGER.error("Error during entity cleanup for %s: %s", dog_name, e)
+
+def parse_datetime(dt_str: str) -> Optional[datetime.datetime]:
+    try:
+        return datetime.datetime.fromisoformat(dt_str)
+    except Exception as e:
+        _LOGGER.error("Failed to parse datetime '%s': %s", dt_str, e)
+        return None
+
+def format_datetime(dt: datetime.datetime) -> str:
+    if dt is None:
+        return ""
+    return dt.isoformat()
+
+def safe_get(data: Dict, *keys, default=None):
+    for key in keys:
+        if not isinstance(data, dict):
+            return default
+        data = data.get(key, default)
+        if data is default:
+            return default
+    return data
+
+def merge_dicts(a: Dict, b: Dict) -> Dict:
+    result = a.copy()
+    result.update(b)
+    return result
+
+def days_between(date1: datetime.datetime, date2: datetime.datetime) -> int:
+    return abs((date2 - date1).days)
+
+def clamp(val: float, min_val: float, max_val: float) -> float:
+    return max(min_val, min(max_val, val))
+
+def is_valid_lat_lon(lat: Any, lon: Any) -> bool:
+    try:
+        lat = float(lat)
+        lon = float(lon)
+        return -90.0 <= lat <= 90.0 and -180.0 <= lon <= 180.0
+    except Exception:
+        return False
+
+def pretty_time_delta(seconds: int) -> str:
+    minutes, sec = divmod(seconds, 60)
+    hours, minutes = divmod(minutes, 60)
+    days, hours = divmod(hours, 24)
+    result = []
+    if days > 0:
+        result.append(f"{days}d")
+    if hours > 0:
+        result.append(f"{hours}h")
+    if minutes > 0:
+        result.append(f"{minutes}m")
+    if sec > 0 or not result:
+        result.append(f"{sec}s")
+    return ' '.join(result)
+
+def generate_automation(trigger: dict, action: dict, condition: dict = None) -> dict:
+    automation = {
+        "trigger": [trigger],
+        "action": [action]
+    }
+    if condition:
+        automation["condition"] = [condition]
+    return automation
+
+def build_time_trigger(at_time: str) -> dict:
+    return {
+        "platform": "time",
+        "at": at_time
+    }
+
+def build_state_trigger(entity_id: str, from_state: str = None, to_state: str = None) -> dict:
+    trig = {
+        "platform": "state",
+        "entity_id": entity_id
+    }
+    if from_state is not None:
+        trig["from"] = from_state
+    if to_state is not None:
+        trig["to"] = to_state
+    return trig
+
+def build_notify_action(message: str, title: str = "PawControl") -> dict:
+    return {
+        "service": "persistent_notification.create",
+        "data": {"title": title, "message": message}
+    }
+
+def send_notification(hass, title: str, message: str):
+    hass.async_create_task(
+        hass.services.async_call(
+            "persistent_notification",
+            "create",
+            {"title": title, "message": message},
+        )
+    )
+
+def send_mobile_notification(hass, message: str, target_device: str = None):
+    service_data = {"message": message}
+    if target_device:
+        service_data["target"] = target_device
+    hass.async_create_task(
+        hass.services.async_call(
+            "notify",
+            "mobile_app",
+            service_data,
+        )
+    )
