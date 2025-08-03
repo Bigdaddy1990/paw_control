@@ -26,5 +26,6 @@ def test_format_distance_handles_various_inputs():
     """Distances should be formatted and invalid values handled gracefully."""
     assert format_distance(500) == "500m"
     assert format_distance(1500) == "1.5km"
+    assert format_distance(1000) == "1km"
     assert format_distance(-100) == "0m"
     assert format_distance("oops") == "0m"

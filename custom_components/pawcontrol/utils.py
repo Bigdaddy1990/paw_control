@@ -134,6 +134,11 @@ def format_distance(meters: float) -> str:
         return f"{int(meters)}m"
 
     km = meters / 1000
+
+    # Avoid showing trailing .0 for whole kilometers (e.g., 1000 -> "1km")
+    if float(km).is_integer():
+        return f"{int(km)}km"
+
     return f"{km:.1f}km"
 
 
