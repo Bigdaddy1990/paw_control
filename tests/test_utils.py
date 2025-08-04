@@ -1,6 +1,9 @@
 import os
 import sys
+import asyncio
 from datetime import datetime, timedelta, timezone
+from types import SimpleNamespace
+from unittest.mock import AsyncMock
 
 import pytest
 
@@ -13,6 +16,8 @@ from custom_components.pawcontrol.utils import (
     format_distance,
     format_duration,
     format_weight,
+    merge_entry_options,
+    call_service,
     time_since_last_activity,
     validate_dog_name,
 )
@@ -27,6 +32,24 @@ def test_calculate_dog_calories_invalid_weight():
     """Invalid or negative weights should return 0 calories instead of raising errors."""
     assert calculate_dog_calories_per_day(-5) == 0
     assert calculate_dog_calories_per_day("bad") == 0
+
+
+def test_merge_entry_options_overrides_data():
+    """Options should override data when merged."""
+    entry = SimpleNamespace(data={"a": 1, "c": 3}, options={"b": 2, "c": 4})
+    assert merge_entry_options(entry) == {"a": 1, "b": 2, "c": 4}
+
+
+def test_call_service_wrapper():
+    """call_service should proxy to hass.services.async_call."""
+
+    async def run_test():
+        mock_call = AsyncMock()
+        hass = SimpleNamespace(services=SimpleNamespace(async_call=mock_call))
+        await call_service(hass, "test", "do", {"x": 1})
+        mock_call.assert_called_once_with("test", "do", {"x": 1}, blocking=True)
+
+    asyncio.run(run_test())
 
 
 def test_format_distance_handles_various_inputs():

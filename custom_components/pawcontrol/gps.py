@@ -3,6 +3,7 @@
 from homeassistant.helpers.entity import Entity
 
 from .const import *
+from .utils import call_service
 
 async def setup_gps(hass, entry):
     """Initialisiert GPS-Sensor und zugehörige Helper."""
@@ -12,10 +13,11 @@ async def setup_gps(hass, entry):
 
     # Helper für GPS-Status anlegen (falls nicht vorhanden)
     if not hass.states.get(helper_id):
-        await hass.services.async_call(
-            "input_boolean", "create",
+        await call_service(
+            hass,
+            "input_boolean",
+            "create",
             {"name": f"{dog} GPS aktiv", "entity_id": helper_id},
-            blocking=True,
         )
 
     # Sensor für GPS-Position initialisieren (Platzhalter – hier kommt echte Logik oder device_tracker rein)
@@ -29,11 +31,7 @@ async def teardown_gps(hass, entry):
 
     # GPS-Helper entfernen
     if hass.states.get(helper_id):
-        await hass.services.async_call(
-            "input_boolean", "remove",
-            {"entity_id": helper_id},
-            blocking=True,
-        )
+        await call_service(hass, "input_boolean", "remove", {"entity_id": helper_id})
     # GPS-Sensor entfernen
     hass.states.async_remove(sensor_id)
 
@@ -42,8 +40,9 @@ async def ensure_helpers(hass, opts):
     dog = opts[CONF_DOG_NAME]
     helper_id = f"input_boolean.{dog}_gps_active"
     if not hass.states.get(helper_id):
-        await hass.services.async_call(
-            "input_boolean", "create",
+        await call_service(
+            hass,
+            "input_boolean",
+            "create",
             {"name": f"{dog} GPS aktiv", "entity_id": helper_id},
-            blocking=True,
         )

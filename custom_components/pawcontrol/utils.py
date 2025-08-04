@@ -56,6 +56,24 @@ def register_services(
         hass.services.async_register(domain, service, handler)
 
 
+async def call_service(
+    hass: HomeAssistant,
+    domain: str,
+    service: str,
+    data: Mapping[str, Any] | None = None,
+    *,
+    blocking: bool = True,
+) -> None:
+    """Wrapper around ``HomeAssistant`` service calls.
+
+    This helper centralises :func:`homeassistant.core.ServiceRegistry.async_call`
+    usage, providing a consistent interface for calling services throughout the
+    integration.
+    """
+
+    await hass.services.async_call(domain, service, data or {}, blocking=blocking)
+
+
 def validate_dog_name(name: str) -> bool:
     """Validate dog name format and constraints."""
     if not name or not isinstance(name, str):
