@@ -1,13 +1,32 @@
-"""Dashboard-Generator für Paw Control – erstellt eine Dashboard-Vorlage als YAML im System."""
-from homeassistant.core import HomeAssistant
-from homeassistant.config_entries import ConfigEntry
-from .const import *
+"""Generate simple dashboard definitions for Paw Control."""
+
+from __future__ import annotations
+
 import logging
+
+from homeassistant.config_entries import ConfigEntry
+from homeassistant.core import HomeAssistant
+
+from .utils import generate_entity_id
 
 _LOGGER = logging.getLogger(__name__)
 
-async def create_dashboard(hass, dog_name):
-    """Erstellt ein Lovelace-Dashboard als YAML (Sensor), das alle aktiven Module abbildet."""
+
+async def create_dashboard(hass: HomeAssistant, dog_name: str) -> None:
+    """Create a Lovelace dashboard definition and store it in a sensor."""
+
+    dog_slug_health = generate_entity_id(dog_name, "sensor", "health")
+    dog_slug_last_walk = generate_entity_id(dog_name, "sensor", "last_walk")
+    dog_slug_gps_location = generate_entity_id(dog_name, "sensor", "gps_location")
+    dog_slug_walks = generate_entity_id(dog_name, "counter", "walks")
+    dog_slug_walk_active = generate_entity_id(
+        dog_name, "input_boolean", "walk_active"
+    )
+    dog_slug_gps_active = generate_entity_id(dog_name, "input_boolean", "gps_active")
+    dog_slug_push_active = generate_entity_id(dog_name, "input_boolean", "push_active")
+    dog_slug_symptoms = generate_entity_id(dog_name, "input_text", "symptoms")
+    dog_slug_medication = generate_entity_id(dog_name, "input_text", "medication")
+    dog_slug_weight = generate_entity_id(dog_name, "input_number", "weight")
 
     dashboard_yaml = f"""
 title: 🐾 Paw Control: {dog_name}
@@ -15,43 +34,43 @@ views:
   - title: Übersicht
     cards:
       - type: custom:mushroom-entity-card
-        entity: sensor.{dog_name}_health
+        entity: {dog_slug_health}
         name: Gesundheit
       - type: custom:mushroom-entity-card
-        entity: sensor.{dog_name}_last_walk
+        entity: {dog_slug_last_walk}
         name: Letztes Gassi
       - type: custom:mushroom-entity-card
-        entity: sensor.{dog_name}_gps_location
+        entity: {dog_slug_gps_location}
         name: GPS-Position
       - type: custom:mushroom-entity-card
-        entity: counter.{dog_name}_walks
+        entity: {dog_slug_walks}
         name: Spaziergänge gesamt
       - type: custom:mushroom-entity-card
-        entity: input_boolean.{dog_name}_walk_active
+        entity: {dog_slug_walk_active}
         name: Gerade Gassi?
       - type: custom:mushroom-entity-card
-        entity: input_boolean.{dog_name}_gps_active
+        entity: {dog_slug_gps_active}
         name: GPS aktiv?
       - type: custom:mushroom-entity-card
-        entity: input_boolean.{dog_name}_push_active
+        entity: {dog_slug_push_active}
         name: Push aktiviert?
       - type: custom:mushroom-entity-card
-        entity: input_text.{dog_name}_symptoms
+        entity: {dog_slug_symptoms}
         name: Symptome
       - type: custom:mushroom-entity-card
-        entity: input_text.{dog_name}_medication
+        entity: {dog_slug_medication}
         name: Medikamente
       - type: custom:mushroom-entity-card
-        entity: input_number.{dog_name}_weight
+        entity: {dog_slug_weight}
         name: Gewicht (kg)
     """
 
-    # Speichert das YAML als "Sensor", damit der User es auslesen/kopieren kann
-    dashboard_sensor_id = f"sensor.{dog_name}_dashboard_yaml"
+    # Store the YAML definition in a sensor for the user to copy into Lovelace
+    dashboard_sensor_id = generate_entity_id(dog_name, "sensor", "dashboard_yaml")
     hass.states.async_set(
         dashboard_sensor_id,
         dashboard_yaml,
-        {"friendly_name": f"{dog_name} Dashboard-Vorlage (Kopieren für Lovelace)"}
+        {"friendly_name": f"{dog_name} Dashboard-Vorlage (Kopieren für Lovelace)"},
     )
 
 DEFAULT_DASHBOARD_NAME = "PawControl"
