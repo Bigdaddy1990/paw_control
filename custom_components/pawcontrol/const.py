@@ -36,6 +36,8 @@ ATTR_LAST_EVENT = "last_event"
 ATTR_DASHBOARD_VIEW = "dashboard_view"
 ATTR_EVENT_TYPE = "event_type"
 ATTR_EVENT_DETAIL = "event_detail"
+ATTR_DOG_NAME = "dog_name"
+ATTR_LAST_UPDATED = "last_updated"
 
 # Standardwerte
 DEFAULT_FEEDING_TIMES = []

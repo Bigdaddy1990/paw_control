@@ -43,3 +43,21 @@ def clamp_string(value: str | None, max_length: int) -> str:
         return ""
     return str(value)[:max_length]
 
+
+def clamp_value(
+    value: float, min_value: float | None = None, max_value: float | None = None
+) -> float:
+    """Begrenze einen numerischen Wert auf einen Bereich."""
+    if min_value is not None and value < min_value:
+        return min_value
+    if max_value is not None and value > max_value:
+        return max_value
+    return value
+
+
+def ensure_option(option: str, options: list[str]) -> str:
+    """Validiere eine Auswahl gegen eine Optionsliste."""
+    if option in options:
+        return option
+    return options[0] if options else option
+
