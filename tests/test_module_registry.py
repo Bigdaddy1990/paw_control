@@ -271,7 +271,7 @@ def test_default_opt_precedence():
             default_on.teardown.assert_not_called()
             default_off.ensure_helpers.assert_not_called()
             default_off.setup.assert_not_called()
-            default_off.teardown.assert_called_once_with(hass, entry)
+            default_off.teardown.assert_not_called()
 
             default_on.ensure_helpers.reset_mock()
             default_on.setup.reset_mock()

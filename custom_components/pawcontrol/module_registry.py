@@ -4,6 +4,10 @@ This module coordinates setup, teardown, and helper creation for each optional
 module. Errors raised during these steps by individual modules are logged and
 do not prevent subsequent modules from running, keeping setup and teardown
 resilient.
+
+Teardown handlers are invoked only when a module is explicitly disabled in the
+options. Modules that default to off and are omitted from the options are left
+untouched.
 """
 from __future__ import annotations
 
@@ -85,15 +89,18 @@ async def setup_modules(
     """Set up or tear down modules based on options.
 
     Setup errors for individual modules are logged and other modules continue.
+    Teardown handlers run only for modules explicitly present in ``opts`` with a
+    value of ``False``; modules that default to off and are omitted are skipped.
     """
     for key, module in MODULES.items():
         try:
-            if opts.get(key, module.default):
+            enabled = opts.get(key, module.default)
+            if enabled:
                 await module.setup(hass, entry)
-            elif module.teardown:
+            elif key in opts and module.teardown:
                 await module.teardown(hass, entry)
         except Exception:  # pragma: no cover - defensive programming
-            action = "setting up" if opts.get(key, module.default) else "tearing down"
+            action = "setting up" if enabled else "tearing down"
             _LOGGER.exception("Error %s module %s", action, key)
 
 
