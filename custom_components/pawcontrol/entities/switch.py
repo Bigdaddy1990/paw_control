@@ -2,11 +2,29 @@
 from homeassistant.components.switch import SwitchEntity
 
 from .base import PawControlBaseEntity
-from ..helpers.entity import as_bool
+from ..helpers.entity import as_bool, get_icon, format_name
+from ..utils import safe_service_call
 
 
 class PawControlSwitchEntity(PawControlBaseEntity, SwitchEntity):
     """Basisklasse für Switch-Entities mit boolescher Konvertierung."""
+
+    def __init__(
+        self,
+        coordinator,
+        name: str | None = None,
+        dog_name: str | None = None,
+        unique_suffix: str | None = None,
+        *,
+        key: str | None = None,
+        icon: str | None = None,
+    ) -> None:
+        if dog_name and key and not name:
+            name = format_name(dog_name, key)
+        if key and not unique_suffix:
+            unique_suffix = key
+        super().__init__(coordinator, name, dog_name, unique_suffix)
+        self._attr_icon = icon or (key and get_icon(key))
 
     def _update_state(self) -> None:
         """Hole und konvertiere den Status aus den Koordinatordaten."""
@@ -23,3 +41,7 @@ class PawControlSwitchEntity(PawControlBaseEntity, SwitchEntity):
     async def async_turn_off(self, **kwargs):
         # Geräte ausschalten
         pass
+
+    async def _safe_service_call(self, domain: str, service: str, data: dict) -> bool:
+        """Hilfsfunktion für sichere Serviceaufrufe."""
+        return await safe_service_call(self.hass, domain, service, data)

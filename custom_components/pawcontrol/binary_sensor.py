@@ -10,9 +10,10 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
-from .const import DOMAIN, ICONS
+from .const import DOMAIN
 from .coordinator import PawControlCoordinator
 from .entities import PawControlBinarySensorEntity
+from .helpers.entity import get_icon, parse_datetime
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -27,7 +28,6 @@ async def async_setup_entry(
     dog_name = coordinator.dog_name
     
     entities = [
-        # Status binary sensors
         PawControlIsHungryBinarySensor(coordinator, dog_name),
         PawControlNeedsWalkBinarySensor(coordinator, dog_name),
         PawControlIsOutsideBinarySensor(coordinator, dog_name),
@@ -40,27 +40,12 @@ async def async_setup_entry(
     async_add_entities(entities)
 
 
-class PawControlBinarySensorBase(PawControlBinarySensorEntity):
-    """Gemeinsame Basis für Paw Control Binary Sensors."""
-
-    def __init__(
-        self,
-        coordinator: PawControlCoordinator,
-        dog_name: str,
-        sensor_type: str,
-    ) -> None:
-        """Initialisiere den Binary Sensor mit Standardattributen."""
-        name = f"{dog_name} {sensor_type.replace('_', ' ').title()}"
-        super().__init__(coordinator, name, dog_name, sensor_type)
-
-
-class PawControlIsHungryBinarySensor(PawControlBinarySensorBase):
+class PawControlIsHungryBinarySensor(PawControlBinarySensorEntity):
     """Binary sensor for hunger status."""
 
     def __init__(self, coordinator: PawControlCoordinator, dog_name: str) -> None:
         """Initialize the binary sensor."""
-        super().__init__(coordinator, dog_name, "is_hungry")
-        self._attr_icon = ICONS["food"]
+        super().__init__(coordinator, dog_name=dog_name, key="is_hungry")
 
     @property
     def is_on(self) -> bool | None:
@@ -72,13 +57,12 @@ class PawControlIsHungryBinarySensor(PawControlBinarySensorBase):
         return feeding.get("needs_feeding", True)
 
 
-class PawControlNeedsWalkBinarySensor(PawControlBinarySensorBase):
+class PawControlNeedsWalkBinarySensor(PawControlBinarySensorEntity):
     """Binary sensor for walk need status."""
 
     def __init__(self, coordinator: PawControlCoordinator, dog_name: str) -> None:
         """Initialize the binary sensor."""
-        super().__init__(coordinator, dog_name, "needs_walk")
-        self._attr_icon = ICONS["walk"]
+        super().__init__(coordinator, dog_name=dog_name, key="needs_walk", icon=get_icon("walk"))
 
     @property
     def is_on(self) -> bool | None:
@@ -90,14 +74,18 @@ class PawControlNeedsWalkBinarySensor(PawControlBinarySensorBase):
         return activity.get("needs_walk", True)
 
 
-class PawControlIsOutsideBinarySensor(PawControlBinarySensorBase):
+class PawControlIsOutsideBinarySensor(PawControlBinarySensorEntity):
     """Binary sensor for outside status."""
 
     def __init__(self, coordinator: PawControlCoordinator, dog_name: str) -> None:
         """Initialize the binary sensor."""
-        super().__init__(coordinator, dog_name, "is_outside")
-        self._attr_icon = ICONS["outside"]
-        self._attr_device_class = BinarySensorDeviceClass.PRESENCE
+        super().__init__(
+            coordinator,
+            dog_name=dog_name,
+            key="is_outside",
+            icon=get_icon("outside"),
+            device_class=BinarySensorDeviceClass.PRESENCE,
+        )
 
     @property
     def is_on(self) -> bool | None:
@@ -109,14 +97,18 @@ class PawControlIsOutsideBinarySensor(PawControlBinarySensorBase):
         return activity.get("was_outside", False)
 
 
-class PawControlEmergencyModeBinarySensor(PawControlBinarySensorBase):
+class PawControlEmergencyModeBinarySensor(PawControlBinarySensorEntity):
     """Binary sensor for emergency mode."""
 
     def __init__(self, coordinator: PawControlCoordinator, dog_name: str) -> None:
         """Initialize the binary sensor."""
-        super().__init__(coordinator, dog_name, "emergency_mode")
-        self._attr_icon = ICONS["emergency"]
-        self._attr_device_class = BinarySensorDeviceClass.PROBLEM
+        super().__init__(
+            coordinator,
+            dog_name=dog_name,
+            key="emergency_mode",
+            icon=get_icon("emergency"),
+            device_class=BinarySensorDeviceClass.PROBLEM,
+        )
 
     @property
     def is_on(self) -> bool | None:
@@ -129,33 +121,38 @@ class PawControlEmergencyModeBinarySensor(PawControlBinarySensorBase):
             return False
 
 
-class PawControlVisitorModeBinarySensor(PawControlBinarySensorBase):
+class PawControlVisitorModeBinarySensor(PawControlBinarySensorEntity):
     """Binary sensor for visitor mode."""
 
     def __init__(self, coordinator: PawControlCoordinator, dog_name: str) -> None:
         """Initialize the binary sensor."""
-        super().__init__(coordinator, dog_name, "visitor_mode")
-        self._attr_icon = ICONS["visitor"]
+        super().__init__(coordinator, dog_name=dog_name, key="visitor_mode", icon=get_icon("visitor"))
 
     @property
     def is_on(self) -> bool | None:
         """Return true if visitor mode is active."""
         try:
-            visitor_state = self.hass.states.get(f"input_boolean.{self._dog_name}_visitor_mode")
+            visitor_state = self.hass.states.get(
+                f"input_boolean.{self._dog_name}_visitor_mode_input"
+            )
             return visitor_state.state == "on" if visitor_state else False
         except Exception as e:
             _LOGGER.error("Error checking visitor mode: %s", e)
             return False
 
 
-class PawControlNeedsAttentionBinarySensor(PawControlBinarySensorBase):
+class PawControlNeedsAttentionBinarySensor(PawControlBinarySensorEntity):
     """Binary sensor for needs attention status."""
 
     def __init__(self, coordinator: PawControlCoordinator, dog_name: str) -> None:
         """Initialize the binary sensor."""
-        super().__init__(coordinator, dog_name, "needs_attention")
-        self._attr_icon = "mdi:bell-alert"
-        self._attr_device_class = BinarySensorDeviceClass.PROBLEM
+        super().__init__(
+            coordinator,
+            dog_name=dog_name,
+            key="needs_attention",
+            icon="mdi:bell-alert",
+            device_class=BinarySensorDeviceClass.PROBLEM,
+        )
 
     @property
     def is_on(self) -> bool | None:
@@ -171,8 +168,8 @@ class PawControlNeedsAttentionBinarySensor(PawControlBinarySensorBase):
             last_feeding = feeding.get("last_feeding")
             if last_feeding:
                 try:
-                    last_fed_time = datetime.fromisoformat(last_feeding.replace("Z", "+00:00"))
-                    if datetime.now() - last_fed_time > timedelta(hours=12):
+                    last_fed_time = parse_datetime(last_feeding)
+                    if last_fed_time and datetime.now() - last_fed_time > timedelta(hours=12):
                         return True
                 except ValueError:
                     pass
@@ -181,8 +178,8 @@ class PawControlNeedsAttentionBinarySensor(PawControlBinarySensorBase):
             last_walk = activity.get("last_walk")
             if last_walk:
                 try:
-                    last_walk_time = datetime.fromisoformat(last_walk.replace("Z", "+00:00"))
-                    if datetime.now() - last_walk_time > timedelta(hours=8):
+                    last_walk_time = parse_datetime(last_walk)
+                    if last_walk_time and datetime.now() - last_walk_time > timedelta(hours=8):
                         return True
                 except ValueError:
                     pass
@@ -199,13 +196,12 @@ class PawControlNeedsAttentionBinarySensor(PawControlBinarySensorBase):
             return None
 
 
-class PawControlGPSTrackingBinarySensor(PawControlBinarySensorBase):
+class PawControlGPSTrackingBinarySensor(PawControlBinarySensorEntity):
     """Binary sensor for GPS tracking status."""
 
     def __init__(self, coordinator: PawControlCoordinator, dog_name: str) -> None:
         """Initialize the binary sensor."""
-        super().__init__(coordinator, dog_name, "gps_tracking")
-        self._attr_icon = ICONS["gps"]
+        super().__init__(coordinator, dog_name=dog_name, key="gps_tracking", icon=get_icon("gps"))
 
     @property
     def is_on(self) -> bool | None:

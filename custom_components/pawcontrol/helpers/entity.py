@@ -5,7 +5,7 @@ from __future__ import annotations
 from datetime import datetime
 from typing import Any
 
-from ..const import ATTR_DOG_NAME, ATTR_LAST_UPDATED
+from ..const import ATTR_DOG_NAME, ATTR_LAST_UPDATED, ICONS
 
 
 def get_icon_by_status(status: str) -> str:
@@ -16,6 +16,16 @@ def get_icon_by_status(status: str) -> str:
         "unknown": "mdi:help-circle",
     }
     return icons.get(status, "mdi:help-circle")
+
+
+def get_icon(key: str, default: str | None = "mdi:help-circle") -> str:
+    """Lese ein Icon aus der zentralen ICONS-Map."""
+    return ICONS.get(key, default)
+
+
+def format_name(dog_name: str, key: str) -> str:
+    """Erzeuge einen konsistent formatierten Entity-Namen."""
+    return f"{dog_name.title()} {key.replace('_', ' ').title()}"
 
 
 def build_attributes(dog_name: str | None = None, **extra: Any) -> dict[str, Any]:

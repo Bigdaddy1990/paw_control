@@ -9,10 +9,10 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
-from .const import DOMAIN, ICONS
+from .const import DOMAIN
 from .coordinator import PawControlCoordinator
 from .entities import PawControlSwitchEntity
-from .utils import safe_service_call
+from .helpers.entity import get_icon
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -45,33 +45,14 @@ async def async_setup_entry(
     async_add_entities(entities)
 
 
-class PawControlSwitchBase(PawControlSwitchEntity):
-    """Gemeinsame Basis für Paw Control Switches."""
-
-    def __init__(
-        self,
-        coordinator: PawControlCoordinator,
-        dog_name: str,
-        switch_type: str,
-    ) -> None:
-        """Initialisiere den Switch mit Standardattributen."""
-        name = f"{dog_name.title()} {switch_type.replace('_', ' ').title()}"
-        super().__init__(coordinator, name, dog_name, switch_type)
-
-    async def _safe_service_call(self, domain: str, service: str, data: dict) -> bool:
-        """Safely call a service with consistent error handling."""
-        return await safe_service_call(self.hass, domain, service, data)
-
-
 # SYSTEM SWITCHES
 
-class PawControlEmergencyModeSwitch(PawControlSwitchBase):
+class PawControlEmergencyModeSwitch(PawControlSwitchEntity):
     """Switch for emergency mode."""
 
     def __init__(self, coordinator: PawControlCoordinator, dog_name: str) -> None:
         """Initialize the switch."""
-        super().__init__(coordinator, dog_name, "emergency_mode")
-        self._attr_icon = ICONS["emergency"]
+        super().__init__(coordinator, dog_name=dog_name, key="emergency_mode", icon=get_icon("emergency"))
 
     @property
     def is_on(self) -> bool | None:
@@ -144,13 +125,12 @@ class PawControlEmergencyModeSwitch(PawControlSwitchBase):
             _LOGGER.error("Failed to deactivate emergency mode for %s: %s", self._dog_name, e)
 
 
-class PawControlVisitorModeSwitch(PawControlSwitchBase):
+class PawControlVisitorModeSwitch(PawControlSwitchEntity):
     """Switch for visitor mode."""
 
     def __init__(self, coordinator: PawControlCoordinator, dog_name: str) -> None:
         """Initialize the switch."""
-        super().__init__(coordinator, dog_name, "visitor_mode")
-        self._attr_icon = ICONS["visitor"]
+        super().__init__(coordinator, dog_name=dog_name, key="visitor_mode", icon=get_icon("visitor"))
 
     @property
     def is_on(self) -> bool | None:
@@ -212,13 +192,12 @@ class PawControlVisitorModeSwitch(PawControlSwitchBase):
             _LOGGER.error("Failed to deactivate visitor mode for %s: %s", self._dog_name, e)
 
 
-class PawControlAutoWalkDetectionSwitch(PawControlSwitchBase):
+class PawControlAutoWalkDetectionSwitch(PawControlSwitchEntity):
     """Switch for automatic walk detection."""
 
     def __init__(self, coordinator: PawControlCoordinator, dog_name: str) -> None:
         """Initialize the switch."""
-        super().__init__(coordinator, dog_name, "auto_walk_detection")
-        self._attr_icon = ICONS["automation"]
+        super().__init__(coordinator, dog_name=dog_name, key="auto_walk_detection", icon=get_icon("automation"))
 
     @property
     def is_on(self) -> bool | None:
@@ -266,13 +245,12 @@ class PawControlAutoWalkDetectionSwitch(PawControlSwitchBase):
 
 # ACTIVITY SWITCHES
 
-class PawControlWalkInProgressSwitch(PawControlSwitchBase):
+class PawControlWalkInProgressSwitch(PawControlSwitchEntity):
     """Switch for walk in progress."""
 
     def __init__(self, coordinator: PawControlCoordinator, dog_name: str) -> None:
         """Initialize the switch."""
-        super().__init__(coordinator, dog_name, "walk_in_progress")
-        self._attr_icon = ICONS["walk"]
+        super().__init__(coordinator, dog_name=dog_name, key="walk_in_progress", icon=get_icon("walk"))
 
     @property
     def is_on(self) -> bool | None:
@@ -333,13 +311,12 @@ class PawControlWalkInProgressSwitch(PawControlSwitchBase):
             _LOGGER.error("Failed to end walk for %s: %s", self._dog_name, e)
 
 
-class PawControlTrainingSessionSwitch(PawControlSwitchBase):
+class PawControlTrainingSessionSwitch(PawControlSwitchEntity):
     """Switch for training session."""
 
     def __init__(self, coordinator: PawControlCoordinator, dog_name: str) -> None:
         """Initialize the switch."""
-        super().__init__(coordinator, dog_name, "training_session")
-        self._attr_icon = ICONS["training"]
+        super().__init__(coordinator, dog_name=dog_name, key="training_session", icon=get_icon("training"))
 
     @property
     def is_on(self) -> bool | None:
@@ -384,13 +361,12 @@ class PawControlTrainingSessionSwitch(PawControlSwitchBase):
             _LOGGER.error("Failed to end training session for %s: %s", self._dog_name, e)
 
 
-class PawControlPlaytimeSessionSwitch(PawControlSwitchBase):
+class PawControlPlaytimeSessionSwitch(PawControlSwitchEntity):
     """Switch for playtime session."""
 
     def __init__(self, coordinator: PawControlCoordinator, dog_name: str) -> None:
         """Initialize the switch."""
-        super().__init__(coordinator, dog_name, "playtime_session")
-        self._attr_icon = ICONS["play"]
+        super().__init__(coordinator, dog_name=dog_name, key="playtime_session", icon=get_icon("play"))
 
     @property
     def is_on(self) -> bool | None:
@@ -441,13 +417,12 @@ class PawControlPlaytimeSessionSwitch(PawControlSwitchBase):
 
 # HEALTH SWITCHES
 
-class PawControlMedicationReminderSwitch(PawControlSwitchBase):
+class PawControlMedicationReminderSwitch(PawControlSwitchEntity):
     """Switch for medication reminders."""
 
     def __init__(self, coordinator: PawControlCoordinator, dog_name: str) -> None:
         """Initialize the switch."""
-        super().__init__(coordinator, dog_name, "medication_reminder")
-        self._attr_icon = ICONS["medication"]
+        super().__init__(coordinator, dog_name=dog_name, key="medication_reminder", icon=get_icon("medication"))
 
     @property
     def is_on(self) -> bool | None:
@@ -493,13 +468,12 @@ class PawControlMedicationReminderSwitch(PawControlSwitchBase):
             _LOGGER.error("Failed to mark medication as given for %s: %s", self._dog_name, e)
 
 
-class PawControlHealthMonitoringSwitch(PawControlSwitchBase):
+class PawControlHealthMonitoringSwitch(PawControlSwitchEntity):
     """Switch for health monitoring."""
 
     def __init__(self, coordinator: PawControlCoordinator, dog_name: str) -> None:
         """Initialize the switch."""
-        super().__init__(coordinator, dog_name, "health_monitoring")
-        self._attr_icon = ICONS["health"]
+        super().__init__(coordinator, dog_name=dog_name, key="health_monitoring", icon=get_icon("health"))
 
     @property
     def is_on(self) -> bool | None:
