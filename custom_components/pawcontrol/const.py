@@ -171,17 +171,72 @@ VALIDATION_RULES = {
 ENTITIES = {
     "input_boolean": {
         "feeding_morning": {"name": "Frühstück gegeben", "icon": "mdi:food"},
+        "feeding_lunch": {"name": "Mittagessen gegeben", "icon": "mdi:food"},
         "feeding_evening": {"name": "Abendessen gegeben", "icon": "mdi:food"},
+        "feeding_snack": {"name": "Snack gegeben", "icon": "mdi:food"},
         "walk_in_progress": {"name": "Spaziergang läuft", "icon": "mdi:walk"},
     },
     "counter": {
         "walk_count": {"name": "Spaziergänge", "initial": 0, "step": 1, "icon": "mdi:walk"},
+        "feeding_morning_count": {
+            "name": "Frühstücks-Zähler",
+            "initial": 0,
+            "step": 1,
+            "icon": "mdi:counter",
+        },
+        "feeding_lunch_count": {
+            "name": "Mittagessens-Zähler",
+            "initial": 0,
+            "step": 1,
+            "icon": "mdi:counter",
+        },
+        "feeding_evening_count": {
+            "name": "Abendessens-Zähler",
+            "initial": 0,
+            "step": 1,
+            "icon": "mdi:counter",
+        },
+        "feeding_snack_count": {
+            "name": "Snack-Zähler",
+            "initial": 0,
+            "step": 1,
+            "icon": "mdi:counter",
+        },
     },
     "input_text": {
         "notes": {"name": "Notizen", "max": 255, "icon": "mdi:note-text"},
     },
     "input_datetime": {
-        "last_walk": {"name": "Letzter Spaziergang", "has_date": True, "has_time": True, "icon": "mdi:walk"},
+        "last_walk": {
+            "name": "Letzter Spaziergang",
+            "has_date": True,
+            "has_time": True,
+            "icon": "mdi:walk",
+        },
+        "last_feeding_morning": {
+            "name": "Letztes Frühstück",
+            "has_date": True,
+            "has_time": True,
+            "icon": "mdi:food",
+        },
+        "last_feeding_lunch": {
+            "name": "Letztes Mittagessen",
+            "has_date": True,
+            "has_time": True,
+            "icon": "mdi:food",
+        },
+        "last_feeding_evening": {
+            "name": "Letztes Abendessen",
+            "has_date": True,
+            "has_time": True,
+            "icon": "mdi:food",
+        },
+        "last_feeding_snack": {
+            "name": "Letzter Snack",
+            "has_date": True,
+            "has_time": True,
+            "icon": "mdi:food",
+        },
     },
     "input_number": {
         "weight": {
