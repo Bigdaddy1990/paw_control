@@ -19,6 +19,10 @@ class PawControlNumberEntity(PawControlBaseEntity, NumberEntity):
         min_value: float | None = None,
         max_value: float | None = None,
         unit: str | None = None,
+        device_class=None,
+        step: float | None = None,
+        mode: str | None = None,
+        state_class: str | None = None,
     ) -> None:
         if dog_name and key and not name:
             name = format_name(dog_name, key)
@@ -30,6 +34,14 @@ class PawControlNumberEntity(PawControlBaseEntity, NumberEntity):
         self._attr_icon = icon or (key and get_icon(key))
         if unit:
             self._attr_native_unit_of_measurement = unit
+        if device_class:
+            self._attr_device_class = device_class
+        if step is not None:
+            self._attr_native_step = step
+        if mode:
+            self._attr_mode = mode
+        if state_class:
+            self._attr_state_class = state_class
 
     @property
     def native_value(self):
