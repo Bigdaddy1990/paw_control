@@ -1,9 +1,14 @@
 """Gassi-/Spaziergangsmodul für Paw Control."""
 
-from datetime import datetime
-from .const import *
+from datetime import UTC, datetime
 
-async def setup_walk(hass, entry):
+from homeassistant.config_entries import ConfigEntry
+from homeassistant.core import HomeAssistant
+
+from .const import CONF_DOG_NAME
+
+
+async def setup_walk(hass: HomeAssistant, entry: ConfigEntry) -> None:
     """Initialisiert Gassi-Tracking, Counter, Sensoren und Helper."""
     dog = entry.data[CONF_DOG_NAME]
 
@@ -11,16 +16,22 @@ async def setup_walk(hass, entry):
     last_walk_id = f"sensor.{dog}_last_walk"
     hass.states.async_set(
         last_walk_id,
-        datetime.now().isoformat(),
-        {"friendly_name": f"{dog} Letzter Spaziergang"}
+        datetime.now(UTC).isoformat(),
+        {"friendly_name": f"{dog} Letzter Spaziergang"},
     )
 
     # Counter für Anzahl Spaziergänge
     walk_counter_id = f"counter.{dog}_walks"
     if not hass.states.get(walk_counter_id):
         await hass.services.async_call(
-            "counter", "create",
-            {"name": f"{dog} Spaziergänge", "entity_id": walk_counter_id, "initial": 0, "step": 1},
+            "counter",
+            "create",
+            {
+                "name": f"{dog} Spaziergänge",
+                "entity_id": walk_counter_id,
+                "initial": 0,
+                "step": 1,
+            },
             blocking=True,
         )
 
@@ -28,12 +39,14 @@ async def setup_walk(hass, entry):
     walk_active_id = f"input_boolean.{dog}_walk_active"
     if not hass.states.get(walk_active_id):
         await hass.services.async_call(
-            "input_boolean", "create",
+            "input_boolean",
+            "create",
             {"name": f"{dog} Gassi läuft", "entity_id": walk_active_id},
             blocking=True,
         )
 
-async def teardown_walk(hass, entry):
+
+async def teardown_walk(hass: HomeAssistant, entry: ConfigEntry) -> None:
     """Entfernt Gassi-Sensoren und Helper."""
     dog = entry.data[CONF_DOG_NAME]
     last_walk_id = f"sensor.{dog}_last_walk"
@@ -43,23 +56,27 @@ async def teardown_walk(hass, entry):
     hass.states.async_remove(last_walk_id)
     if hass.states.get(walk_counter_id):
         await hass.services.async_call(
-            "counter", "reset",
+            "counter",
+            "reset",
             {"entity_id": walk_counter_id},
             blocking=True,
         )
         await hass.services.async_call(
-            "counter", "remove",
+            "counter",
+            "remove",
             {"entity_id": walk_counter_id},
             blocking=True,
         )
     if hass.states.get(walk_active_id):
         await hass.services.async_call(
-            "input_boolean", "remove",
+            "input_boolean",
+            "remove",
             {"entity_id": walk_active_id},
             blocking=True,
         )
 
-async def ensure_helpers(hass, opts):
+
+async def ensure_helpers(hass: HomeAssistant, opts: dict) -> None:
     """Stellt sicher, dass Gassi-Helper existieren."""
     dog = opts[CONF_DOG_NAME]
     walk_counter_id = f"counter.{dog}_walks"
@@ -67,13 +84,21 @@ async def ensure_helpers(hass, opts):
 
     if not hass.states.get(walk_counter_id):
         await hass.services.async_call(
-            "counter", "create",
-            {"name": f"{dog} Spaziergänge", "entity_id": walk_counter_id, "initial": 0, "step": 1},
+            "counter",
+            "create",
+            {
+                "name": f"{dog} Spaziergänge",
+                "entity_id": walk_counter_id,
+                "initial": 0,
+                "step": 1,
+            },
             blocking=True,
         )
     if not hass.states.get(walk_active_id):
         await hass.services.async_call(
-            "input_boolean", "create",
+            "input_boolean",
+            "create",
             {"name": f"{dog} Gassi läuft", "entity_id": walk_active_id},
             blocking=True,
         )
+
