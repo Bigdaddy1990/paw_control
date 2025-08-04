@@ -24,3 +24,10 @@ class PawControlGpsEntity(PawControlBaseEntity):
             self._state = (data["lat"], data["lon"])
         else:
             self._state = None
+
+    @property
+    def extra_state_attributes(self):
+        if self._state:
+            lat, lon = self._state
+            return self.build_extra_attributes(lat=lat, lon=lon)
+        return super().extra_state_attributes

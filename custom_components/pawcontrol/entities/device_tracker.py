@@ -28,10 +28,11 @@ class PawControlDeviceTrackerEntity(PawControlBaseEntity, TrackerEntity):
 
     @property
     def extra_state_attributes(self):
-        attrs = super().extra_state_attributes
         if self._state:
-            attrs["coords"] = format_gps_coords(self.latitude, self.longitude)
-        return attrs
+            return self.build_extra_attributes(
+                coords=format_gps_coords(self.latitude, self.longitude)
+            )
+        return super().extra_state_attributes
 
     @property
     def source_type(self):
