@@ -14,6 +14,7 @@ from custom_components.pawcontrol.utils import (
     format_duration,
     format_weight,
     time_since_last_activity,
+    validate_dog_name,
 )
 
 
@@ -107,3 +108,11 @@ def test_time_since_last_activity_accepts_datetime_object():
     expected = datetime.now() - past_time
     assert isinstance(result, timedelta)
     assert abs(result - expected) <= tolerance
+
+
+def test_validate_dog_name_enforces_rules():
+    """Dog names must follow pattern, length and start with a letter."""
+    assert validate_dog_name("Buddy")
+    assert not validate_dog_name("1Buddy")
+    assert not validate_dog_name("Bad!")
+    assert not validate_dog_name("a" * 31)
