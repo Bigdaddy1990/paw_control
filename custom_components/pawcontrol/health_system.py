@@ -2,10 +2,12 @@ import logging
 import datetime
 from typing import List, Dict, Optional
 from homeassistant.core import HomeAssistant
-from homeassistant.helpers.entity import Entity, EntityCategory
+from homeassistant.helpers.entity import EntityCategory
 from homeassistant.components.binary_sensor import BinarySensorEntity
+
 from .const import DOMAIN
 from .utils import register_services
+from .entities.health import PawControlHealthEntity
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -38,38 +40,34 @@ def get_activity_logger(hass: HomeAssistant) -> ActivityLogger:
         hass.data[DOMAIN]["activity_logger"] = ActivityLogger()
     return hass.data[DOMAIN]["activity_logger"]
 
-class PawControlHealthSensor(Entity):
+class PawControlHealthSensor(PawControlHealthEntity):
     def __init__(self, activity_logger, entry_id: str):
-        self._activity_logger = activity_logger
-        self._attr_name = "PawControl Gesundheitsstatus"
-        self._attr_unique_id = f"{DOMAIN}_health_status_{entry_id}"
+        super().__init__(
+            activity_logger,
+            entry_id,
+            "PawControl Gesundheitsstatus",
+            "health_status",
+        )
         self._attr_entity_category = EntityCategory.DIAGNOSTIC
 
     @property
     def state(self):
-        latest = self._activity_logger.get_latest("health")
+        latest = self._latest_health
         return latest["details"].get("status", "unknown") if latest else "unknown"
 
-    @property
-    def extra_state_attributes(self):
-        latest = self._activity_logger.get_latest("health")
-        return latest or {}
-
-class PawControlHealthAlertBinarySensor(BinarySensorEntity):
+class PawControlHealthAlertBinarySensor(PawControlHealthEntity, BinarySensorEntity):
     def __init__(self, activity_logger, entry_id: str):
-        self._activity_logger = activity_logger
-        self._attr_name = "PawControl Health Alert"
-        self._attr_unique_id = f"{DOMAIN}_health_alert_{entry_id}"
+        super().__init__(
+            activity_logger,
+            entry_id,
+            "PawControl Health Alert",
+            "health_alert",
+        )
 
     @property
     def is_on(self):
-        latest = self._activity_logger.get_latest("health")
-        return latest and latest["details"].get("alert", False)
-
-    @property
-    def extra_state_attributes(self):
-        latest = self._activity_logger.get_latest("health")
-        return latest or {}
+        latest = self._latest_health
+        return bool(latest and latest["details"].get("alert", False))
 
 async def async_setup_entry(hass: HomeAssistant, entry):
     _LOGGER.info("Setting up PawControl Health Logger from config entry")
