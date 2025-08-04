@@ -40,13 +40,8 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         """Handle the first step of the configuration flow."""
 
         errors: dict[str, str] = {}
-        if user_input is not None:
-            # Additional validation could be added here
-            return self.async_create_entry(
-                title=user_input[CONF_DOG_NAME], data=user_input
-            )
 
-        schema: dict[Any, Any] = {
+        schema_dict: dict[Any, Any] = {
             vol.Required(CONF_DOG_NAME): str,
             vol.Optional(CONF_DOG_BREED, default=""): str,
             vol.Optional(CONF_DOG_AGE, default=0): vol.All(vol.Coerce(int), vol.Range(min=0)),
@@ -59,11 +54,26 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             vol.Optional(CONF_VET_CONTACT, default=""): str,
         }
         # Add toggles for modules and dashboard creation
-        schema.update(build_module_schema())
+        schema_dict.update(build_module_schema())
+        schema = vol.Schema(schema_dict)
+
+        if user_input is not None:
+            try:
+                user_input = schema(user_input)
+            except vol.MultipleInvalid as err:
+                for error in err.errors:
+                    if error.path:
+                        errors[str(error.path[0])] = "invalid_input"
+                    else:
+                        errors["base"] = "invalid_input"
+            else:
+                return self.async_create_entry(
+                    title=user_input[CONF_DOG_NAME], data=user_input
+                )
 
         return self.async_show_form(
             step_id="user",
-            data_schema=vol.Schema(schema),
+            data_schema=schema,
             errors=errors,
         )
 
@@ -88,10 +98,19 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
 
         data = merge_entry_options(self.config_entry)
 
+        schema = vol.Schema(build_module_schema(data))
+
         if user_input is not None:
-            return self.async_create_entry(title="", data=user_input)
+            errors: dict[str, str] = {}
+            try:
+                user_input = schema(user_input)
+            except vol.MultipleInvalid:
+                errors["base"] = "invalid_input"
+            else:
+                return self.async_create_entry(title="", data=user_input)
+            return self.async_show_form(
+                step_id="init", data_schema=schema, errors=errors
+            )
 
-        schema = build_module_schema(data)
-
-        return self.async_show_form(step_id="init", data_schema=vol.Schema(schema))
+        return self.async_show_form(step_id="init", data_schema=schema)
 
