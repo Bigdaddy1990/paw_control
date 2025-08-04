@@ -2,7 +2,6 @@
 from __future__ import annotations
 
 import logging
-from datetime import datetime
 from typing import Any
 
 from homeassistant.components.sensor import SensorDeviceClass
@@ -10,9 +9,10 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
-from .const import DOMAIN, ICONS
+from .const import DOMAIN
 from .coordinator import PawControlCoordinator
 from .entities import PawControlSensorEntity
+from .helpers.entity import get_icon, parse_datetime
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -27,19 +27,12 @@ async def async_setup_entry(
     dog_name = coordinator.dog_name
     
     entities = [
-        # Status sensors
         PawControlStatusSensor(coordinator, dog_name),
         PawControlDailySummarySensor(coordinator, dog_name),
-        
-        # Activity sensors
         PawControlLastWalkSensor(coordinator, dog_name),
         PawControlWalkCountSensor(coordinator, dog_name),
-        
-        # Health sensors
         PawControlWeightSensor(coordinator, dog_name),
         PawControlHealthStatusSensor(coordinator, dog_name),
-        
-        # Location sensors
         PawControlLocationSensor(coordinator, dog_name),
         PawControlGPSSignalSensor(coordinator, dog_name),
     ]
@@ -47,27 +40,12 @@ async def async_setup_entry(
     async_add_entities(entities)
 
 
-class PawControlSensorBase(PawControlSensorEntity):
-    """Gemeinsame Basis für Paw Control Sensoren."""
-
-    def __init__(
-        self,
-        coordinator: PawControlCoordinator,
-        dog_name: str,
-        sensor_type: str,
-    ) -> None:
-        """Initialisiere den Sensor mit Standardattributen."""
-        name = f"{dog_name} {sensor_type.replace('_', ' ').title()}"
-        super().__init__(coordinator, name, dog_name, sensor_type)
-
-
-class PawControlStatusSensor(PawControlSensorBase):
+class PawControlStatusSensor(PawControlSensorEntity):
     """Sensor for overall dog status."""
 
     def __init__(self, coordinator: PawControlCoordinator, dog_name: str) -> None:
         """Initialize the sensor."""
-        super().__init__(coordinator, dog_name, "status")
-        self._attr_icon = ICONS["status"]
+        super().__init__(coordinator, dog_name=dog_name, key="status")
 
     @property
     def native_value(self) -> str | None:
@@ -95,13 +73,12 @@ class PawControlStatusSensor(PawControlSensorBase):
         return attrs
 
 
-class PawControlDailySummarySensor(PawControlSensorBase):
+class PawControlDailySummarySensor(PawControlSensorEntity):
     """Sensor for daily summary."""
 
     def __init__(self, coordinator: PawControlCoordinator, dog_name: str) -> None:
         """Initialize the sensor."""
-        super().__init__(coordinator, dog_name, "daily_summary")
-        self._attr_icon = "mdi:calendar-today"
+        super().__init__(coordinator, dog_name=dog_name, key="daily_summary", icon="mdi:calendar-today")
 
     @property
     def native_value(self) -> str | None:
@@ -126,14 +103,18 @@ class PawControlDailySummarySensor(PawControlSensorBase):
             return "Fehler beim Laden"
 
 
-class PawControlLastWalkSensor(PawControlSensorBase):
+class PawControlLastWalkSensor(PawControlSensorEntity):
     """Sensor for last walk time."""
 
     def __init__(self, coordinator: PawControlCoordinator, dog_name: str) -> None:
         """Initialize the sensor."""
-        super().__init__(coordinator, dog_name, "last_walk")
-        self._attr_icon = ICONS["walk"]
-        self._attr_device_class = SensorDeviceClass.TIMESTAMP
+        super().__init__(
+            coordinator,
+            dog_name=dog_name,
+            key="last_walk",
+            device_class=SensorDeviceClass.TIMESTAMP,
+            icon=get_icon("walk"),
+        )
 
     @property
     def native_value(self) -> datetime | None:
@@ -143,25 +124,19 @@ class PawControlLastWalkSensor(PawControlSensorBase):
         
         try:
             activity = self.coordinator.data.get("activity_status", {})
-            last_walk = activity.get("last_walk")
-            
-            if last_walk and last_walk not in ["unknown", "unavailable"]:
-                return datetime.fromisoformat(last_walk.replace("Z", "+00:00"))
-            
-            return None
-            
-        except (ValueError, TypeError) as e:
+            last_walk = parse_datetime(activity.get("last_walk"))
+            return last_walk
+        except Exception as e:
             _LOGGER.error("Error parsing last walk time: %s", e)
             return None
 
 
-class PawControlWalkCountSensor(PawControlSensorBase):
+class PawControlWalkCountSensor(PawControlSensorEntity):
     """Sensor for walk count."""
 
     def __init__(self, coordinator: PawControlCoordinator, dog_name: str) -> None:
         """Initialize the sensor."""
-        super().__init__(coordinator, dog_name, "walk_count")
-        self._attr_icon = ICONS["walk"]
+        super().__init__(coordinator, dog_name=dog_name, key="walk_count", icon=get_icon("walk"))
 
     @property
     def native_value(self) -> int | None:
@@ -173,15 +148,19 @@ class PawControlWalkCountSensor(PawControlSensorBase):
         return activity.get("walk_count", 0)
 
 
-class PawControlWeightSensor(PawControlSensorBase):
+class PawControlWeightSensor(PawControlSensorEntity):
     """Sensor for weight."""
 
     def __init__(self, coordinator: PawControlCoordinator, dog_name: str) -> None:
         """Initialize the sensor."""
-        super().__init__(coordinator, dog_name, "weight")
-        self._attr_icon = ICONS["weight"]
-        self._attr_native_unit_of_measurement = "kg"
-        self._attr_device_class = SensorDeviceClass.WEIGHT
+        super().__init__(
+            coordinator,
+            dog_name=dog_name,
+            key="weight",
+            icon=get_icon("weight"),
+            device_class=SensorDeviceClass.WEIGHT,
+            unit="kg",
+        )
 
     @property
     def native_value(self) -> float | None:
@@ -193,13 +172,12 @@ class PawControlWeightSensor(PawControlSensorBase):
         return health.get("weight")
 
 
-class PawControlHealthStatusSensor(PawControlSensorBase):
+class PawControlHealthStatusSensor(PawControlSensorEntity):
     """Sensor for health status."""
 
     def __init__(self, coordinator: PawControlCoordinator, dog_name: str) -> None:
         """Initialize the sensor."""
-        super().__init__(coordinator, dog_name, "health_status")
-        self._attr_icon = ICONS["health"]
+        super().__init__(coordinator, dog_name=dog_name, key="health_status")
 
     @property
     def native_value(self) -> str | None:
@@ -225,13 +203,12 @@ class PawControlHealthStatusSensor(PawControlSensorBase):
         return attrs
 
 
-class PawControlLocationSensor(PawControlSensorBase):
+class PawControlLocationSensor(PawControlSensorEntity):
     """Sensor for current location."""
 
     def __init__(self, coordinator: PawControlCoordinator, dog_name: str) -> None:
         """Initialize the sensor."""
-        super().__init__(coordinator, dog_name, "location")
-        self._attr_icon = ICONS["location"]
+        super().__init__(coordinator, dog_name=dog_name, key="location")
 
     @property
     def native_value(self) -> str | None:
@@ -270,14 +247,18 @@ class PawControlLocationSensor(PawControlSensorBase):
         return attrs
 
 
-class PawControlGPSSignalSensor(PawControlSensorBase):
+class PawControlGPSSignalSensor(PawControlSensorEntity):
     """Sensor for GPS signal strength."""
 
     def __init__(self, coordinator: PawControlCoordinator, dog_name: str) -> None:
         """Initialize the sensor."""
-        super().__init__(coordinator, dog_name, "gps_signal")
-        self._attr_icon = ICONS["signal"]
-        self._attr_native_unit_of_measurement = "%"
+        super().__init__(
+            coordinator,
+            dog_name=dog_name,
+            key="gps_signal",
+            icon=get_icon("signal"),
+            unit="%",
+        )
 
     @property
     def native_value(self) -> float | None:
