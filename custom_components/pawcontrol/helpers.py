@@ -16,8 +16,7 @@ from .const import (
     CONF_DOG_NAME,
     ENTITIES,
     FEEDING_TYPES,
-    MEAL_TYPES,
-    DEFAULT_FEEDING_TIMES_DICT,
+    MEAL_TYPES
 )
 from .utils import safe_service_call, normalize_dog_name
 
