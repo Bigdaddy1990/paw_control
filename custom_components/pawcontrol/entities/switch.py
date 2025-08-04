@@ -3,7 +3,6 @@ from homeassistant.components.switch import SwitchEntity
 
 from .base import PawControlBaseEntity
 from ..helpers.entity import as_bool
-from ..utils import safe_service_call
 
 
 class PawControlSwitchEntity(PawControlBaseEntity, SwitchEntity):
@@ -43,7 +42,3 @@ class PawControlSwitchEntity(PawControlBaseEntity, SwitchEntity):
     async def async_turn_off(self, **kwargs):
         # Geräte ausschalten
         pass
-
-    async def _safe_service_call(self, domain: str, service: str, data: dict) -> bool:
-        """Hilfsfunktion für sichere Serviceaufrufe."""
-        return await safe_service_call(self.hass, domain, service, data)
