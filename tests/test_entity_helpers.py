@@ -5,7 +5,11 @@ import pytest
 
 sys.path.insert(0, os.path.abspath("."))
 
-from custom_components.pawcontrol.helpers.entity import clamp_value, ensure_option
+from custom_components.pawcontrol.helpers.entity import (
+    as_bool,
+    clamp_value,
+    ensure_option,
+)
 
 
 def test_clamp_value():
@@ -19,3 +23,10 @@ def test_ensure_option():
     assert ensure_option("b", options) == "b"
     assert ensure_option("c", options) == "a"
     assert ensure_option("c", []) == "c"
+
+
+def test_as_bool():
+    assert as_bool(True) is True
+    assert as_bool("on") is True
+    assert as_bool("off") is False
+    assert as_bool(0) is False
