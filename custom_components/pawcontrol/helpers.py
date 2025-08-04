@@ -748,17 +748,6 @@ async def cleanup_dog_entities(hass: HomeAssistant, dog_name: str) -> None:
     except Exception as e:
         _LOGGER.error("Error during entity cleanup for %s: %s", dog_name, e)
 
-def parse_datetime(dt_str: str) -> Optional[datetime.datetime]:
-    try:
-        return datetime.datetime.fromisoformat(dt_str)
-    except Exception as e:
-        _LOGGER.error("Failed to parse datetime '%s': %s", dt_str, e)
-        return None
-
-def format_datetime(dt: datetime.datetime) -> str:
-    if dt is None:
-        return ""
-    return dt.isoformat()
 
 def safe_get(data: Dict, *keys, default=None):
     for key in keys:
@@ -774,7 +763,24 @@ def merge_dicts(a: Dict, b: Dict) -> Dict:
     result.update(b)
     return result
 
-def days_between(date1: datetime.datetime, date2: datetime.datetime) -> int:
+def parse_datetime(dt_str: str) -> Optional[datetime]:
+    """Convert an ISO formatted string to a datetime object."""
+    try:
+        return datetime.fromisoformat(dt_str)
+    except Exception as e:  # pragma: no cover - logging edge cases
+        _LOGGER.error("Failed to parse datetime '%s': %s", dt_str, e)
+        return None
+
+
+def format_datetime(dt: datetime | None) -> str:
+    """Return an ISO formatted string for a datetime object."""
+    if dt is None:
+        return ""
+    return dt.isoformat()
+
+
+def days_between(date1: datetime, date2: datetime) -> int:
+    """Return the absolute number of days between two datetimes."""
     return abs((date2 - date1).days)
 
 def clamp(val: float, min_val: float, max_val: float) -> float:
