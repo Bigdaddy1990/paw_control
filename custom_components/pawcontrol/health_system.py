@@ -5,6 +5,7 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity import Entity, EntityCategory
 from homeassistant.components.binary_sensor import BinarySensorEntity
 from .const import DOMAIN
+from .utils import register_services
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -80,15 +81,20 @@ async def async_setup_entry(hass: HomeAssistant, entry):
         details = call.data.get("details", {})
         logger.log_activity(activity_type, details)
 
-    hass.services.async_register(DOMAIN, "log_activity", handle_log_activity)
-
     async def handle_get_latest_activity(call):
         logger = get_activity_logger(hass)
         activity_type = call.data.get("type")
         latest = logger.get_latest(activity_type)
         _LOGGER.info("Latest activity: %s", latest)
 
-    hass.services.async_register(DOMAIN, "get_latest_activity", handle_get_latest_activity)
+    register_services(
+        hass,
+        DOMAIN,
+        {
+            "log_activity": handle_log_activity,
+            "get_latest_activity": handle_get_latest_activity,
+        },
+    )
 
     return True
 

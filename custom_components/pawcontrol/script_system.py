@@ -16,6 +16,7 @@ from .const import (
     MEAL_TYPES,
     STATUS_MESSAGES,
 )
+from .utils import register_services
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -92,10 +93,7 @@ class PawControlScriptManager:
                 SERVICE_GENERATE_REPORT: self._generate_report_service,
             }
 
-            for service, handler in services.items():
-                self.hass.services.async_register(
-                    DOMAIN, service, handler, schema=None
-                )
+            register_services(self.hass, DOMAIN, services)
 
             _LOGGER.info(
                 "Registered %d services for %s", len(services), self._dog_name

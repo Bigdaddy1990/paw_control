@@ -1,6 +1,7 @@
 """Push-Modul für Paw Control – Service, Target-Handling, Setup/Teardown."""
 
 from .const import *
+from .utils import register_services
 
 async def setup_push(hass, entry):
     """Registriert Push-Service, Helper für Benachrichtigungen."""
@@ -25,7 +26,11 @@ async def setup_push(hass, entry):
             f"{dog}: {message}",
             title=title
         )
-    hass.services.async_register(DOMAIN, SERVICE_SEND_NOTIFICATION, handle_send_notification)
+    register_services(
+        hass,
+        DOMAIN,
+        {SERVICE_SEND_NOTIFICATION: handle_send_notification},
+    )
 
 async def teardown_push(hass, entry):
     """Entfernt Push-Service und zugehörige Helper."""

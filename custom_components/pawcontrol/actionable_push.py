@@ -4,6 +4,8 @@ import logging
 _LOGGER = logging.getLogger(__name__)
 DOMAIN = "pawcontrol"
 
+from .utils import register_services
+
 async def handle_send_notification(call: ServiceCall):
     hass: HomeAssistant = call.hass
     dog_name = call.data.get("dog_name")
@@ -54,4 +56,4 @@ async def handle_send_notification(call: ServiceCall):
         )
 
 def setup_actionable_notifications(hass: HomeAssistant):
-    hass.services.async_register(DOMAIN, "send_notification", handle_send_notification)
+    register_services(hass, DOMAIN, {"send_notification": handle_send_notification})

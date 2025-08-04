@@ -10,6 +10,7 @@ from homeassistant.components.device_tracker import SourceType, DeviceTrackerEnt
 from homeassistant.components.binary_sensor import BinarySensorEntity, DEVICE_CLASS_PROBLEM
 from homeassistant.components.button import ButtonEntity
 from .const import DOMAIN
+from .utils import register_services
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -140,7 +141,8 @@ async def async_setup_entry(hass: HomeAssistant, entry):
     async def handle_manual_gps_update(call):
         _LOGGER.info("Manual GPS update requested.")
         await coordinator.async_request_refresh()
-    hass.services.async_register(DOMAIN, "update_gps", handle_manual_gps_update)
+
+    register_services(hass, DOMAIN, {"update_gps": handle_manual_gps_update})
 
     return True
 

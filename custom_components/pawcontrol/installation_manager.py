@@ -13,6 +13,7 @@ from .module_registry import (
     async_setup_modules,
     async_unload_modules,
 )
+from .utils import merge_entry_options
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -23,7 +24,7 @@ class InstallationManager:
     async def setup_entry(self, hass: HomeAssistant, entry: ConfigEntry) -> bool:
         """Set up the integration and selected modules."""
         # Merge config entry data and options, with options taking precedence
-        opts = entry.data | entry.options
+        opts = merge_entry_options(entry)
 
         # Some parts of the integration – especially helper creation – expect a
         # dog name to be present.  The title of the entry is the dog name in the
