@@ -1,14 +1,11 @@
 from __future__ import annotations
 
 import logging
-import asyncio
-from datetime import datetime, timedelta
-from typing import Dict, List, Any, Optional
+from datetime import datetime
 
-from homeassistant.core import HomeAssistant, ServiceCall
 from homeassistant.config_entries import ConfigEntry
+from homeassistant.core import HomeAssistant, ServiceCall
 from homeassistant.helpers.script import Script
-from homeassistant.helpers import entity_registry
 
 from .const import (
     DOMAIN,
@@ -80,73 +77,30 @@ class PawControlScriptManager:
     async def async_setup_services(self) -> None:
         """Set up all services."""
         try:
-            # Register feeding services
-            self.hass.services.async_register(
-                DOMAIN, SERVICE_FEED_DOG, self._feed_dog_service,
-                schema=None
+            services = {
+                SERVICE_FEED_DOG: self._feed_dog_service,
+                SERVICE_WALK_DOG: self._walk_dog_service,
+                SERVICE_PLAY_WITH_DOG: self._play_with_dog_service,
+                SERVICE_TRAINING_SESSION: self._training_session_service,
+                SERVICE_HEALTH_CHECK: self._health_check_service,
+                SERVICE_MEDICATION_GIVEN: self._medication_given_service,
+                SERVICE_VET_VISIT: self._vet_visit_service,
+                SERVICE_GROOMING_SESSION: self._grooming_session_service,
+                SERVICE_EMERGENCY_MODE: self._emergency_mode_service,
+                SERVICE_VISITOR_MODE: self._visitor_mode_service,
+                SERVICE_DAILY_RESET: self._daily_reset_service,
+                SERVICE_GENERATE_REPORT: self._generate_report_service,
+            }
+
+            for service, handler in services.items():
+                self.hass.services.async_register(
+                    DOMAIN, service, handler, schema=None
+                )
+
+            _LOGGER.info(
+                "Registered %d services for %s", len(services), self._dog_name
             )
-            
-            # Register activity services
-            self.hass.services.async_register(
-                DOMAIN, SERVICE_WALK_DOG, self._walk_dog_service,
-                schema=None
-            )
-            
-            self.hass.services.async_register(
-                DOMAIN, SERVICE_PLAY_WITH_DOG, self._play_with_dog_service,
-                schema=None
-            )
-            
-            self.hass.services.async_register(
-                DOMAIN, SERVICE_TRAINING_SESSION, self._training_session_service,
-                schema=None
-            )
-            
-            # Register health services
-            self.hass.services.async_register(
-                DOMAIN, SERVICE_HEALTH_CHECK, self._health_check_service,
-                schema=None
-            )
-            
-            self.hass.services.async_register(
-                DOMAIN, SERVICE_MEDICATION_GIVEN, self._medication_given_service,
-                schema=None
-            )
-            
-            self.hass.services.async_register(
-                DOMAIN, SERVICE_VET_VISIT, self._vet_visit_service,
-                schema=None
-            )
-            
-            # Register care services
-            self.hass.services.async_register(
-                DOMAIN, SERVICE_GROOMING_SESSION, self._grooming_session_service,
-                schema=None
-            )
-            
-            # Register system services
-            self.hass.services.async_register(
-                DOMAIN, SERVICE_EMERGENCY_MODE, self._emergency_mode_service,
-                schema=None
-            )
-            
-            self.hass.services.async_register(
-                DOMAIN, SERVICE_VISITOR_MODE, self._visitor_mode_service,
-                schema=None
-            )
-            
-            self.hass.services.async_register(
-                DOMAIN, SERVICE_DAILY_RESET, self._daily_reset_service,
-                schema=None
-            )
-            
-            self.hass.services.async_register(
-                DOMAIN, SERVICE_GENERATE_REPORT, self._generate_report_service,
-                schema=None
-            )
-            
-            _LOGGER.info("Registered %d services for %s", 12, self._dog_name)
-            
+
         except Exception as e:
             _LOGGER.error("Error setting up services for %s: %s", self._dog_name, e)
             raise

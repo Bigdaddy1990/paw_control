@@ -1,8 +1,12 @@
-"""Setup verification and auto-fix functionality for Paw Control - FIXED VERSION."""
-import logging
+"""Setup verification and auto-fix functionality for Paw Control."""
+
+from __future__ import annotations
+
 import asyncio
+import logging
+from dataclasses import asdict, dataclass, field
 from datetime import datetime
-from typing import Dict, List, Any, Optional
+from typing import Any, Dict
 
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers import entity_registry as er
@@ -12,7 +16,22 @@ from .utils import safe_service_call
 _LOGGER = logging.getLogger(__name__)
 
 
-async def async_verify_critical_entities(hass: HomeAssistant, dog_name: str) -> Dict[str, Any]:
+@dataclass
+class CriticalEntityReport:
+    """Result information from :func:`async_verify_critical_entities`."""
+
+    critical_entities_total: int
+    critical_entities_found: int = 0
+    critical_entities_missing: list[str] = field(default_factory=list)
+    critical_entities_working: list[str] = field(default_factory=list)
+    critical_entities_broken: list[str] = field(default_factory=list)
+    is_functional: bool = False
+    error: str | None = None
+
+
+async def async_verify_critical_entities(
+    hass: HomeAssistant, dog_name: str
+) -> Dict[str, Any]:
     """Verify that critical entities exist and are functional."""
     critical_entities = [
         f"input_boolean.{dog_name}_feeding_morning",
@@ -24,45 +43,42 @@ async def async_verify_critical_entities(hass: HomeAssistant, dog_name: str) -> 
         f"input_select.{dog_name}_health_status",
         f"input_number.{dog_name}_weight",
     ]
-    
-    verification_result = {
-        "critical_entities_total": len(critical_entities),
-        "critical_entities_found": 0,
-        "critical_entities_missing": [],
-        "critical_entities_working": [],
-        "critical_entities_broken": [],
-        "is_functional": False
-    }
-    
+
+    report = CriticalEntityReport(critical_entities_total=len(critical_entities))
+
     try:
         for entity_id in critical_entities:
             state = hass.states.get(entity_id)
             if not state:
-                verification_result["critical_entities_missing"].append(entity_id)
+                report.critical_entities_missing.append(entity_id)
                 continue
-                
-            verification_result["critical_entities_found"] += 1
+
+            report.critical_entities_found += 1
             if state.state in ["unknown", "unavailable"]:
-                verification_result["critical_entities_broken"].append(entity_id)
+                report.critical_entities_broken.append(entity_id)
             else:
-                verification_result["critical_entities_working"].append(entity_id)
-        
-        working_count = len(verification_result["critical_entities_working"])
-        total_count = len(critical_entities)
-        verification_result["is_functional"] = (working_count / total_count) >= 0.8  # 80% threshold
-        
-        _LOGGER.info("Critical entity verification for %s: %d/%d working (%.1f%%)", 
-                    dog_name, working_count, total_count, (working_count / total_count) * 100)
-        
-        return verification_result
-        
+                report.critical_entities_working.append(entity_id)
+
+        working_count = len(report.critical_entities_working)
+        report.is_functional = (
+            working_count / report.critical_entities_total
+        ) >= 0.8  # 80% threshold
+
+        _LOGGER.info(
+            "Critical entity verification for %s: %d/%d working (%.1f%%)",
+            dog_name,
+            working_count,
+            report.critical_entities_total,
+            (working_count / report.critical_entities_total) * 100,
+        )
+
+        return asdict(report)
+
     except Exception as e:
+        report.error = str(e)
         _LOGGER.error("Error during critical entity verification: %s", e)
-        return {
-            **verification_result,
-            "error": str(e),
-            "is_functional": False
-        }
+        report.is_functional = False
+        return asdict(report)
 
 
 async def async_repair_broken_entities(hass: HomeAssistant, dog_name: str, expected_entities: Dict[str, Dict[str, Any]]) -> Dict[str, Any]:
