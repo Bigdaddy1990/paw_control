@@ -25,25 +25,29 @@ from .exceptions import InvalidCoordinates, DataValidationError
 _LOGGER = logging.getLogger(__name__)
 
 
+# Precompile dog name pattern for reuse
+DOG_NAME_RE = re.compile(DOG_NAME_PATTERN)
+
+
 def validate_dog_name(name: str) -> bool:
     """Validate dog name format and constraints."""
     if not name or not isinstance(name, str):
         return False
-    
+
     name = name.strip()
-    
+
     # Check length
     if len(name) < MIN_DOG_NAME_LENGTH or len(name) > MAX_DOG_NAME_LENGTH:
         return False
-    
+
     # Check for valid characters (letters, numbers, spaces, common punctuation)
-    if not re.match(r'^[a-zA-ZäöüÄÖÜß0-9\s\-_.]+$', name):
+    if not DOG_NAME_RE.match(name):
         return False
-    
+
     # Must start with a letter
     if not name[0].isalpha():
         return False
-    
+
     return True
 
 
