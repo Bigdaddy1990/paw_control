@@ -27,6 +27,8 @@
 
 Während der Einrichtung und im Optionsdialog werden alle verfügbaren Module als Schalter angezeigt. Ein aktivierter Schalter richtet die zugehörigen Sensoren, Helper und Automationen ein; beim Deaktivieren werden sie wieder entfernt.
 
+Der Teardown-Handler eines Moduls wird nur ausgeführt, wenn dieses in den Optionen ausdrücklich auf `Aus` gesetzt ist. Module, die standardmäßig deaktiviert sind und in den Optionen fehlen, werden dabei ignoriert.
+
 ![Options Flow mit Modul-Schaltern](images/options_flow.svg)
 
 Die Module lassen sich jederzeit über `Einstellungen → Geräte & Dienste → Paw Control → Optionen` anpassen.
