@@ -61,3 +61,12 @@ def ensure_option(option: str, options: list[str]) -> str:
         return option
     return options[0] if options else option
 
+
+def as_bool(value: Any) -> bool:
+    """Konvertiere verschiedene Darstellungen zu einem booleschen Wert."""
+    if isinstance(value, bool):
+        return value
+    if isinstance(value, str):
+        return value.lower() in ("true", "on", "1", "yes")
+    return bool(value)
+

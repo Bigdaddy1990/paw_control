@@ -6,10 +6,13 @@ import asyncio
 
 sys.path.insert(0, os.path.abspath("."))
 
-from custom_components.pawcontrol.entities.text import PawControlTextEntity
+from custom_components.pawcontrol.entities.binary_sensor import (
+    PawControlBinarySensorEntity,
+)
+from custom_components.pawcontrol.entities.datetime import PawControlDateTimeEntity
 from custom_components.pawcontrol.entities.number import PawControlNumberEntity
 from custom_components.pawcontrol.entities.select import PawControlSelectEntity
-from custom_components.pawcontrol.entities.datetime import PawControlDateTimeEntity
+from custom_components.pawcontrol.entities.text import PawControlTextEntity
 
 
 class DummyCoordinator:
@@ -57,3 +60,15 @@ def test_datetime_entity_converts_value():
     assert value.day == 10
     assert value.hour == 10
     assert value.minute == 0
+
+
+def test_binary_sensor_converts_value():
+    coordinator = DummyCoordinator({"Door": "on"})
+    entity = PawControlBinarySensorEntity(coordinator, "Door")
+    entity._update_state()
+    assert entity.is_on is True
+
+    coordinator = DummyCoordinator({"Door": "off"})
+    entity = PawControlBinarySensorEntity(coordinator, "Door")
+    entity._update_state()
+    assert entity.is_on is False
