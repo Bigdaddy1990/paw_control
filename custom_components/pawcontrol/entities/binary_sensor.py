@@ -2,7 +2,7 @@
 from homeassistant.components.binary_sensor import BinarySensorEntity
 
 from .base import PawControlBaseEntity
-from ..helpers.entity import as_bool, get_icon, format_name
+from ..helpers.entity import as_bool
 
 
 class PawControlBinarySensorEntity(PawControlBaseEntity, BinarySensorEntity):
@@ -19,12 +19,14 @@ class PawControlBinarySensorEntity(PawControlBaseEntity, BinarySensorEntity):
         icon: str | None = None,
         device_class=None,
     ) -> None:
-        if dog_name and key and not name:
-            name = format_name(dog_name, key)
-        if key and not unique_suffix:
-            unique_suffix = key
-        super().__init__(coordinator, name, dog_name, unique_suffix)
-        self._attr_icon = icon or (key and get_icon(key))
+        super().__init__(
+            coordinator,
+            name,
+            dog_name,
+            unique_suffix,
+            key=key,
+            icon=icon,
+        )
         if device_class:
             self._attr_device_class = device_class
 

@@ -7,7 +7,7 @@ from typing import Any
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 from ..const import DOMAIN
-from ..helpers.entity import build_attributes
+from ..helpers.entity import build_attributes, format_name, get_icon
 
 
 class PawControlBaseEntity(CoordinatorEntity):
@@ -16,11 +16,19 @@ class PawControlBaseEntity(CoordinatorEntity):
     def __init__(
         self,
         coordinator,
-        name: str,
+        name: str | None = None,
         dog_name: str | None = None,
         unique_suffix: str | None = None,
+        *,
+        key: str | None = None,
+        icon: str | None = None,
     ) -> None:
         """Initialisiere die Basis-Entity."""
+        if dog_name and key and not name:
+            name = format_name(dog_name, key)
+        if key and not unique_suffix:
+            unique_suffix = key
+
         super().__init__(coordinator)
         self._attr_name = name
         self._dog_name = dog_name
@@ -28,6 +36,8 @@ class PawControlBaseEntity(CoordinatorEntity):
 
         if dog_name and unique_suffix:
             self._attr_unique_id = f"{DOMAIN}_{dog_name.lower()}_{unique_suffix}"
+        if icon or key:
+            self._attr_icon = icon or get_icon(key)
 
     @property
     def available(self) -> bool:

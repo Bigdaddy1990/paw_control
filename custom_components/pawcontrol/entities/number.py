@@ -2,7 +2,7 @@
 from homeassistant.components.number import NumberEntity
 
 from .base import PawControlBaseEntity
-from ..helpers.entity import clamp_value, get_icon, format_name
+from ..helpers.entity import clamp_value
 
 class PawControlNumberEntity(PawControlBaseEntity, NumberEntity):
     """Basisklasse für Number-Entities mit Validierung."""
@@ -24,14 +24,16 @@ class PawControlNumberEntity(PawControlBaseEntity, NumberEntity):
         mode: str | None = None,
         state_class: str | None = None,
     ) -> None:
-        if dog_name and key and not name:
-            name = format_name(dog_name, key)
-        if key and not unique_suffix:
-            unique_suffix = key
-        super().__init__(coordinator, name, dog_name, unique_suffix)
+        super().__init__(
+            coordinator,
+            name,
+            dog_name,
+            unique_suffix,
+            key=key,
+            icon=icon,
+        )
         self._attr_native_min_value = min_value
         self._attr_native_max_value = max_value
-        self._attr_icon = icon or (key and get_icon(key))
         if unit:
             self._attr_native_unit_of_measurement = unit
         if device_class:
