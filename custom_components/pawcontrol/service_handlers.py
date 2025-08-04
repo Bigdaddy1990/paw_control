@@ -3,6 +3,7 @@ from __future__ import annotations
 import logging
 from datetime import datetime
 from homeassistant.core import HomeAssistant
+
 from .const import (
     SERVICE_FOOD_TYPE,
     SERVICE_FOOD_AMOUNT,
@@ -15,6 +16,8 @@ from .const import (
     SERVICE_MOOD,
     SERVICE_VET_DATE,
 )
+
+from .utils import safe_service_call
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -469,15 +472,3 @@ async def end_walk_tracking(hass: HomeAssistant, dog_name: str, data: dict) -> N
         
     except Exception as e:
         _LOGGER.error("Error ending walk tracking for %s: %s", dog_name, e)
-
-
-async def safe_service_call(hass: HomeAssistant, domain: str, service: str, data: dict) -> None:
-    """Make a safe service call with error handling."""
-    try:
-        entity_id = data.get("entity_id")
-        if entity_id and hass.states.get(entity_id):
-            await hass.services.async_call(domain, service, data, blocking=True)
-        else:
-            _LOGGER.debug("Entity %s not found, skipping service call", entity_id)
-    except Exception as e:
-        _LOGGER.debug("Service call failed %s.%s: %s", domain, service, e)
