@@ -28,6 +28,7 @@ from .const import (
     DOMAIN,
 )
 from .config_helpers import build_module_schema
+from .utils import merge_entry_options
 
 
 class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
@@ -85,7 +86,7 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
     ) -> FlowResult:  # pragma: no cover - Home Assistant handles step name
         """Show and persist module options during configuration."""
 
-        data = {**self.config_entry.data, **self.config_entry.options}
+        data = merge_entry_options(self.config_entry)
 
         if user_input is not None:
             return self.async_create_entry(title="", data=user_input)
