@@ -10,6 +10,7 @@ from homeassistant.components.button import ButtonEntity
 from homeassistant.helpers.entity import Entity, EntityCategory
 
 from .const import DOMAIN
+from .utils import register_services
 
 if TYPE_CHECKING:
     from homeassistant.config_entries import ConfigEntry
@@ -98,14 +99,15 @@ async def async_setup_entry(hass: HomeAssistant, _entry: ConfigEntry) -> bool:
         details = call.data.get("details", {})
         system.log_walk(timestamp, details)
 
-    hass.services.async_register(DOMAIN, "log_walk", handle_log_walk)
+    services = {"log_walk": handle_log_walk}
 
     async def handle_get_last_walk(_call: Any) -> None:
         system = get_walk_automation_system(hass)
         last_walk = system.get_last_walk()
         _LOGGER.info("Last walk: %s", last_walk)
 
-    hass.services.async_register(DOMAIN, "get_last_walk", handle_get_last_walk)
+    services["get_last_walk"] = handle_get_last_walk
+    register_services(hass, DOMAIN, services)
 
     return True
 

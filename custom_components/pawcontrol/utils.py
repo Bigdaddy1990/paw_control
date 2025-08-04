@@ -5,9 +5,10 @@ import re
 import logging
 from datetime import datetime, timedelta, timezone
 from math import radians, sin, cos, sqrt, atan2, isfinite
-from typing import List, Dict, Tuple, Optional, Any
+from typing import Any, Callable, Dict, List, Mapping, Optional, Tuple
 
 from homeassistant.core import HomeAssistant
+from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_NAME
 from homeassistant.util import slugify
 
@@ -27,6 +28,32 @@ _LOGGER = logging.getLogger(__name__)
 
 # Precompile dog name pattern for reuse
 DOG_NAME_RE = re.compile(DOG_NAME_PATTERN)
+
+
+def merge_entry_options(entry: ConfigEntry) -> dict[str, Any]:
+    """Merge config entry data and options.
+
+    Options take precedence over data. The returned dictionary is a new copy
+    so callers can modify it without affecting the original entry.
+    """
+
+    return {**entry.data, **entry.options}
+
+
+def register_services(
+    hass: HomeAssistant,
+    domain: str,
+    services: Mapping[str, Callable[..., Any]],
+) -> None:
+    """Register multiple service handlers for ``domain``.
+
+    ``services`` should be a mapping of service name to async handler function.
+    The handlers are registered with Home Assistant using
+    :func:`homeassistant.core.ServiceRegistry.async_register`.
+    """
+
+    for service, handler in services.items():
+        hass.services.async_register(domain, service, handler)
 
 
 def validate_dog_name(name: str) -> bool:
