@@ -5,7 +5,7 @@ from __future__ import annotations
 from homeassistant.components.text import TextEntity, TextMode
 
 from .base import PawControlBaseEntity
-from ..helpers.entity import clamp_string, format_name, get_icon
+from ..helpers.entity import clamp_string
 
 
 class PawControlTextEntity(PawControlBaseEntity, TextEntity):
@@ -23,13 +23,14 @@ class PawControlTextEntity(PawControlBaseEntity, TextEntity):
         max_length: int = 255,
         mode: TextMode = TextMode.TEXT,
     ) -> None:
-        if dog_name and key and not name:
-            name = format_name(dog_name, key)
-        if key and not unique_suffix:
-            unique_suffix = key
-        super().__init__(coordinator, name, dog_name, unique_suffix)
-        if icon or key:
-            self._attr_icon = icon or get_icon(key)
+        super().__init__(
+            coordinator,
+            name,
+            dog_name,
+            unique_suffix,
+            key=key,
+            icon=icon,
+        )
         self._attr_native_max = max_length
         self._attr_mode = mode
 

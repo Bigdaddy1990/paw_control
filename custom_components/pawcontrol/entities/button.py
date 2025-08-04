@@ -6,7 +6,6 @@ from __future__ import annotations
 from homeassistant.components.button import ButtonEntity
 
 from .base import PawControlBaseEntity
-from ..helpers.entity import format_name, get_icon
 from ..utils import safe_service_call
 
 
@@ -23,12 +22,14 @@ class PawControlButtonEntity(PawControlBaseEntity, ButtonEntity):
         key: str | None = None,
         icon: str | None = None,
     ) -> None:
-        if dog_name and key and not name:
-            name = format_name(dog_name, key)
-        if key and not unique_suffix:
-            unique_suffix = key
-        super().__init__(coordinator, name, dog_name, unique_suffix)
-        self._attr_icon = icon or (key and get_icon(key))
+        super().__init__(
+            coordinator,
+            name,
+            dog_name,
+            unique_suffix,
+            key=key,
+            icon=icon,
+        )
 
     async def _safe_service_call(self, domain: str, service: str, data: dict) -> bool:
         """Hilfsfunktion für sichere Serviceaufrufe."""

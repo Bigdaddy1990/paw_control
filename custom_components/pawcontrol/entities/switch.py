@@ -2,7 +2,7 @@
 from homeassistant.components.switch import SwitchEntity
 
 from .base import PawControlBaseEntity
-from ..helpers.entity import as_bool, get_icon, format_name
+from ..helpers.entity import as_bool
 from ..utils import safe_service_call
 
 
@@ -19,12 +19,14 @@ class PawControlSwitchEntity(PawControlBaseEntity, SwitchEntity):
         key: str | None = None,
         icon: str | None = None,
     ) -> None:
-        if dog_name and key and not name:
-            name = format_name(dog_name, key)
-        if key and not unique_suffix:
-            unique_suffix = key
-        super().__init__(coordinator, name, dog_name, unique_suffix)
-        self._attr_icon = icon or (key and get_icon(key))
+        super().__init__(
+            coordinator,
+            name,
+            dog_name,
+            unique_suffix,
+            key=key,
+            icon=icon,
+        )
 
     def _update_state(self) -> None:
         """Hole und konvertiere den Status aus den Koordinatordaten."""

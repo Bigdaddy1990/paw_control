@@ -2,7 +2,7 @@
 from homeassistant.components.select import SelectEntity
 
 from .base import PawControlBaseEntity
-from ..helpers.entity import ensure_option, format_name, get_icon
+from ..helpers.entity import ensure_option
 
 class PawControlSelectEntity(PawControlBaseEntity, SelectEntity):
     """Basisklasse für Select-Entities mit Validierung."""
@@ -18,13 +18,14 @@ class PawControlSelectEntity(PawControlBaseEntity, SelectEntity):
         icon: str | None = None,
         options: list[str] | None = None,
     ) -> None:
-        if dog_name and key and not name:
-            name = format_name(dog_name, key)
-        if key and not unique_suffix:
-            unique_suffix = key
-        super().__init__(coordinator, name, dog_name, unique_suffix)
-        if icon or key:
-            self._attr_icon = icon or get_icon(key)
+        super().__init__(
+            coordinator,
+            name,
+            dog_name,
+            unique_suffix,
+            key=key,
+            icon=icon,
+        )
         self._attr_options = options or []
         if self._attr_options:
             self._state = self._attr_options[0]
