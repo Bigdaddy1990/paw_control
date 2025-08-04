@@ -10,6 +10,7 @@ from __future__ import annotations
 
 from .module_registry import (
     MODULES,
+    Module,
     async_ensure_helpers,
     async_setup_modules,
     async_unload_modules,
@@ -17,6 +18,7 @@ from .module_registry import (
 
 __all__ = [
     "MODULES",
+    "Module",
     "async_ensure_helpers",
     "async_setup_modules",
     "async_unload_modules",
