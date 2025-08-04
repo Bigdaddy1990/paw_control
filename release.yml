@@ -8,6 +8,8 @@ on:
 jobs:
   release:
     runs-on: ubuntu-latest
+    env:
+      VERSION: ${{ github.ref_name }}
     
     permissions:
       contents: write
@@ -31,7 +33,7 @@ jobs:
           
           # Create ZIP archive
           cd release_tmp
-          zip -r ../paw_control-${GITHUB_REF#refs/tags/}.zip ./*
+          zip -r ../paw_control-${VERSION}.zip ./*
           cd ..
           
           # Cleanup
@@ -44,7 +46,7 @@ jobs:
         uses: softprops/action-gh-release@v1
         with:
           files: |
-            paw_control-*.zip
+            paw_control-${{ env.VERSION }}.zip
           draft: false
           prerelease: false
           generate_release_notes: true
