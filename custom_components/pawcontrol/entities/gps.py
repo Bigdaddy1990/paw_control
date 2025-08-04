@@ -8,17 +8,18 @@ class PawControlGpsEntity(PawControlBaseEntity):
     """Basisklasse für GPS-Entities mit gemeinsamer Update-Logik."""
 
     def __init__(self, coordinator, name):
+        """Initialisiere die GPS-Entity."""
         super().__init__(coordinator, name)
 
     @property
     def available(self):
         """Entity ist verfügbar, wenn Koordinaten gültig sind."""
-        data = self._coordinator.data.get(self._attr_name, {})
+        data = self.coordinator.data.get(self._attr_name, {})
         return is_valid_gps_coords(data.get("lat"), data.get("lon"))
 
     def _update_state(self):
         """Aktualisiere internen State mit gültigen Koordinaten."""
-        data = self._coordinator.data.get(self._attr_name, {})
+        data = self.coordinator.data.get(self._attr_name, {})
         if is_valid_gps_coords(data.get("lat"), data.get("lon")):
             self._state = (data["lat"], data["lon"])
         else:
