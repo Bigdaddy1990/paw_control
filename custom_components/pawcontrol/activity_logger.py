@@ -51,14 +51,14 @@ async def async_log_activity(
         
         # Update last activity text
         readable_activities = {
-            "walk": "Gassi",
-            "feeding": "Fütterung", 
-            "outside": "Draußen",
-            "poop": "Geschäft",
-            "play": "Spielen",
+            "walk": "Walk",
+            "feeding": "Feeding",
+            "outside": "Outside",
+            "poop": "Potty",
+            "play": "Play",
             "training": "Training",
-            "medication": "Medikament",
-            "health_check": "Gesundheitscheck"
+            "medication": "Medication",
+            "health_check": "Health check",
         }
         
         activity_label = readable_activities.get(activity_type, activity_type.title())
@@ -154,11 +154,11 @@ async def async_log_health_event(
     """Log a health-related event."""
     
     health_events = {
-        "medication": "Medikament gegeben",
-        "vet_visit": "Tierarztbesuch",
-        "health_check": "Gesundheitscheck",
-        "vaccination": "Impfung",
-        "weight_check": "Gewichtskontrolle"
+        "medication": "Medication given",
+        "vet_visit": "Vet visit",
+        "health_check": "Health check",
+        "vaccination": "Vaccination",
+        "weight_check": "Weight check",
     }
     
     event_label = health_events.get(event_type, event_type)
@@ -175,33 +175,33 @@ async def async_get_daily_summary(hass: HomeAssistant, dog_name: str) -> str:
         activities = {}
         
         activity_counters = [
-            ("feeding_morning", "Frühstück"),
-            ("feeding_lunch", "Mittag"),
-            ("feeding_evening", "Abend"),
+            ("feeding_morning", "Breakfast"),
+            ("feeding_lunch", "Lunch"),
+            ("feeding_evening", "Dinner"),
             ("feeding_snack", "Snacks"),
-            ("outside", "Draußen"),
-            ("walk", "Gassi"),
-            ("play", "Spielen"),
+            ("outside", "Outside"),
+            ("walk", "Walk"),
+            ("play", "Play"),
             ("training", "Training"),
-            ("poop", "Geschäfte")
+            ("poop", "Potty"),
         ]
-        
+
         for counter_suffix, label in activity_counters:
             counter_entity = f"counter.{dog_id}_{counter_suffix}_count"
             state = hass.states.get(counter_entity)
             if state and state.state != "0":
                 activities[label] = state.state
-        
+
         if not activities:
-            return f"{dog_name.title()}: Noch keine Aktivitäten heute"
-        
+            return f"{dog_name.title()}: No activities recorded today"
+
         # Format summary
         summary_parts = []
         for activity, count in activities.items():
             summary_parts.append(f"{activity}: {count}x")
-        
+
         return f"{dog_name.title()}: " + ", ".join(summary_parts)
         
     except Exception as e:
         _LOGGER.error("Failed to generate daily summary for %s: %s", dog_name, e)
-        return f"{dog_name.title()}: Zusammenfassung nicht verfügbar"
+        return f"{dog_name.title()}: Summary not available"

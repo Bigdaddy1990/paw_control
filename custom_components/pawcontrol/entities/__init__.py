@@ -1,4 +1,4 @@
-"""Hilfspaket mit Basis-Entity-Klassen für Paw Control."""
+"""Helper package with base entity classes for Paw Control."""
 
 from .base import PawControlBaseEntity
 from .binary_sensor import PawControlBinarySensorEntity
