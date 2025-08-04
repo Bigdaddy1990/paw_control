@@ -6,7 +6,6 @@ from __future__ import annotations
 from homeassistant.components.button import ButtonEntity
 
 from .base import PawControlBaseEntity
-from ..utils import safe_service_call
 
 
 class PawControlButtonEntity(PawControlBaseEntity, ButtonEntity):
@@ -30,10 +29,6 @@ class PawControlButtonEntity(PawControlBaseEntity, ButtonEntity):
             key=key,
             icon=icon,
         )
-
-    async def _safe_service_call(self, domain: str, service: str, data: dict) -> bool:
-        """Hilfsfunktion für sichere Serviceaufrufe."""
-        return await safe_service_call(self.hass, domain, service, data)
 
     async def async_press(self) -> None:  # pragma: no cover - muss in Unterklassen implementiert werden
         """Button-Logik in Unterklassen bereitstellen."""

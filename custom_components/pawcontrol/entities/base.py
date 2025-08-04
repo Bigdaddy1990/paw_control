@@ -8,6 +8,7 @@ from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 from ..const import DOMAIN
 from ..helpers.entity import build_attributes, format_name, get_icon
+from ..utils import safe_service_call
 
 
 class PawControlBaseEntity(CoordinatorEntity):
@@ -76,3 +77,7 @@ class PawControlBaseEntity(CoordinatorEntity):
     def build_extra_attributes(self, **extra: Any) -> dict[str, Any]:
         """Hilfsfunktion für Unterklassen zur Attribut-Erstellung."""
         return build_attributes(self._dog_name, **extra)
+
+    async def _safe_service_call(self, domain: str, service: str, data: dict) -> bool:
+        """Hilfsfunktion für sichere Serviceaufrufe."""
+        return await safe_service_call(self.hass, domain, service, data)
