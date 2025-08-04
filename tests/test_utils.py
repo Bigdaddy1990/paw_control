@@ -20,6 +20,7 @@ from custom_components.pawcontrol.utils import (
     call_service,
     time_since_last_activity,
     validate_dog_name,
+    validate_weight,
 )
 
 
@@ -66,6 +67,16 @@ def test_format_weight_handles_various_inputs():
     assert format_weight(10) == "10.0kg"
     assert format_weight("bad") == "0.0kg"
     assert format_weight(-5) == "0.0kg"
+
+
+def test_validate_weight_rejects_invalid_values():
+    """validate_weight should reject non-finite or non-positive values."""
+    assert validate_weight(10)
+    assert not validate_weight(0)
+    assert not validate_weight(-1)
+    assert not validate_weight(float("nan"))
+    assert not validate_weight(float("inf"))
+    assert not validate_weight("bad")
 
 
 def test_calculate_speed_kmh_handles_invalid_inputs():

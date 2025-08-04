@@ -98,10 +98,7 @@ def validate_dog_name(name: str) -> bool:
 
 def validate_weight(weight: float) -> bool:
     """Check that weight can be converted to a positive, finite float."""
-    try:
-        value = float(weight)
-    except (TypeError, ValueError):
-        return False
+    value = safe_float_convert(weight, default=float("nan"))
     return value > 0 and isfinite(value)
 
 
@@ -158,21 +155,15 @@ def calculate_distance(coord1: Tuple[float, float], coord2: Tuple[float, float])
 
 def format_duration(minutes: int) -> str:
     """Format duration in minutes to a human readable string."""
-    if not isinstance(minutes, int):
+    if not isinstance(minutes, int) or minutes <= 0:
         return "0 min"
 
-    if minutes <= 0:
-        return "0 min"
-
-    if minutes < 60:
+    hours, remainder = divmod(minutes, 60)
+    if hours == 0:
         return f"{minutes} min"
-
-    hours = minutes // 60
-    remaining_minutes = minutes % 60
-
-    if remaining_minutes == 0:
+    if remainder == 0:
         return f"{hours}h"
-    return f"{hours}h {remaining_minutes}min"
+    return f"{hours}h {remainder}min"
 
 
 def format_distance(meters: float) -> str:
@@ -204,15 +195,10 @@ def format_weight(kg: float) -> str:
     Ensures invalid, non-numeric or negative values are handled gracefully
     instead of raising errors or returning misleading results.
     """
-    try:
-        kg = float(kg)
-    except (TypeError, ValueError):
-        return "0.0kg"
-
-    if not isfinite(kg) or kg < 0:
-        kg = 0.0
-
-    return f"{kg:.1f}kg"
+    kg_value = safe_float_convert(kg)
+    if not isfinite(kg_value) or kg_value < 0:
+        kg_value = 0.0
+    return f"{kg_value:.1f}kg"
 
 
 def get_gps_accuracy_level(accuracy: float) -> str:
