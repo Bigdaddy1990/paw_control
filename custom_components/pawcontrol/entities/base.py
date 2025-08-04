@@ -2,11 +2,12 @@
 
 from __future__ import annotations
 
-from datetime import datetime
+from typing import Any
 
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
-from ..const import ATTR_DOG_NAME, ATTR_LAST_UPDATED, DOMAIN
+from ..const import DOMAIN
+from ..helpers.entity import build_attributes
 
 
 class PawControlBaseEntity(CoordinatorEntity):
@@ -56,11 +57,12 @@ class PawControlBaseEntity(CoordinatorEntity):
         }
 
     @property
-    def extra_state_attributes(self) -> dict:
+    def extra_state_attributes(self) -> dict[str, Any]:
         """Zusätzliche Attribute für den Entity-State."""
         if not self._dog_name:
             return {}
-        return {
-            ATTR_DOG_NAME: self._dog_name,
-            ATTR_LAST_UPDATED: datetime.now().isoformat(),
-        }
+        return build_attributes(self._dog_name)
+
+    def build_extra_attributes(self, **extra: Any) -> dict[str, Any]:
+        """Hilfsfunktion für Unterklassen zur Attribut-Erstellung."""
+        return build_attributes(self._dog_name, **extra)
