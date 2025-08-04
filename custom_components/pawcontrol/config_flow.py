@@ -48,10 +48,13 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         schema: dict[Any, Any] = {
             vol.Required(CONF_DOG_NAME): str,
             vol.Optional(CONF_DOG_BREED, default=""): str,
-            vol.Optional(CONF_DOG_AGE, default=0): int,
-            vol.Optional(CONF_DOG_WEIGHT, default=0.0): float,
-            vol.Optional(CONF_FEEDING_TIMES, default=DEFAULT_FEEDING_TIMES): list,
-            vol.Optional(CONF_WALK_DURATION, default=DEFAULT_WALK_DURATION): int,
+            vol.Optional(CONF_DOG_AGE, default=0): vol.All(vol.Coerce(int), vol.Range(min=0)),
+            vol.Optional(CONF_DOG_WEIGHT, default=0.0): vol.All(vol.Coerce(float), vol.Range(min=0)),
+            vol.Optional(
+                CONF_FEEDING_TIMES,
+                default=list(DEFAULT_FEEDING_TIMES),
+            ): list,
+            vol.Optional(CONF_WALK_DURATION, default=DEFAULT_WALK_DURATION): vol.All(vol.Coerce(int), vol.Range(min=0)),
             vol.Optional(CONF_VET_CONTACT, default=""): str,
         }
         # Add toggles for modules and dashboard creation
