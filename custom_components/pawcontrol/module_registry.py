@@ -14,7 +14,7 @@ from __future__ import annotations
 import logging
 from collections.abc import Awaitable, Callable
 from dataclasses import dataclass
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from . import gps, health, push, walk
 from .const import (
@@ -70,17 +70,43 @@ MODULES: dict[str, Module] = {
 _LOGGER = logging.getLogger(__name__)
 
 
+async def _call_module_func(
+    func: ModuleFunc | None,
+    log_msg: str,
+    log_args: tuple[Any, ...],
+    *call_args: Any,
+) -> None:
+    """Call ``func`` and log any exception.
+
+    This helper centralises the ``try/except`` pattern used throughout this
+    module.  It keeps the logging consistent and makes the calling code easier
+    to read.  ``log_msg`` and ``log_args`` are passed directly to
+    :func:`logging.Logger.exception` when an error occurs.
+    """
+
+    if not func:
+        return
+
+    try:
+        await func(*call_args)
+    except Exception:  # pragma: no cover - defensive programming
+        _LOGGER.exception(log_msg, *log_args)
+
+
 async def ensure_helpers(hass: HomeAssistant, opts: dict[str, bool]) -> None:
     """Ensure helpers for all enabled modules.
 
     Errors from individual modules are logged but do not halt processing.
     """
     for key, module in MODULES.items():
-        if opts.get(key, module.default) and module.ensure_helpers:
-            try:
-                await module.ensure_helpers(hass, opts)
-            except Exception:  # pragma: no cover - defensive programming
-                _LOGGER.exception("Error ensuring helpers for module %s", key)
+        if opts.get(key, module.default):
+            await _call_module_func(
+                module.ensure_helpers,
+                "Error ensuring helpers for module %s",
+                (key,),
+                hass,
+                opts,
+            )
 
 
 async def setup_modules(
@@ -93,15 +119,23 @@ async def setup_modules(
     value of ``False``; modules that default to off and are omitted are skipped.
     """
     for key, module in MODULES.items():
-        try:
-            enabled = opts.get(key, module.default)
-            if enabled:
-                await module.setup(hass, entry)
-            elif key in opts and module.teardown:
-                await module.teardown(hass, entry)
-        except Exception:  # pragma: no cover - defensive programming
-            action = "setting up" if enabled else "tearing down"
-            _LOGGER.exception("Error %s module %s", action, key)
+        enabled = opts.get(key, module.default)
+        if enabled:
+            await _call_module_func(
+                module.setup,
+                "Error %s module %s",
+                ("setting up", key),
+                hass,
+                entry,
+            )
+        elif key in opts:
+            await _call_module_func(
+                module.teardown,
+                "Error %s module %s",
+                ("tearing down", key),
+                hass,
+                entry,
+            )
 
 
 async def unload_modules(hass: HomeAssistant, entry: ConfigEntry) -> None:
@@ -110,11 +144,13 @@ async def unload_modules(hass: HomeAssistant, entry: ConfigEntry) -> None:
     Errors during teardown are logged to avoid interrupting unloading.
     """
     for key, module in MODULES.items():
-        if module.teardown:
-            try:
-                await module.teardown(hass, entry)
-            except Exception:  # pragma: no cover - defensive programming
-                _LOGGER.exception("Error tearing down module %s", key)
+        await _call_module_func(
+            module.teardown,
+            "Error tearing down module %s",
+            (key,),
+            hass,
+            entry,
+        )
 
 
 # Backwards compatible aliases used by the tests and legacy code

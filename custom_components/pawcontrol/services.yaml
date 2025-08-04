@@ -7,6 +7,7 @@ feed_dog:
       required: true
       selector:
         text:
+
     meal_type:
       description: Art der Mahlzeit
       example: "morning"
@@ -15,7 +16,7 @@ feed_dog:
         select:
           options:
             - "morning"
-            - "launch"
+            - "lunch"
             - "evening"
             - "snack"
     amount:

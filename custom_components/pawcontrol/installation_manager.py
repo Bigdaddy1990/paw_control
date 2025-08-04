@@ -23,7 +23,7 @@ class InstallationManager:
     async def setup_entry(self, hass: HomeAssistant, entry: ConfigEntry) -> bool:
         """Set up the integration and selected modules."""
         # Merge config entry data and options, with options taking precedence
-        opts = {**entry.data, **entry.options}
+        opts = entry.data | entry.options
 
         # Some parts of the integration – especially helper creation – expect a
         # dog name to be present.  The title of the entry is the dog name in the
@@ -31,8 +31,7 @@ class InstallationManager:
         # stored data. This allows setup to proceed without crashing when the
         # data is incomplete while still making the name available to modules.
         dog_present = CONF_DOG_NAME in opts
-        opts.setdefault(CONF_DOG_NAME, entry.title)
-        dog_name = opts.get(CONF_DOG_NAME)
+        dog_name = opts.setdefault(CONF_DOG_NAME, entry.title)
 
         # Ensure helper entities for enabled modules then set them up
         await async_ensure_helpers(hass, opts)

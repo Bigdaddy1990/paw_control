@@ -2,6 +2,8 @@
 from __future__ import annotations
 import logging
 from datetime import datetime
+from typing import Any
+
 from homeassistant.core import HomeAssistant
 
 from .const import (
@@ -22,6 +24,13 @@ from .utils import safe_service_call
 _LOGGER = logging.getLogger(__name__)
 
 
+async def _svc(
+    hass: HomeAssistant, domain: str, service: str, entity_id: str, **data: Any
+) -> None:
+    """Wrapper around ``safe_service_call`` accepting an ``entity_id`` argument."""
+    await safe_service_call(hass, domain, service, {"entity_id": entity_id, **data})
+
+
 async def update_feeding_entities(hass: HomeAssistant, dog_name: str, data: dict) -> None:
     """Update feeding-related entities."""
     try:
@@ -38,29 +47,41 @@ async def update_feeding_entities(hass: HomeAssistant, dog_name: str, data: dict
             feeding_entity = f"input_boolean.{dog_name}_feeding_evening"
         
         # Turn on feeding boolean
-        await safe_service_call(hass, "input_boolean", "turn_on", {"entity_id": feeding_entity})
-        
+        await _svc(hass, "input_boolean", "turn_on", feeding_entity)
+
         # Update counter
-        counter_entity = feeding_entity.replace("input_boolean", "counter").replace("feeding_", "feeding_") + "_count"
-        await safe_service_call(hass, "counter", "increment", {"entity_id": counter_entity})
-        
+        counter_entity = (
+            feeding_entity.replace("input_boolean", "counter")
+            .replace("feeding_", "feeding_")
+            + "_count"
+        )
+        await _svc(hass, "counter", "increment", counter_entity)
+
         # Update last feeding datetime
-        datetime_entity = feeding_entity.replace("input_boolean", "input_datetime").replace("feeding_", "last_feeding_")
-        await safe_service_call(hass, "input_datetime", "set_datetime", {
-            "entity_id": datetime_entity,
-            "datetime": now.isoformat()
-        })
-        
+        datetime_entity = feeding_entity.replace(
+            "input_boolean", "input_datetime"
+        ).replace("feeding_", "last_feeding_")
+        await _svc(
+            hass,
+            "input_datetime",
+            "set_datetime",
+            datetime_entity,
+            datetime=now.isoformat(),
+        )
+
         # Update daily food amount
         daily_amount_entity = f"input_number.{dog_name}_daily_food_amount"
         current_state = hass.states.get(daily_amount_entity)
         if current_state:
             current_amount = float(current_state.state)
             new_amount = current_amount + amount
-            await safe_service_call(hass, "input_number", "set_value", {
-                "entity_id": daily_amount_entity,
-                "value": new_amount
-            })
+            await _svc(
+                hass,
+                "input_number",
+                "set_value",
+                daily_amount_entity,
+                value=new_amount,
+            )
         
         _LOGGER.debug("Updated feeding entities for %s", dog_name)
         
@@ -72,15 +93,21 @@ async def update_walk_start_entities(hass: HomeAssistant, dog_name: str, data: d
     """Update entities when walk starts."""
     try:
         # Set walk in progress
-        await safe_service_call(hass, "input_boolean", "turn_on", {
-            "entity_id": f"input_boolean.{dog_name}_walk_in_progress"
-        })
-        
+        await _svc(
+            hass,
+            "input_boolean",
+            "turn_on",
+            f"input_boolean.{dog_name}_walk_in_progress",
+        )
+
         # Update walk start time
-        await safe_service_call(hass, "input_datetime", "set_datetime", {
-            "entity_id": f"input_datetime.{dog_name}_last_walk",
-            "datetime": datetime.now().isoformat()
-        })
+        await _svc(
+            hass,
+            "input_datetime",
+            "set_datetime",
+            f"input_datetime.{dog_name}_last_walk",
+            datetime=datetime.now().isoformat(),
+        )
         
         _LOGGER.debug("Updated walk start entities for %s", dog_name)
         
@@ -92,30 +119,35 @@ async def update_walk_end_entities(hass: HomeAssistant, dog_name: str, data: dic
     """Update entities when walk ends."""
     try:
         # Turn off walk in progress
-        await safe_service_call(hass, "input_boolean", "turn_off", {
-            "entity_id": f"input_boolean.{dog_name}_walk_in_progress"
-        })
-        
+        await _svc(
+            hass,
+            "input_boolean",
+            "turn_off",
+            f"input_boolean.{dog_name}_walk_in_progress",
+        )
+
         # Set outside and walked_today to true
-        await safe_service_call(hass, "input_boolean", "turn_on", {
-            "entity_id": f"input_boolean.{dog_name}_outside"
-        })
-        await safe_service_call(hass, "input_boolean", "turn_on", {
-            "entity_id": f"input_boolean.{dog_name}_walked_today"
-        })
-        
+        await _svc(hass, "input_boolean", "turn_on", f"input_boolean.{dog_name}_outside")
+        await _svc(
+            hass,
+            "input_boolean",
+            "turn_on",
+            f"input_boolean.{dog_name}_walked_today",
+        )
+
         # Increment walk counter
-        await safe_service_call(hass, "counter", "increment", {
-            "entity_id": f"counter.{dog_name}_walk_count"
-        })
-        
+        await _svc(hass, "counter", "increment", f"counter.{dog_name}_walk_count")
+
         # Update walk duration if provided
         duration = data.get(SERVICE_DURATION)
         if duration:
-            await safe_service_call(hass, "input_number", "set_value", {
-                "entity_id": f"input_number.{dog_name}_daily_walk_duration",
-                "value": duration
-            })
+            await _svc(
+                hass,
+                "input_number",
+                "set_value",
+                f"input_number.{dog_name}_daily_walk_duration",
+                value=duration,
+            )
         
         _LOGGER.debug("Updated walk end entities for %s", dog_name)
         
@@ -127,38 +159,47 @@ async def update_health_entities(hass: HomeAssistant, dog_name: str, data: dict)
     """Update health-related entities."""
     try:
         # Update weight if provided
-        weight = data.get(SERVICE_WEIGHT)
-        if weight:
-            await safe_service_call(hass, "input_number", "set_value", {
-                "entity_id": f"input_number.{dog_name}_weight",
-                "value": weight
-            })
-        
+        if weight := data.get(SERVICE_WEIGHT):
+            await _svc(
+                hass,
+                "input_number",
+                "set_value",
+                f"input_number.{dog_name}_weight",
+                value=weight,
+            )
+
         # Update temperature if provided
-        temperature = data.get(SERVICE_TEMPERATURE)
-        if temperature:
-            await safe_service_call(hass, "input_number", "set_value", {
-                "entity_id": f"input_number.{dog_name}_temperature",
-                "value": temperature
-            })
-        
+        if temperature := data.get(SERVICE_TEMPERATURE):
+            await _svc(
+                hass,
+                "input_number",
+                "set_value",
+                f"input_number.{dog_name}_temperature",
+                value=temperature,
+            )
+
         # Update energy level if provided
-        energy_level = data.get(SERVICE_ENERGY_LEVEL)
-        if energy_level:
-            await safe_service_call(hass, "input_select", "select_option", {
-                "entity_id": f"input_select.{dog_name}_energy_level_category",
-                "option": energy_level
-            })
-        
+        if energy_level := data.get(SERVICE_ENERGY_LEVEL):
+            await _svc(
+                hass,
+                "input_select",
+                "select_option",
+                f"input_select.{dog_name}_energy_level_category",
+                option=energy_level,
+            )
+
         # Update health notes if provided
         symptoms = data.get(SERVICE_SYMPTOMS)
         notes = data.get(SERVICE_NOTES)
         if symptoms or notes:
             health_notes = f"{symptoms or ''} {notes or ''}".strip()
-            await safe_service_call(hass, "input_text", "set_value", {
-                "entity_id": f"input_text.{dog_name}_health_notes",
-                "value": health_notes
-            })
+            await _svc(
+                hass,
+                "input_text",
+                "set_value",
+                f"input_text.{dog_name}_health_notes",
+                value=health_notes,
+            )
         
         _LOGGER.debug("Updated health entities for %s", dog_name)
         
@@ -169,12 +210,14 @@ async def update_health_entities(hass: HomeAssistant, dog_name: str, data: dict)
 async def update_mood_entities(hass: HomeAssistant, dog_name: str, data: dict) -> None:
     """Update mood-related entities."""
     try:
-        mood = data.get(SERVICE_MOOD)
-        if mood:
-            await safe_service_call(hass, "input_select", "select_option", {
-                "entity_id": f"input_select.{dog_name}_mood",
-                "option": mood
-            })
+        if mood := data.get(SERVICE_MOOD):
+            await _svc(
+                hass,
+                "input_select",
+                "select_option",
+                f"input_select.{dog_name}_mood",
+                option=mood,
+            )
         
         _LOGGER.debug("Updated mood entities for %s", dog_name)
         
@@ -185,9 +228,12 @@ async def update_mood_entities(hass: HomeAssistant, dog_name: str, data: dict) -
 async def update_training_start_entities(hass: HomeAssistant, dog_name: str, data: dict) -> None:
     """Update entities when training starts."""
     try:
-        await safe_service_call(hass, "input_boolean", "turn_on", {
-            "entity_id": f"input_boolean.{dog_name}_training_session"
-        })
+        await _svc(
+            hass,
+            "input_boolean",
+            "turn_on",
+            f"input_boolean.{dog_name}_training_session",
+        )
         
         _LOGGER.debug("Updated training start entities for %s", dog_name)
         
@@ -198,13 +244,19 @@ async def update_training_start_entities(hass: HomeAssistant, dog_name: str, dat
 async def update_training_end_entities(hass: HomeAssistant, dog_name: str, data: dict) -> None:
     """Update entities when training ends."""
     try:
-        await safe_service_call(hass, "input_boolean", "turn_off", {
-            "entity_id": f"input_boolean.{dog_name}_training_session"
-        })
-        
-        await safe_service_call(hass, "counter", "increment", {
-            "entity_id": f"counter.{dog_name}_training_count"
-        })
+        await _svc(
+            hass,
+            "input_boolean",
+            "turn_off",
+            f"input_boolean.{dog_name}_training_session",
+        )
+
+        await _svc(
+            hass,
+            "counter",
+            "increment",
+            f"counter.{dog_name}_training_count",
+        )
         
         _LOGGER.debug("Updated training end entities for %s", dog_name)
         
@@ -215,18 +267,27 @@ async def update_training_end_entities(hass: HomeAssistant, dog_name: str, data:
 async def update_medication_entities(hass: HomeAssistant, dog_name: str, data: dict) -> None:
     """Update medication-related entities."""
     try:
-        await safe_service_call(hass, "input_boolean", "turn_on", {
-            "entity_id": f"input_boolean.{dog_name}_medication_given"
-        })
-        
-        await safe_service_call(hass, "counter", "increment", {
-            "entity_id": f"counter.{dog_name}_medication_count"
-        })
-        
-        await safe_service_call(hass, "input_datetime", "set_datetime", {
-            "entity_id": f"input_datetime.{dog_name}_last_medication",
-            "datetime": datetime.now().isoformat()
-        })
+        await _svc(
+            hass,
+            "input_boolean",
+            "turn_on",
+            f"input_boolean.{dog_name}_medication_given",
+        )
+
+        await _svc(
+            hass,
+            "counter",
+            "increment",
+            f"counter.{dog_name}_medication_count",
+        )
+
+        await _svc(
+            hass,
+            "input_datetime",
+            "set_datetime",
+            f"input_datetime.{dog_name}_last_medication",
+            datetime=datetime.now().isoformat(),
+        )
         
         _LOGGER.debug("Updated medication entities for %s", dog_name)
         
@@ -237,12 +298,14 @@ async def update_medication_entities(hass: HomeAssistant, dog_name: str, data: d
 async def update_vet_entities(hass: HomeAssistant, dog_name: str, data: dict) -> None:
     """Update veterinary-related entities."""
     try:
-        vet_date = data.get(SERVICE_VET_DATE)
-        if vet_date:
-            await safe_service_call(hass, "input_datetime", "set_datetime", {
-                "entity_id": f"input_datetime.{dog_name}_next_vet_appointment",
-                "datetime": vet_date
-            })
+        if vet_date := data.get(SERVICE_VET_DATE):
+            await _svc(
+                hass,
+                "input_datetime",
+                "set_datetime",
+                f"input_datetime.{dog_name}_next_vet_appointment",
+                datetime=vet_date,
+            )
         
         _LOGGER.debug("Updated vet entities for %s", dog_name)
         
@@ -253,9 +316,12 @@ async def update_vet_entities(hass: HomeAssistant, dog_name: str, data: dict) ->
 async def update_playtime_start_entities(hass: HomeAssistant, dog_name: str, data: dict) -> None:
     """Update entities when playtime starts."""
     try:
-        await safe_service_call(hass, "input_boolean", "turn_on", {
-            "entity_id": f"input_boolean.{dog_name}_playtime_session"
-        })
+        await _svc(
+            hass,
+            "input_boolean",
+            "turn_on",
+            f"input_boolean.{dog_name}_playtime_session",
+        )
         
         _LOGGER.debug("Updated playtime start entities for %s", dog_name)
         
@@ -266,13 +332,19 @@ async def update_playtime_start_entities(hass: HomeAssistant, dog_name: str, dat
 async def update_playtime_end_entities(hass: HomeAssistant, dog_name: str, data: dict) -> None:
     """Update entities when playtime ends."""
     try:
-        await safe_service_call(hass, "input_boolean", "turn_off", {
-            "entity_id": f"input_boolean.{dog_name}_playtime_session"
-        })
-        
-        await safe_service_call(hass, "counter", "increment", {
-            "entity_id": f"counter.{dog_name}_playtime_count"
-        })
+        await _svc(
+            hass,
+            "input_boolean",
+            "turn_off",
+            f"input_boolean.{dog_name}_playtime_session",
+        )
+
+        await _svc(
+            hass,
+            "counter",
+            "increment",
+            f"counter.{dog_name}_playtime_count",
+        )
         
         _LOGGER.debug("Updated playtime end entities for %s", dog_name)
         
@@ -294,7 +366,7 @@ async def reset_all_entities(hass: HomeAssistant, dog_name: str, data: dict) -> 
         ]
         
         for entity in boolean_entities:
-            await safe_service_call(hass, "input_boolean", "turn_off", {"entity_id": entity})
+            await _svc(hass, "input_boolean", "turn_off", entity)
         
         # Reset counters
         counter_entities = [
@@ -305,7 +377,7 @@ async def reset_all_entities(hass: HomeAssistant, dog_name: str, data: dict) -> 
         ]
         
         for entity in counter_entities:
-            await safe_service_call(hass, "counter", "reset", {"entity_id": entity})
+            await _svc(hass, "counter", "reset", entity)
         
         # Reset number entities
         number_entities = [
@@ -314,7 +386,7 @@ async def reset_all_entities(hass: HomeAssistant, dog_name: str, data: dict) -> 
         ]
         
         for entity in number_entities:
-            await safe_service_call(hass, "input_number", "set_value", {"entity_id": entity, "value": 0})
+            await _svc(hass, "input_number", "set_value", entity, value=0)
         
         _LOGGER.info("Reset all entities for %s", dog_name)
         
