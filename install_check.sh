@@ -26,13 +26,31 @@ print_status() {
     fi
 }
 
+# Determine available Python and pip executables
+PYTHON_CMD=""
+PIP_CMD=""
+
+if command -v python3 &> /dev/null; then
+    PYTHON_CMD="python3"
+elif command -v python &> /dev/null; then
+    PYTHON_CMD="python"
+fi
+
+if command -v pip3 &> /dev/null; then
+    PIP_CMD="pip3"
+elif command -v pip &> /dev/null; then
+    PIP_CMD="pip"
+elif [ -n "$PYTHON_CMD" ] && $PYTHON_CMD -m pip --version > /dev/null 2>&1; then
+    PIP_CMD="$PYTHON_CMD -m pip"
+fi
+
 # Check Python version
 echo "🐍 Checking Python version..."
-if command -v python3 &> /dev/null; then
-    PYTHON_VERSION=$(python3 --version | cut -d' ' -f2)
+if [ -n "$PYTHON_CMD" ]; then
+    PYTHON_VERSION=$($PYTHON_CMD --version | cut -d' ' -f2)
     MAJOR=$(echo $PYTHON_VERSION | cut -d'.' -f1)
     MINOR=$(echo $PYTHON_VERSION | cut -d'.' -f2)
-    
+
     if [ "$MAJOR" -eq 3 ] && [ "$MINOR" -ge 11 ]; then
         print_status "SUCCESS" "Python $PYTHON_VERSION is supported"
     else
@@ -63,20 +81,20 @@ done
 
 # Check manifest.json validity
 echo -e "\n📋 Checking manifest.json..."
-if [ -f "custom_components/pawcontrol/manifest.json" ]; then
-    if python3 -m json.tool custom_components/pawcontrol/manifest.json > /dev/null 2>&1; then
+if [ -f "custom_components/pawcontrol/manifest.json" ] && [ -n "$PYTHON_CMD" ]; then
+    if $PYTHON_CMD -m json.tool custom_components/pawcontrol/manifest.json > /dev/null 2>&1; then
         print_status "SUCCESS" "manifest.json is valid JSON"
-        
+
         # Check required fields
-        DOMAIN=$(python3 -c "import json; print(json.load(open('custom_components/pawcontrol/manifest.json')).get('domain', ''))" 2>/dev/null)
-        VERSION=$(python3 -c "import json; print(json.load(open('custom_components/pawcontrol/manifest.json')).get('version', ''))" 2>/dev/null)
-        
+        DOMAIN=$($PYTHON_CMD -c "import json; print(json.load(open('custom_components/pawcontrol/manifest.json')).get('domain', ''))" 2>/dev/null)
+        VERSION=$($PYTHON_CMD -c "import json; print(json.load(open('custom_components/pawcontrol/manifest.json')).get('version', ''))" 2>/dev/null)
+
         if [ "$DOMAIN" = "pawcontrol" ]; then
             print_status "SUCCESS" "Domain is correct: $DOMAIN"
         else
             print_status "ERROR" "Domain is incorrect: $DOMAIN (should be: pawcontrol)"
         fi
-        
+
         if [ -n "$VERSION" ]; then
             print_status "SUCCESS" "Version is set: $VERSION"
         else
@@ -89,26 +107,34 @@ fi
 
 # Check Python syntax
 echo -e "\n🐍 Checking Python syntax..."
-for py_file in custom_components/pawcontrol/*.py; do
-    if [ -f "$py_file" ]; then
-        if python3 -m py_compile "$py_file" 2>/dev/null; then
-            print_status "SUCCESS" "$(basename $py_file) syntax is valid"
-        else
-            print_status "ERROR" "$(basename $py_file) has syntax errors"
+if [ -n "$PYTHON_CMD" ]; then
+    for py_file in custom_components/pawcontrol/*.py; do
+        if [ -f "$py_file" ]; then
+            if $PYTHON_CMD -m py_compile "$py_file" 2>/dev/null; then
+                print_status "SUCCESS" "$(basename $py_file) syntax is valid"
+            else
+                print_status "ERROR" "$(basename $py_file) has syntax errors"
+            fi
         fi
-    fi
-done
+    done
+else
+    print_status "ERROR" "Python interpreter not available for syntax check"
+fi
 
 # Check dependencies
 echo -e "\n📦 Checking dependencies..."
 if [ -f "requirements.txt" ]; then
     print_status "SUCCESS" "requirements.txt found"
-    
-    # Try to install dependencies (dry run)
-    if pip3 install --dry-run -r requirements.txt > /dev/null 2>&1; then
-        print_status "SUCCESS" "All dependencies are available"
+
+    if [ -n "$PIP_CMD" ]; then
+        # Try to install dependencies (dry run)
+        if $PIP_CMD install --dry-run -r requirements.txt > /dev/null 2>&1; then
+            print_status "SUCCESS" "All dependencies are available"
+        else
+            print_status "WARNING" "Some dependencies might not be available"
+        fi
     else
-        print_status "WARNING" "Some dependencies might not be available"
+        print_status "WARNING" "pip not found; skipping dependency check"
     fi
 else
     print_status "WARNING" "requirements.txt not found"
@@ -118,8 +144,8 @@ fi
 echo -e "\n🏪 Checking HACS compatibility..."
 if [ -f "hacs.json" ]; then
     print_status "SUCCESS" "hacs.json found"
-    
-    if python3 -m json.tool hacs.json > /dev/null 2>&1; then
+
+    if [ -n "$PYTHON_CMD" ] && $PYTHON_CMD -m json.tool hacs.json > /dev/null 2>&1; then
         print_status "SUCCESS" "hacs.json is valid JSON"
     else
         print_status "ERROR" "hacs.json is invalid JSON"
