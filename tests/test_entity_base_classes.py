@@ -6,13 +6,22 @@ import asyncio
 
 sys.path.insert(0, os.path.abspath("."))
 
-from custom_components.pawcontrol.entities.binary_sensor import (
-    PawControlBinarySensorEntity,
+from custom_components.pawcontrol.const import (
+    ATTR_DOG_NAME,
+    ATTR_LAST_UPDATED,
+    DOMAIN,
 )
-from custom_components.pawcontrol.entities.datetime import PawControlDateTimeEntity
-from custom_components.pawcontrol.entities.number import PawControlNumberEntity
-from custom_components.pawcontrol.entities.select import PawControlSelectEntity
-from custom_components.pawcontrol.entities.text import PawControlTextEntity
+from custom_components.pawcontrol.entities import (
+    PawControlBaseEntity,
+    PawControlBinarySensorEntity,
+    PawControlButtonEntity,
+    PawControlDateTimeEntity,
+    PawControlNumberEntity,
+    PawControlSelectEntity,
+    PawControlSensorEntity,
+    PawControlSwitchEntity,
+    PawControlTextEntity,
+)
 
 
 class DummyCoordinator:
@@ -62,13 +71,62 @@ def test_datetime_entity_converts_value():
     assert value.minute == 0
 
 
-def test_binary_sensor_converts_value():
+def test_binary_sensor_inherits_attributes_and_converts():
     coordinator = DummyCoordinator({"Door": "on"})
-    entity = PawControlBinarySensorEntity(coordinator, "Door")
+    entity = PawControlBinarySensorEntity(
+        coordinator, "Door", dog_name="Bello", unique_suffix="door"
+    )
     entity._update_state()
     assert entity.is_on is True
+    assert entity.unique_id == f"{DOMAIN}_bello_door"
+    assert entity.device_info["name"] == "Paw Control - Bello"
+    attrs = entity.extra_state_attributes
+    assert attrs[ATTR_DOG_NAME] == "Bello"
+    assert ATTR_LAST_UPDATED in attrs
 
     coordinator = DummyCoordinator({"Door": "off"})
-    entity = PawControlBinarySensorEntity(coordinator, "Door")
+    entity = PawControlBinarySensorEntity(
+        coordinator, "Door", dog_name="Bello", unique_suffix="door"
+    )
     entity._update_state()
     assert entity.is_on is False
+
+
+def test_sensor_entity_inherits_state_and_device_info():
+    coordinator = DummyCoordinator({"Temp": 25})
+    entity = PawControlSensorEntity(
+        coordinator, "Temp", dog_name="Bello", unique_suffix="temp"
+    )
+    entity._update_state()
+    assert entity.state == 25
+    assert entity.unique_id == f"{DOMAIN}_bello_temp"
+    assert entity.device_info["name"] == "Paw Control - Bello"
+    attrs = entity.extra_state_attributes
+    assert attrs[ATTR_DOG_NAME] == "Bello"
+    assert ATTR_LAST_UPDATED in attrs
+
+
+def test_switch_entity_inherits_attributes_and_converts():
+    coordinator = DummyCoordinator({"Light": "true"})
+    entity = PawControlSwitchEntity(
+        coordinator, "Light", dog_name="Bello", unique_suffix="light"
+    )
+    entity._update_state()
+    assert entity.is_on is True
+    assert entity.unique_id == f"{DOMAIN}_bello_light"
+    assert entity.device_info["name"] == "Paw Control - Bello"
+    attrs = entity.extra_state_attributes
+    assert attrs[ATTR_DOG_NAME] == "Bello"
+    assert ATTR_LAST_UPDATED in attrs
+
+
+def test_button_entity_has_device_info_and_attributes():
+    entity = PawControlButtonEntity(
+        DummyCoordinator(), "Feed", dog_name="Bello", unique_suffix="feed"
+    )
+    assert isinstance(entity, PawControlBaseEntity)
+    assert entity.unique_id == f"{DOMAIN}_bello_feed"
+    assert entity.device_info["name"] == "Paw Control - Bello"
+    attrs = entity.extra_state_attributes
+    assert attrs[ATTR_DOG_NAME] == "Bello"
+    assert ATTR_LAST_UPDATED in attrs

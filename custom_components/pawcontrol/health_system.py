@@ -7,7 +7,7 @@ from homeassistant.components.binary_sensor import BinarySensorEntity
 
 from .const import DOMAIN
 from .utils import register_services
-from .entities.health import PawControlHealthEntity
+from .entities import PawControlHealthEntity
 
 _LOGGER = logging.getLogger(__name__)
 

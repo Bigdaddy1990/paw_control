@@ -5,14 +5,13 @@ import logging
 from datetime import datetime
 from typing import Any
 
-from homeassistant.components.switch import SwitchEntity
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
-from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
-from .const import DOMAIN, ICONS, ATTR_DOG_NAME, ATTR_LAST_UPDATED
+from .const import DOMAIN, ICONS
 from .coordinator import PawControlCoordinator
+from .entities import PawControlSwitchEntity
 from .utils import safe_service_call
 
 _LOGGER = logging.getLogger(__name__)
@@ -46,8 +45,8 @@ async def async_setup_entry(
     async_add_entities(entities)
 
 
-class PawControlSwitchBase(CoordinatorEntity, SwitchEntity):
-    """Base class for Paw Control switches."""
+class PawControlSwitchBase(PawControlSwitchEntity):
+    """Gemeinsame Basis für Paw Control Switches."""
 
     def __init__(
         self,
@@ -55,31 +54,9 @@ class PawControlSwitchBase(CoordinatorEntity, SwitchEntity):
         dog_name: str,
         switch_type: str,
     ) -> None:
-        """Initialize the switch."""
-        super().__init__(coordinator)
-        self._dog_name = dog_name
-        self._switch_type = switch_type
-        self._attr_unique_id = f"{DOMAIN}_{dog_name.lower()}_{switch_type}"
-        self._attr_name = f"{dog_name.title()} {switch_type.replace('_', ' ').title()}"
-
-    @property
-    def device_info(self) -> dict[str, Any]:
-        """Return device information."""
-        return {
-            "identifiers": {(DOMAIN, self._dog_name.lower())},
-            "name": f"Paw Control - {self._dog_name}",
-            "manufacturer": "Paw Control",
-            "model": "Dog Management System",
-            "sw_version": "1.0.0",
-        }
-
-    @property
-    def extra_state_attributes(self) -> dict[str, Any]:
-        """Return extra state attributes."""
-        return {
-            ATTR_DOG_NAME: self._dog_name,
-            ATTR_LAST_UPDATED: datetime.now().isoformat(),
-        }
+        """Initialisiere den Switch mit Standardattributen."""
+        name = f"{dog_name.title()} {switch_type.replace('_', ' ').title()}"
+        super().__init__(coordinator, name, dog_name, switch_type)
 
     async def _safe_service_call(self, domain: str, service: str, data: dict) -> bool:
         """Safely call a service with consistent error handling."""
