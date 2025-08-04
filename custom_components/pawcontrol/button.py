@@ -13,6 +13,7 @@ from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 from .const import DOMAIN, ICONS, ATTR_DOG_NAME, ATTR_LAST_UPDATED
 from .coordinator import PawControlCoordinator
+from .utils import safe_service_call
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -83,13 +84,8 @@ class PawControlButtonBase(CoordinatorEntity, ButtonEntity):
         }
 
     async def _safe_service_call(self, domain: str, service: str, data: dict) -> bool:
-        """Safely call a service with error handling."""
-        try:
-            await self.hass.services.async_call(domain, service, data, blocking=True)
-            return True
-        except Exception as e:
-            _LOGGER.error("Service call %s.%s failed for %s: %s", domain, service, self._dog_name, e)
-            return False
+        """Safely call a service with consistent error handling."""
+        return await safe_service_call(self.hass, domain, service, data)
 
 
 # FEEDING BUTTONS

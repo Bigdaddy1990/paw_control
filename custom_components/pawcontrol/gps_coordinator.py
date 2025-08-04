@@ -1,4 +1,5 @@
 """GPS Coordinator implementation for Paw Control."""
+import asyncio
 import json
 import logging
 from datetime import datetime, timedelta
@@ -10,29 +11,10 @@ from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
 from homeassistant.config_entries import ConfigEntry
 
 from .const import DOMAIN, CONF_DOG_NAME
-from .utils import calculate_distance, validate_coordinates
+from .utils import calculate_distance, validate_coordinates, safe_service_call
 from .exceptions import GPSError, InvalidCoordinates
 
 _LOGGER = logging.getLogger(__name__)
-
-
-async def safe_service_call(hass, domain: str, service: str, data: dict, entity_id: str = None) -> bool:
-    """Safely call a service with existence checks."""
-    if not hass.services.has_service(domain, service):
-        _LOGGER.warning("Service %s.%s not available", domain, service)
-        return False
-    
-    # Check if entity exists if entity_id is provided
-    if entity_id and not hass.states.get(entity_id):
-        _LOGGER.warning("Entity %s does not exist for service call", entity_id)
-        return False
-    
-    try:
-        await hass.services.async_call(domain, service, data, blocking=True)
-        return True
-    except Exception as e:
-        _LOGGER.error("Service call %s.%s failed: %s", domain, service, e)
-        return False
 
 
 class PawControlDataUpdateCoordinator(DataUpdateCoordinator):
@@ -75,8 +57,7 @@ class PawControlDataUpdateCoordinator(DataUpdateCoordinator):
             entity_id = f"input_text.{self.dog_name}_current_location"
             await safe_service_call(
                 self.hass, "input_text", "set_value",
-                {"entity_id": entity_id, "value": f"{latitude},{longitude}"},
-                entity_id
+                {"entity_id": entity_id, "value": f"{latitude},{longitude}"}
             )
             
             # Update GPS signal strength
@@ -85,8 +66,7 @@ class PawControlDataUpdateCoordinator(DataUpdateCoordinator):
                 entity_id = f"input_number.{self.dog_name}_gps_signal_strength"
                 await safe_service_call(
                     self.hass, "input_number", "set_value",
-                    {"entity_id": entity_id, "value": signal_strength},
-                    entity_id
+                    {"entity_id": entity_id, "value": signal_strength}
                 )
             
             # Check automatic walk detection
@@ -197,8 +177,7 @@ class PawControlDataUpdateCoordinator(DataUpdateCoordinator):
             for entity_id in walk_entities_to_reset:
                 await safe_service_call(
                     self.hass, "input_number", "set_value",
-                    {"entity_id": entity_id, "value": 0},
-                    entity_id
+                    {"entity_id": entity_id, "value": 0}
                 )
             
             # Store walk start data
