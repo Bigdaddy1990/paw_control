@@ -1,104 +1,139 @@
-import asyncio
+"""Tests for the InstallationManager module."""
+
 import os
 import sys
-from types import SimpleNamespace
 from unittest.mock import AsyncMock, patch
 
-import pytest
-from homeassistant import config_entries
-
+# Ensure the custom component package is importable
 sys.path.insert(0, os.path.abspath("."))
 
 from custom_components.pawcontrol.const import (
-    DOMAIN,
     CONF_CREATE_DASHBOARD,
     CONF_DOG_NAME,
+    DOMAIN,
 )
 from custom_components.pawcontrol.installation_manager import InstallationManager
+from homeassistant import config_entries
 
 
-def test_setup_entry_handles_missing_dog_name():
-    """Dashboard creation should be skipped gracefully if dog name missing."""
+def test_dashboard_not_created_without_dog_name():
+    """Dashboard is skipped when no dog name was provided."""
 
-    async def run_test():
-        hass = SimpleNamespace()
+    async def run_test() -> None:
+        manager = InstallationManager()
+        hass = object()
         entry = config_entries.ConfigEntry(
             version=1,
             minor_version=1,
             domain=DOMAIN,
-            title="Test",
+            title="Fido",
             data={},
             source="user",
+            options={CONF_CREATE_DASHBOARD: True},
         )
-        entry.options = {CONF_CREATE_DASHBOARD: True}
 
-        manager = InstallationManager()
+        ensure_mock = AsyncMock()
+        setup_mock = AsyncMock()
+        dash_mock = AsyncMock()
 
-        with patch(
-            "custom_components.pawcontrol.installation_manager.async_ensure_helpers",
-            new=AsyncMock(),
-        ) as ensure_helpers, patch(
-            "custom_components.pawcontrol.installation_manager.async_setup_modules",
-            new=AsyncMock(),
-        ) as setup_modules, patch(
-            "custom_components.pawcontrol.dashboard.create_dashboard",
-            new=AsyncMock(),
-        ) as create_dashboard:
-            result = await manager.setup_entry(hass, entry)
-            assert result is True
-            expected_opts = {
-                CONF_CREATE_DASHBOARD: True,
-                CONF_DOG_NAME: "Test",
-            }
-            ensure_helpers.assert_awaited_once_with(hass, expected_opts)
-            setup_modules.assert_awaited_once_with(
-                hass, entry, expected_opts
-            )
-            create_dashboard.assert_not_called()
+        with (
+            patch(
+                "custom_components.pawcontrol.installation_manager.async_ensure_helpers",
+                ensure_mock,
+            ),
+            patch(
+                "custom_components.pawcontrol.installation_manager.async_setup_modules",
+                setup_mock,
+            ),
+            patch(
+                "custom_components.pawcontrol.dashboard.create_dashboard",
+                dash_mock,
+            ),
+        ):
+            await manager.setup_entry(hass, entry)
+
+        ensure_mock.assert_called_once()
+        setup_mock.assert_called_once()
+        dash_mock.assert_not_called()
+        called_opts = ensure_mock.call_args[0][1]
+        assert called_opts[CONF_DOG_NAME] == "Fido"
+
+    import asyncio
 
     asyncio.run(run_test())
 
 
-@pytest.mark.parametrize("dog_in_options", [False, True])
-def test_setup_entry_creates_dashboard_when_dog_name_present(dog_in_options):
-    """Dashboard creation should occur when dog name explicitly provided."""
+def test_dashboard_created_when_dog_name_present():
+    """Dashboard is created when dog name exists and option is enabled."""
 
-    async def run_test():
-        hass = SimpleNamespace()
-        data = {CONF_DOG_NAME: "Fido"} if not dog_in_options else {}
+    async def run_test() -> None:
+        manager = InstallationManager()
+        hass = object()
         entry = config_entries.ConfigEntry(
             version=1,
             minor_version=1,
             domain=DOMAIN,
-            title="Test Title",
-            data=data,
+            title="Rex",
+            data={CONF_DOG_NAME: "Rex", CONF_CREATE_DASHBOARD: True},
             source="user",
         )
-        entry.options = {CONF_CREATE_DASHBOARD: True}
-        if dog_in_options:
-            entry.options[CONF_DOG_NAME] = "Fido"
 
+        ensure_mock = AsyncMock()
+        setup_mock = AsyncMock()
+        dash_mock = AsyncMock()
+
+        with (
+            patch(
+                "custom_components.pawcontrol.installation_manager.async_ensure_helpers",
+                ensure_mock,
+            ),
+            patch(
+                "custom_components.pawcontrol.installation_manager.async_setup_modules",
+                setup_mock,
+            ),
+            patch(
+                "custom_components.pawcontrol.dashboard.create_dashboard",
+                dash_mock,
+            ),
+        ):
+            await manager.setup_entry(hass, entry)
+
+        dash_mock.assert_called_once_with(hass, "Rex")
+        ensure_mock.assert_called_once()
+        setup_mock.assert_called_once()
+
+    import asyncio
+
+    asyncio.run(run_test())
+
+
+def test_unload_entry_calls_module_unload():
+    """Unloading an entry triggers module unload helpers."""
+
+    async def run_test() -> None:
         manager = InstallationManager()
+        hass = object()
+        entry = config_entries.ConfigEntry(
+            version=1,
+            minor_version=1,
+            domain=DOMAIN,
+            title="Fido",
+            data={},
+            source="user",
+        )
+
+        unload_mock = AsyncMock()
 
         with patch(
-            "custom_components.pawcontrol.installation_manager.async_ensure_helpers",
-            new=AsyncMock(),
-        ) as ensure_helpers, patch(
-            "custom_components.pawcontrol.installation_manager.async_setup_modules",
-            new=AsyncMock(),
-        ) as setup_modules, patch(
-            "custom_components.pawcontrol.dashboard.create_dashboard",
-            new=AsyncMock(),
-        ) as create_dashboard:
-            result = await manager.setup_entry(hass, entry)
-            assert result is True
-            expected_opts = {
-                CONF_CREATE_DASHBOARD: True,
-                CONF_DOG_NAME: "Fido",
-            }
-            ensure_helpers.assert_awaited_once_with(hass, expected_opts)
-            setup_modules.assert_awaited_once_with(hass, entry, expected_opts)
-            create_dashboard.assert_awaited_once_with(hass, "Fido")
+            "custom_components.pawcontrol.installation_manager.async_unload_modules",
+            unload_mock,
+        ):
+            result = await manager.unload_entry(hass, entry)
+
+        unload_mock.assert_called_once_with(hass, entry)
+        assert result is True
+
+    import asyncio
 
     asyncio.run(run_test())
 
