@@ -5,17 +5,14 @@ import logging
 from datetime import datetime, timedelta
 from typing import Any
 
-from homeassistant.components.binary_sensor import (
-    BinarySensorDeviceClass,
-    BinarySensorEntity,
-)
+from homeassistant.components.binary_sensor import BinarySensorDeviceClass
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
-from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
-from .const import DOMAIN, ICONS, ATTR_DOG_NAME, ATTR_LAST_UPDATED
+from .const import DOMAIN, ICONS
 from .coordinator import PawControlCoordinator
+from .entities import PawControlBinarySensorEntity
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -43,8 +40,8 @@ async def async_setup_entry(
     async_add_entities(entities)
 
 
-class PawControlBinarySensorBase(CoordinatorEntity, BinarySensorEntity):
-    """Base class for Paw Control binary sensors."""
+class PawControlBinarySensorBase(PawControlBinarySensorEntity):
+    """Gemeinsame Basis für Paw Control Binary Sensors."""
 
     def __init__(
         self,
@@ -52,31 +49,9 @@ class PawControlBinarySensorBase(CoordinatorEntity, BinarySensorEntity):
         dog_name: str,
         sensor_type: str,
     ) -> None:
-        """Initialize the binary sensor."""
-        super().__init__(coordinator)
-        self._dog_name = dog_name
-        self._sensor_type = sensor_type
-        self._attr_unique_id = f"{DOMAIN}_{dog_name.lower()}_{sensor_type}"
-        self._attr_name = f"{dog_name} {sensor_type.replace('_', ' ').title()}"
-
-    @property
-    def device_info(self) -> dict[str, Any]:
-        """Return device information."""
-        return {
-            "identifiers": {(DOMAIN, self._dog_name.lower())},
-            "name": f"Paw Control - {self._dog_name}",
-            "manufacturer": "Paw Control",
-            "model": "Dog Management System",
-            "sw_version": "1.0.0",
-        }
-
-    @property
-    def extra_state_attributes(self) -> dict[str, Any]:
-        """Return extra state attributes."""
-        return {
-            ATTR_DOG_NAME: self._dog_name,
-            ATTR_LAST_UPDATED: datetime.now().isoformat(),
-        }
+        """Initialisiere den Binary Sensor mit Standardattributen."""
+        name = f"{dog_name} {sensor_type.replace('_', ' ').title()}"
+        super().__init__(coordinator, name, dog_name, sensor_type)
 
 
 class PawControlIsHungryBinarySensor(PawControlBinarySensorBase):
