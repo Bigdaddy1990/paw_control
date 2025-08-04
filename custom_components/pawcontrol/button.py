@@ -8,10 +8,10 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
-from .const import DOMAIN, ICONS
+from .const import DOMAIN
 from .coordinator import PawControlCoordinator
 from .entities import PawControlButtonEntity
-from .utils import safe_service_call
+from .helpers.entity import get_icon
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -29,16 +29,16 @@ async def async_setup_entry(
         # Feeding buttons
         PawControlFeedMorningButton(coordinator, dog_name),
         PawControlFeedEveningButton(coordinator, dog_name),
-        
+
         # Activity buttons
         PawControlMarkOutsideButton(coordinator, dog_name),
         PawControlMarkPoopDoneButton(coordinator, dog_name),
-        
+
         # System buttons
         PawControlResetDailyDataButton(coordinator, dog_name),
         PawControlEmergencyButton(coordinator, dog_name),
         PawControlVisitorModeButton(coordinator, dog_name),
-        
+
         # GPS buttons
         PawControlUpdateGPSButton(coordinator, dog_name),
     ]
@@ -46,33 +46,19 @@ async def async_setup_entry(
     async_add_entities(entities)
 
 
-class PawControlButtonBase(PawControlButtonEntity):
-    """Gemeinsame Basis für Paw Control Buttons."""
-
-    def __init__(
-        self,
-        coordinator: PawControlCoordinator,
-        dog_name: str,
-        button_type: str,
-    ) -> None:
-        """Initialisiere den Button mit Standardattributen."""
-        name = f"{dog_name} {button_type.replace('_', ' ').title()}"
-        super().__init__(coordinator, name, dog_name, button_type)
-
-    async def _safe_service_call(self, domain: str, service: str, data: dict) -> bool:
-        """Safely call a service with consistent error handling."""
-        return await safe_service_call(self.hass, domain, service, data)
-
-
 # FEEDING BUTTONS
 
-class PawControlFeedMorningButton(PawControlButtonBase):
+class PawControlFeedMorningButton(PawControlButtonEntity):
     """Button to mark morning feeding."""
 
     def __init__(self, coordinator: PawControlCoordinator, dog_name: str) -> None:
         """Initialize the button."""
-        super().__init__(coordinator, dog_name, "feed_morning")
-        self._attr_icon = ICONS["morning"]
+        super().__init__(
+            coordinator,
+            dog_name=dog_name,
+            key="feed_morning",
+            icon=get_icon("morning"),
+        )
 
     async def async_press(self) -> None:
         """Handle the button press."""
@@ -93,13 +79,17 @@ class PawControlFeedMorningButton(PawControlButtonBase):
             _LOGGER.error("Failed to record morning feeding for %s: %s", self._dog_name, e)
 
 
-class PawControlFeedEveningButton(PawControlButtonBase):
+class PawControlFeedEveningButton(PawControlButtonEntity):
     """Button to mark evening feeding."""
 
     def __init__(self, coordinator: PawControlCoordinator, dog_name: str) -> None:
         """Initialize the button."""
-        super().__init__(coordinator, dog_name, "feed_evening")
-        self._attr_icon = ICONS["evening"]
+        super().__init__(
+            coordinator,
+            dog_name=dog_name,
+            key="feed_evening",
+            icon=get_icon("evening"),
+        )
 
     async def async_press(self) -> None:
         """Handle the button press."""
@@ -122,13 +112,17 @@ class PawControlFeedEveningButton(PawControlButtonBase):
 
 # ACTIVITY BUTTONS
 
-class PawControlMarkOutsideButton(PawControlButtonBase):
+class PawControlMarkOutsideButton(PawControlButtonEntity):
     """Button to mark dog as outside."""
 
     def __init__(self, coordinator: PawControlCoordinator, dog_name: str) -> None:
         """Initialize the button."""
-        super().__init__(coordinator, dog_name, "mark_outside")
-        self._attr_icon = ICONS["outside"]
+        super().__init__(
+            coordinator,
+            dog_name=dog_name,
+            key="mark_outside",
+            icon=get_icon("outside"),
+        )
 
     async def async_press(self) -> None:
         """Handle the button press."""
@@ -149,13 +143,17 @@ class PawControlMarkOutsideButton(PawControlButtonBase):
             _LOGGER.error("Failed to mark %s as outside: %s", self._dog_name, e)
 
 
-class PawControlMarkPoopDoneButton(PawControlButtonBase):
+class PawControlMarkPoopDoneButton(PawControlButtonEntity):
     """Button to mark poop as done."""
 
     def __init__(self, coordinator: PawControlCoordinator, dog_name: str) -> None:
         """Initialize the button."""
-        super().__init__(coordinator, dog_name, "mark_poop_done")
-        self._attr_icon = ICONS["poop"]
+        super().__init__(
+            coordinator,
+            dog_name=dog_name,
+            key="mark_poop_done",
+            icon=get_icon("poop"),
+        )
 
     async def async_press(self) -> None:
         """Handle the button press."""
@@ -177,13 +175,17 @@ class PawControlMarkPoopDoneButton(PawControlButtonBase):
 
 # SYSTEM BUTTONS
 
-class PawControlResetDailyDataButton(PawControlButtonBase):
+class PawControlResetDailyDataButton(PawControlButtonEntity):
     """Button to reset daily data."""
 
     def __init__(self, coordinator: PawControlCoordinator, dog_name: str) -> None:
         """Initialize the button."""
-        super().__init__(coordinator, dog_name, "reset_daily_data")
-        self._attr_icon = "mdi:refresh"
+        super().__init__(
+            coordinator,
+            dog_name=dog_name,
+            key="reset_daily_data",
+            icon="mdi:refresh",
+        )
 
     async def async_press(self) -> None:
         """Handle the button press."""
@@ -215,13 +217,17 @@ class PawControlResetDailyDataButton(PawControlButtonBase):
             _LOGGER.error("Failed to reset daily data for %s: %s", self._dog_name, e)
 
 
-class PawControlEmergencyButton(PawControlButtonBase):
+class PawControlEmergencyButton(PawControlButtonEntity):
     """Button for emergency situations."""
 
     def __init__(self, coordinator: PawControlCoordinator, dog_name: str) -> None:
         """Initialize the button."""
-        super().__init__(coordinator, dog_name, "emergency")
-        self._attr_icon = ICONS["emergency"]
+        super().__init__(
+            coordinator,
+            dog_name=dog_name,
+            key="emergency",
+            icon=get_icon("emergency"),
+        )
 
     async def async_press(self) -> None:
         """Handle the button press."""
@@ -241,13 +247,17 @@ class PawControlEmergencyButton(PawControlButtonBase):
             _LOGGER.error("Failed to activate emergency for %s: %s", self._dog_name, e)
 
 
-class PawControlVisitorModeButton(PawControlButtonBase):
+class PawControlVisitorModeButton(PawControlButtonEntity):
     """Button to toggle visitor mode."""
 
     def __init__(self, coordinator: PawControlCoordinator, dog_name: str) -> None:
         """Initialize the button."""
-        super().__init__(coordinator, dog_name, "visitor_mode")
-        self._attr_icon = ICONS["visitor"]
+        super().__init__(
+            coordinator,
+            dog_name=dog_name,
+            key="visitor_mode",
+            icon=get_icon("visitor"),
+        )
 
     async def async_press(self) -> None:
         """Handle the button press."""
@@ -281,13 +291,17 @@ class PawControlVisitorModeButton(PawControlButtonBase):
 
 # GPS BUTTONS
 
-class PawControlUpdateGPSButton(PawControlButtonBase):
+class PawControlUpdateGPSButton(PawControlButtonEntity):
     """Button to update GPS location."""
 
     def __init__(self, coordinator: PawControlCoordinator, dog_name: str) -> None:
         """Initialize the button."""
-        super().__init__(coordinator, dog_name, "update_gps")
-        self._attr_icon = ICONS["gps"]
+        super().__init__(
+            coordinator,
+            dog_name=dog_name,
+            key="update_gps",
+            icon=get_icon("gps"),
+        )
 
     async def async_press(self) -> None:
         """Handle the button press."""
