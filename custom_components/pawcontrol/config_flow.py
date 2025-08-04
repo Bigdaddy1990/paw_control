@@ -44,18 +44,23 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         schema_dict: dict[Any, Any] = {
             vol.Required(CONF_DOG_NAME): str,
             vol.Optional(CONF_DOG_BREED, default=""): str,
-            vol.Optional(CONF_DOG_AGE, default=0): vol.All(vol.Coerce(int), vol.Range(min=0)),
-            vol.Optional(CONF_DOG_WEIGHT, default=0.0): vol.All(vol.Coerce(float), vol.Range(min=0)),
+            vol.Optional(CONF_DOG_AGE, default=0): vol.All(
+                vol.Coerce(int), vol.Range(min=0)
+            ),
+            vol.Optional(CONF_DOG_WEIGHT, default=0.0): vol.All(
+                vol.Coerce(float), vol.Range(min=0)
+            ),
             vol.Optional(
-                CONF_FEEDING_TIMES,
-                default=list(DEFAULT_FEEDING_TIMES),
+                CONF_FEEDING_TIMES, default=list(DEFAULT_FEEDING_TIMES)
             ): list,
-            vol.Optional(CONF_WALK_DURATION, default=DEFAULT_WALK_DURATION): vol.All(vol.Coerce(int), vol.Range(min=0)),
+            vol.Optional(CONF_WALK_DURATION, default=DEFAULT_WALK_DURATION): vol.All(
+                vol.Coerce(int), vol.Range(min=0)
+            ),
             vol.Optional(CONF_VET_CONTACT, default=""): str,
         }
         # Add toggles for modules and dashboard creation
         schema_dict.update(build_module_schema())
-        schema = vol.Schema(schema_dict)
+        schema = vol.Schema(schema_dict, extra=vol.PREVENT_EXTRA)
 
         if user_input is not None:
             try:
@@ -97,20 +102,18 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
         """Show and persist module options during configuration."""
 
         data = merge_entry_options(self.config_entry)
+        schema = vol.Schema(build_module_schema(data), extra=vol.PREVENT_EXTRA)
 
-        schema = vol.Schema(build_module_schema(data))
-
+        errors: dict[str, str] = {}
         if user_input is not None:
-            errors: dict[str, str] = {}
             try:
                 user_input = schema(user_input)
             except vol.MultipleInvalid:
                 errors["base"] = "invalid_input"
             else:
                 return self.async_create_entry(title="", data=user_input)
-            return self.async_show_form(
-                step_id="init", data_schema=schema, errors=errors
-            )
 
-        return self.async_show_form(step_id="init", data_schema=schema)
+        return self.async_show_form(
+            step_id="init", data_schema=schema, errors=errors
+        )
 

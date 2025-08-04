@@ -15,20 +15,17 @@ if TYPE_CHECKING:
 def build_module_schema(data: Mapping[str, Any] | None = None) -> dict[Any, Any]:
     """Create schema entries for module toggles.
 
-    Parameters
-    ----------
-    data: Existing configuration or options. If provided, values from this dict
-        are used as defaults. Otherwise module defaults are used.
+    When ``data`` is provided, values are taken as defaults; otherwise the
+    module's default value is used.
     """
-    schema: dict[Any, Any] = {}
-    for key, module in MODULES.items():
-        default_value = (
-            module.default if data is None else data.get(key, module.default)
-        )
-        schema[vol.Optional(key, default=default_value)] = bool
-    dashboard_default = (
-        False if data is None else data.get(CONF_CREATE_DASHBOARD, False)
-    )
-    schema[vol.Optional(CONF_CREATE_DASHBOARD, default=dashboard_default)] = bool
+
+    defaults = data or {}
+    schema: dict[Any, Any] = {
+        vol.Optional(key, default=defaults.get(key, module.default)): bool
+        for key, module in MODULES.items()
+    }
+    schema[vol.Optional(
+        CONF_CREATE_DASHBOARD, default=defaults.get(CONF_CREATE_DASHBOARD, False)
+    )] = bool
     return schema
 
