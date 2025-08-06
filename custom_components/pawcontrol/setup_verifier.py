@@ -29,6 +29,19 @@ class CriticalEntityReport:
     error: str | None = None
 
 
+@dataclass
+class RepairResult:
+    """Result container for :func:`async_repair_broken_entities`."""
+
+    entities_checked: int = 0
+    entities_repaired: int = 0
+    entities_failed: int = 0
+    repaired_entities: list[str] = field(default_factory=list)
+    failed_entities: list[str] = field(default_factory=list)
+    repair_actions: list[str] = field(default_factory=list)
+    error: str | None = None
+
+
 async def async_verify_critical_entities(
     hass: HomeAssistant, dog_name: str
 ) -> Dict[str, Any]:
@@ -81,24 +94,19 @@ async def async_verify_critical_entities(
         return asdict(report)
 
 
-async def async_repair_broken_entities(hass: HomeAssistant, dog_name: str, expected_entities: Dict[str, Dict[str, Any]]) -> Dict[str, Any]:
+async def async_repair_broken_entities(
+    hass: HomeAssistant, dog_name: str, expected_entities: Dict[str, Dict[str, Any]]
+) -> Dict[str, Any]:
     """Attempt to repair broken entities by recreating them."""
-    repair_result = {
-        "entities_checked": 0,
-        "entities_repaired": 0,
-        "entities_failed": 0,
-        "repaired_entities": [],
-        "failed_entities": [],
-        "repair_actions": []
-    }
-    
+    result = RepairResult()
+
     try:
         for entity_id, entity_info in expected_entities.items():
-            repair_result["entities_checked"] += 1
+            result.entities_checked += 1
             state = hass.states.get(entity_id)
             needs_repair = False
             repair_reason = ""
-            
+
             if not state:
                 needs_repair = True
                 repair_reason = "Entity does not exist"
@@ -108,57 +116,70 @@ async def async_repair_broken_entities(hass: HomeAssistant, dog_name: str, expec
             elif not state.attributes.get("friendly_name"):
                 needs_repair = True
                 repair_reason = "Missing friendly name"
-            
+
             if needs_repair:
                 _LOGGER.info("Repairing entity %s: %s", entity_id, repair_reason)
                 try:
-                    # Remove existing entity if it exists but is broken
                     if state:
                         try:
-                            domain = entity_id.split('.')[0]
+                            domain = entity_id.split(".")[0]
                             await hass.services.async_call(
-                                domain, "remove", 
-                                {"entity_id": entity_id}, 
-                                blocking=True
+                                domain,
+                                "remove",
+                                {"entity_id": entity_id},
+                                blocking=True,
                             )
                             await asyncio.sleep(1.0)
                         except Exception as remove_error:
-                            _LOGGER.debug("Could not remove broken entity %s: %s", entity_id, remove_error)
-                    
-                    # Recreate the entity
-                    success = await _create_missing_entity(hass, entity_id, entity_info, dog_name)
-                    
+                            _LOGGER.debug(
+                                "Could not remove broken entity %s: %s",
+                                entity_id,
+                                remove_error,
+                            )
+
+                    success = await _create_missing_entity(
+                        hass, entity_id, entity_info, dog_name
+                    )
+
                     if success:
-                        repair_result["entities_repaired"] += 1
-                        repair_result["repaired_entities"].append(entity_id)
-                        repair_result["repair_actions"].append(f"Repaired {entity_id}: {repair_reason}")
+                        result.entities_repaired += 1
+                        result.repaired_entities.append(entity_id)
+                        result.repair_actions.append(
+                            f"Repaired {entity_id}: {repair_reason}"
+                        )
                         _LOGGER.info("✅ Successfully repaired: %s", entity_id)
                     else:
-                        repair_result["entities_failed"] += 1
-                        repair_result["failed_entities"].append(entity_id)
-                        repair_result["repair_actions"].append(f"Failed to repair {entity_id}: {repair_reason}")
+                        result.entities_failed += 1
+                        result.failed_entities.append(entity_id)
+                        result.repair_actions.append(
+                            f"Failed to repair {entity_id}: {repair_reason}"
+                        )
                         _LOGGER.error("❌ Failed to repair: %s", entity_id)
-                        
+
                 except Exception as repair_error:
-                    repair_result["entities_failed"] += 1
-                    repair_result["failed_entities"].append(entity_id)
-                    error_msg = f"Exception repairing {entity_id}: {str(repair_error)}"
-                    repair_result["repair_actions"].append(error_msg)
+                    result.entities_failed += 1
+                    result.failed_entities.append(entity_id)
+                    error_msg = (
+                        f"Exception repairing {entity_id}: {str(repair_error)}"
+                    )
+                    result.repair_actions.append(error_msg)
                     _LOGGER.error("❌ %s", error_msg)
-                
+
                 await asyncio.sleep(0.5)
-        
-        _LOGGER.info("Entity repair completed for %s: %d repaired, %d failed", 
-                    dog_name, repair_result["entities_repaired"], repair_result["entities_failed"])
-        
-        return repair_result
-        
-    except Exception as e:
+
+        _LOGGER.info(
+            "Entity repair completed for %s: %d repaired, %d failed",
+            dog_name,
+            result.entities_repaired,
+            result.entities_failed,
+        )
+
+        return asdict(result)
+
+    except Exception as e:  # pragma: no cover - defensive programming
         _LOGGER.error("Critical error during entity repair: %s", e)
-        return {
-            **repair_result,
-            "error": str(e)
-        }
+        result.error = str(e)
+        return asdict(result)
 
 
 async def async_generate_installation_report(hass: HomeAssistant, dog_name: str, verification_result: Dict[str, Any], critical_check: Dict[str, Any]) -> str:
