@@ -22,6 +22,7 @@ from .const import (
     CONF_DOG_NAME,
     CONF_DOG_WEIGHT,
     CONF_FEEDING_TIMES,
+    FEEDING_TYPES,
     CONF_VET_CONTACT,
     CONF_WALK_DURATION,
     DEFAULT_FEEDING_TIMES,
@@ -53,7 +54,7 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             ),
             vol.Optional(
                 CONF_FEEDING_TIMES, default=list(DEFAULT_FEEDING_TIMES)
-            ): cv.multi_select(DEFAULT_FEEDING_TIMES),
+            ): cv.multi_select(FEEDING_TYPES),
             vol.Optional(CONF_WALK_DURATION, default=DEFAULT_WALK_DURATION): vol.All(
                 vol.Coerce(int), vol.Range(min=0)
             ),
