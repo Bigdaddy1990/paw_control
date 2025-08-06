@@ -1,80 +1,65 @@
-"""Helper creation utilities for Paw Control."""
+"""Helper creation utilities for Paw Control.
+
+This module creates and removes the helper entities used by the integration.
+The helpers are created via service calls which are wrapped in
+``safe_service_call`` to ensure failures are logged but do not raise.
+"""
 
 from __future__ import annotations
 
 import asyncio
 import logging
-
 from dataclasses import dataclass
 from typing import Any
 
-from homeassistant.core import HomeAssistant
-from homeassistant.components.input_datetime import DOMAIN as INPUT_DATETIME_DOMAIN
-from homeassistant.components.input_boolean import DOMAIN as INPUT_BOOLEAN_DOMAIN
 from homeassistant.components.counter import DOMAIN as COUNTER_DOMAIN
+from homeassistant.components.input_boolean import DOMAIN as INPUT_BOOLEAN_DOMAIN
+from homeassistant.components.input_datetime import DOMAIN as INPUT_DATETIME_DOMAIN
+from homeassistant.core import HomeAssistant
 from homeassistant.util.dt import now
 
 from .utils import safe_service_call
 
 _LOGGER = logging.getLogger(__name__)
 
-COUNTERS = ("feeding", "walk", "potty")
+# Counters used by the integration
+COUNTER_HELPERS = ("feeding", "walk", "potty")
+
+# Default configuration for newly created counters
+COUNTER_CONFIG: dict[str, Any] = {
+    "initial": 0,
+    "minimum": 0,
+    "maximum": 20,
+    "step": 1,
+    "restore": True,
+}
 
 
 async def _call_service(
     hass: HomeAssistant, dog_id: str, domain: str, service: str, data: dict
 ) -> None:
-    """Execute a helper service call and log errors."""
+    """Call a Home Assistant service and log any failure."""
     try:
         await safe_service_call(hass, domain, service, data)
     except Exception:  # pragma: no cover - defensive programming
         _LOGGER.exception(
-            "Error creating helper %s for dog %s", data.get("entity_id", "?"), dog_id
+            "Error executing %s.%s for dog %s", domain, service, dog_id
         )
 
 
 @dataclass(frozen=True)
 class HelperCall:
-    """Container describing a helper service call."""
+    """Description of a helper service call."""
 
     domain: str
     service: str
     data: dict[str, Any]
 
 
-COUNTER_HELPERS = ("feeding", "walk", "potty")
-COUNTER_CFG: dict[str, Any] = {
-    "initial": 0,
-    "minimum": 0,
-    "maximum": 20,
-    "step": 1,
-    "restore": True,
-}
-
-
-COUNTER_CONFIG = {
-    "initial": 0,
-    "minimum": 0,
-    "maximum": 20,
-    "step": 1,
-    "restore": True,
-}
-
-
 async def async_create_helpers_for_dog(hass: HomeAssistant, dog_id: str) -> None:
     """Create helper entities required for core features."""
 
-    async def _svc(call: HelperCall) -> None:
-        try:
-            await safe_service_call(hass, call.domain, call.service, call.data)
-        except Exception:  # pragma: no cover - defensive programming
-            _LOGGER.exception(
-                "Error creating helper %s for dog %s",
-                call.data.get("entity_id", "?"),
-                dog_id,
-            )
-
-    helper_calls: list[HelperCall] = [
+    calls: list[HelperCall] = [
         HelperCall(
             INPUT_DATETIME_DOMAIN,
             "set_datetime",
@@ -98,31 +83,24 @@ async def async_create_helpers_for_dog(hass: HomeAssistant, dog_id: str) -> None
         ),
     ]
 
-
     for counter in COUNTER_HELPERS:
-        helper_calls.append(
+        calls.append(
             HelperCall(
                 COUNTER_DOMAIN,
                 "configure",
-                {"entity_id": f"counter.{counter}_{dog_id}", **COUNTER_CFG},
+                {"entity_id": f"counter.{counter}_{dog_id}", **COUNTER_CONFIG},
             )
         )
 
-    await asyncio.gather(*(_svc(call) for call in helper_calls))
+    await asyncio.gather(
+        *(_call_service(hass, dog_id, c.domain, c.service, c.data) for c in calls)
+    )
 
 
 async def async_remove_helpers_for_dog(hass: HomeAssistant, dog_id: str) -> None:
     """Remove helper entities created for core features."""
 
-    async def _svc(domain: str, service: str, data: dict) -> None:
-        try:
-            await safe_service_call(hass, domain, service, data)
-        except Exception:  # pragma: no cover - defensive programming
-            _LOGGER.exception(
-                "Error removing helper %s for dog %s", data.get("entity_id", "?"), dog_id
-            )
-
-    helper_calls: list[tuple[str, str, dict]] = [
+    calls: list[tuple[str, str, dict[str, Any]]] = [
         (
             INPUT_DATETIME_DOMAIN,
             "remove",
@@ -140,12 +118,10 @@ async def async_remove_helpers_for_dog(hass: HomeAssistant, dog_id: str) -> None
         ),
     ]
 
-    for counter in ["feeding", "walk", "potty"]:
-        helper_calls.append(
+    for counter in COUNTER_HELPERS:
+        calls.append(
             (
                 COUNTER_DOMAIN,
-                "configure",
-                {"entity_id": f"counter.{counter}_{dog_id}", **COUNTER_CONFIG},
                 "remove",
                 {"entity_id": f"counter.{counter}_{dog_id}"},
             )
@@ -154,9 +130,10 @@ async def async_remove_helpers_for_dog(hass: HomeAssistant, dog_id: str) -> None
     await asyncio.gather(
         *(
             _call_service(hass, dog_id, domain, service, data)
-            for domain, service, data in helper_calls
+            for domain, service, data in calls
         )
     )
 
 
 __all__ = ["async_create_helpers_for_dog", "async_remove_helpers_for_dog"]
+
