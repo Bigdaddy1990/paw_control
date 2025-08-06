@@ -9,9 +9,10 @@ import logging
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 
+from .actionable_push import setup_actionable_notifications
+from .const import DOMAIN
 from .installation_manager import InstallationManager
 
-# Integration domain
 DOMAIN = "pawcontrol"
 
 _LOGGER = logging.getLogger(__name__)
@@ -32,6 +33,7 @@ async def async_setup(hass: HomeAssistant, config: dict) -> bool:
     if DOMAIN in config:
         _LOGGER.warning("Configuration via YAML is not supported")
 
+    setup_actionable_notifications(hass)
     return True
 
 
@@ -65,4 +67,10 @@ __all__ = [
     "async_unload_entry",
     "async_reload_entry",
 ]
+
+async def async_reload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
+    """Handle reloading a config entry by unloading and setting it up again."""
+    if not await async_unload_entry(hass, entry):
+        return False
+    return await async_setup_entry(hass, entry)
 
