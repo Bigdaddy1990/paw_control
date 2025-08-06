@@ -22,6 +22,15 @@ from .utils import safe_service_call
 _LOGGER = logging.getLogger(__name__)
 
 
+COUNTER_CONFIG = {
+    "initial": 0,
+    "minimum": 0,
+    "maximum": 20,
+    "step": 1,
+    "restore": True,
+}
+
+
 async def async_create_helpers_for_dog(hass: HomeAssistant, dog_id: str) -> None:
     """Create helper entities required for core features."""
 
@@ -57,19 +66,12 @@ async def async_create_helpers_for_dog(hass: HomeAssistant, dog_id: str) -> None
         ),
     ]
 
-    counter_cfg = {
-        "initial": 0,
-        "minimum": 0,
-        "maximum": 20,
-        "step": 1,
-        "restore": True,
-    }
     for counter in ["feeding", "walk", "potty"]:
         helper_calls.append(
             (
                 COUNTER_DOMAIN,
                 "configure",
-                {"entity_id": f"counter.{counter}_{dog_id}", **counter_cfg},
+                {"entity_id": f"counter.{counter}_{dog_id}", **COUNTER_CONFIG},
             )
         )
 
