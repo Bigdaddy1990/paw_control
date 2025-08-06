@@ -21,7 +21,9 @@ from custom_components.pawcontrol.utils import (
     time_since_last_activity,
     validate_dog_name,
     validate_weight,
+    parse_coordinates_string,
 )
+from custom_components.pawcontrol.exceptions import InvalidCoordinates
 
 
 def test_calculate_dog_calories_positive():
@@ -150,3 +152,11 @@ def test_validate_dog_name_enforces_rules():
     assert not validate_dog_name("1Buddy")
     assert not validate_dog_name("Bad!")
     assert not validate_dog_name("a" * 31)
+
+
+def test_parse_coordinates_string_invalid_inputs():
+    """parse_coordinates_string should raise InvalidCoordinates for bad input."""
+    with pytest.raises(InvalidCoordinates):
+        parse_coordinates_string("10")  # missing lon
+    with pytest.raises(InvalidCoordinates):
+        parse_coordinates_string(None)
