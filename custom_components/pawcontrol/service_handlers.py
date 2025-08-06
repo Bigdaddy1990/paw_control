@@ -1,5 +1,7 @@
-"""Service handlers for Paw Control integration."""
+"""Service handler utilities for Paw Control services."""
+
 from __future__ import annotations
+
 import logging
 from datetime import datetime
 from typing import Any
