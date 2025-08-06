@@ -37,6 +37,9 @@ SERVICE_VET_VISIT = "record_vet_visit"
 SERVICE_GENERATE_REPORT = "generate_report"
 
 
+__all__ = ["async_setup_entry"]
+
+
 async def async_setup_entry(
     hass: HomeAssistant,
     config_entry: ConfigEntry,
@@ -1051,3 +1054,46 @@ class PawControlScriptManager:
         except Exception as e:  # pragma: no cover - defensive programming
             _LOGGER.error("Error executing daily reset: %s", e)
             raise
+
+
+    async def _send_notification(
+        self, title: str, message: str, notification_id: str
+    ) -> None:
+        """Send a persistent notification.
+
+        Notifications are non-blocking; errors are logged at debug level to
+        avoid interrupting the calling service.
+        """
+        try:
+            await self.hass.services.async_call(
+                "persistent_notification",
+                "create",
+                {
+                    "title": title,
+                    "message": message,
+                    "notification_id": f"{DOMAIN}_{notification_id}",
+                },
+            )
+        except Exception:  # pragma: no cover - defensive programming
+            _LOGGER.debug("Failed to send notification %s", notification_id)
+
+    async def _add_activity_notes(
+        self, activity: str, details: dict[str, str]
+    ) -> None:
+        """Append a formatted activity entry to the daily notes helper."""
+
+        try:
+            notes_entity = f"input_text.{self._dog_name}_daily_notes"
+            state = self.hass.states.get(notes_entity)
+            current_notes = state.state if state else ""
+            timestamp = datetime.now().strftime("%H:%M")
+            detail_str = ", ".join(f"{k}: {v}" for k, v in details.items())
+            new_entry = f"[{timestamp}] {activity}: {detail_str}"
+            updated_notes = f"{current_notes}\n{new_entry}" if current_notes else new_entry
+            await self.hass.services.async_call(
+                "input_text",
+                "set_value",
+                {"entity_id": notes_entity, "value": updated_notes[:255]},
+            )
+        except Exception:  # pragma: no cover - defensive programming
+            _LOGGER.debug("Failed to append activity notes for %s", activity)

@@ -177,6 +177,8 @@ async_unload_modules = unload_modules
 __all__ = [
     "MODULES",
     "Module",
+    "enabled_modules",
+    "disabled_modules",
     "async_ensure_helpers",
     "async_setup_modules",
     "async_unload_modules",

@@ -7,7 +7,6 @@ feed_dog:
       required: true
       selector:
         text:
-
     meal_type:
       description: Art der Mahlzeit
       example: "morning"
@@ -30,28 +29,8 @@ feed_dog:
           step: 10
           unit_of_measurement: "g"
 
-start_walk:
-  description: Startet einen neuen Spaziergang.
-  fields:
-    dog_name:
-      description: Name des Hundes
-      example: "buddy"
-      required: true
-      selector:
-        text:
-    walk_type:
-      description: Art des Spaziergangs
-      example: "normal"
-      default: "normal"
-      selector:
-        select:
-          options:
-            - "short"
-            - "normal"
-            - "long"
-
-end_walk:
-  description: Beendet den aktuellen Spaziergang.
+walk_dog:
+  description: Zeichnet einen Spaziergang auf.
   fields:
     dog_name:
       description: Name des Hundes
@@ -69,6 +48,250 @@ end_walk:
           max: 300
           step: 1
           unit_of_measurement: "min"
+    distance:
+      description: Zurückgelegte Distanz in Kilometern
+      example: "2.5"
+      selector:
+        text:
+    notes:
+      description: Notizen zum Spaziergang
+      selector:
+        text:
+          multiline: true
+    weather:
+      description: Wetterbedingungen
+      selector:
+        text:
+
+play_with_dog:
+  description: Zeichnet eine Spielsession auf.
+  fields:
+    dog_name:
+      description: Name des Hundes
+      example: "buddy"
+      required: true
+      selector:
+        text:
+    duration:
+      description: Dauer des Spielens in Minuten
+      example: 15
+      default: 15
+      selector:
+        number:
+          min: 1
+          max: 300
+          step: 1
+          unit_of_measurement: "min"
+    play_type:
+      description: Art des Spiels
+      selector:
+        text:
+    intensity:
+      description: Intensität der Session
+      selector:
+        text:
+    notes:
+      description: Notizen
+      selector:
+        text:
+          multiline: true
+
+activate_emergency_mode:
+  description: Aktiviert den Notfallmodus.
+  fields:
+    dog_name:
+      description: Name des Hundes
+      example: "buddy"
+      required: true
+      selector:
+        text:
+    reason:
+      description: Grund für den Notfallmodus
+      selector:
+        text:
+          multiline: true
+
+toggle_visitor_mode:
+  description: Schaltet den Besuchermodus um.
+  fields:
+    dog_name:
+      description: Name des Hundes
+      example: "buddy"
+      required: true
+      selector:
+        text:
+
+perform_health_check:
+  description: Führt einen Gesundheitscheck durch.
+  fields:
+    dog_name:
+      description: Name des Hundes
+      example: "buddy"
+      required: true
+      selector:
+        text:
+    temperature:
+      description: Körpertemperatur in °C
+      example: 38.5
+      selector:
+        number:
+          min: 35.0
+          max: 42.0
+          step: 0.1
+          unit_of_measurement: "°C"
+    weight:
+      description: Aktuelles Gewicht in kg
+      example: 25.5
+      selector:
+        number:
+          min: 0.5
+          max: 100.0
+          step: 0.1
+          unit_of_measurement: "kg"
+    notes:
+      description: Gesundheitsnotizen
+      example: "Allgemein guter Zustand"
+      selector:
+        text:
+          multiline: true
+
+mark_medication_given:
+  description: Markiert Medikamente als gegeben.
+  fields:
+    dog_name:
+      description: Name des Hundes
+      example: "buddy"
+      required: true
+      selector:
+        text:
+    medication:
+      description: Name des Medikaments
+      selector:
+        text:
+    dosage:
+      description: Dosierung
+      selector:
+        text:
+    notes:
+      description: Notizen
+      selector:
+        text:
+          multiline: true
+
+start_grooming_session:
+  description: Zeichnet eine Pflegesession auf.
+  fields:
+    dog_name:
+      description: Name des Hundes
+      example: "buddy"
+      required: true
+      selector:
+        text:
+    grooming_type:
+      description: Art der Pflege
+      selector:
+        text:
+    duration:
+      description: Dauer in Minuten
+      example: 30
+      default: 30
+      selector:
+        number:
+          min: 1
+          max: 300
+          step: 1
+          unit_of_measurement: "min"
+    professional:
+      description: Wird professionell durchgeführt
+      selector:
+        boolean:
+    notes:
+      description: Notizen
+      selector:
+        text:
+          multiline: true
+
+start_training_session:
+  description: Zeichnet eine Trainingseinheit auf.
+  fields:
+    dog_name:
+      description: Name des Hundes
+      example: "buddy"
+      required: true
+      selector:
+        text:
+    training_type:
+      description: Art des Trainings
+      selector:
+        text:
+    duration:
+      description: Dauer in Minuten
+      example: 10
+      default: 10
+      selector:
+        number:
+          min: 1
+          max: 300
+          step: 1
+          unit_of_measurement: "min"
+    commands:
+      description: Geübte Kommandos
+      selector:
+        text:
+    success_rate:
+      description: Erfolgsquote
+      selector:
+        text:
+    notes:
+      description: Notizen
+      selector:
+        text:
+          multiline: true
+
+record_vet_visit:
+  description: Protokolliert einen Tierarztbesuch.
+  fields:
+    dog_name:
+      description: Name des Hundes
+      example: "buddy"
+      required: true
+      selector:
+        text:
+    visit_type:
+      description: Art des Besuchs
+      selector:
+        text:
+    diagnosis:
+      description: Diagnose
+      selector:
+        text:
+    treatment:
+      description: Behandlung
+      selector:
+        text:
+    next_appointment:
+      description: Nächster Termin
+      selector:
+        text:
+    cost:
+      description: Kosten
+      selector:
+        text:
+    notes:
+      description: Notizen
+      selector:
+        text:
+          multiline: true
+
+generate_report:
+  description: Generiert einen Installationsbericht.
+  fields:
+    dog_name:
+      description: Name des Hundes
+      example: "buddy"
+      required: true
+      selector:
+        text:
 
 update_gps:
   description: Aktualisiert die GPS-Position des Hundes.
@@ -107,40 +330,6 @@ update_gps:
           max: 1000
           step: 1
           unit_of_measurement: "m"
-
-health_check:
-  description: Führt einen Gesundheitscheck durch.
-  fields:
-    dog_name:
-      description: Name des Hundes
-      example: "buddy"
-      required: true
-      selector:
-        text:
-    temperature:
-      description: Körpertemperatur in °C
-      example: 38.5
-      selector:
-        number:
-          min: 35.0
-          max: 42.0
-          step: 0.1
-          unit_of_measurement: "°C"
-    weight:
-      description: Aktuelles Gewicht in kg
-      example: 25.5
-      selector:
-        number:
-          min: 0.5
-          max: 100.0
-          step: 0.1
-          unit_of_measurement: "kg"
-    notes:
-      description: Gesundheitsnotizen
-      example: "Allgemein guter Zustand"
-      selector:
-        text:
-          multiline: true
 
 daily_reset:
   description: Setzt alle täglichen Daten zurück.
