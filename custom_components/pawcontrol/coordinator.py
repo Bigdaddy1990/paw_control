@@ -39,7 +39,9 @@ class PawControlCoordinator(DataUpdateCoordinator):
                 "health_status": await self._get_health_status(),
                 "location_status": await self._get_location_status(),
             }
-            
+
+            data["happiness_status"] = self._calculate_happiness(data)
+
             return data
             
         except Exception as e:
@@ -49,15 +51,25 @@ class PawControlCoordinator(DataUpdateCoordinator):
     async def _get_feeding_status(self) -> Dict[str, Any]:
         """Get feeding status."""
         try:
-            morning_state = self.hass.states.get(f"input_boolean.{self.dog_name}_feeding_morning")
-            evening_state = self.hass.states.get(f"input_boolean.{self.dog_name}_feeding_evening")
-            last_feeding_state = self.hass.states.get(f"input_datetime.{self.dog_name}_last_feeding")
-            
+            morning_state = self.hass.states.get(
+                f"input_boolean.{self.dog_name}_feeding_morning"
+            )
+            evening_state = self.hass.states.get(
+                f"input_boolean.{self.dog_name}_feeding_evening"
+            )
+            last_feeding_state = self.hass.states.get(
+                f"input_datetime.{self.dog_name}_last_feeding"
+            )
+
+            morning_fed = morning_state.state == "on" if morning_state else False
+            evening_fed = evening_state.state == "on" if evening_state else False
+
             return {
-                "morning_fed": morning_state.state == "on" if morning_state else False,
-                "evening_fed": evening_state.state == "on" if evening_state else False,
+                "morning_fed": morning_fed,
+                "evening_fed": evening_fed,
                 "last_feeding": last_feeding_state.state if last_feeding_state else None,
-                "needs_feeding": not (morning_state and morning_state.state == "on"),
+                # Needs feeding if either the morning or evening feeding has not been completed
+                "needs_feeding": not (morning_fed and evening_fed),
             }
         except Exception as e:
             _LOGGER.error("Error getting feeding status: %s", e)
@@ -114,6 +126,17 @@ class PawControlCoordinator(DataUpdateCoordinator):
             _LOGGER.error("Error getting location status: %s", e)
             return {}
 
+    def _calculate_happiness(self, data: Dict[str, Any]) -> str:
+        """Simple happiness metric based on feeding and walk status."""
+        feeding = data.get("feeding_status", {})
+        activity = data.get("activity_status", {})
+        fed = feeding.get("morning_fed", False) and feeding.get("evening_fed", False)
+        walked = activity.get("walked_today", False)
+
+        if fed and walked:
+            return "Happy"
+        return "Needs attention"
+
     def get_status_summary(self) -> str:
         """Get a simple status summary."""
         if not self.data:
@@ -122,11 +145,11 @@ class PawControlCoordinator(DataUpdateCoordinator):
         try:
             feeding = self.data.get("feeding_status", {})
             activity = self.data.get("activity_status", {})
-            
-            fed = feeding.get("morning_fed", False) or feeding.get("evening_fed", False)
+
+            fed = feeding.get("morning_fed", False) and feeding.get("evening_fed", False)
             walked = activity.get("walked_today", False)
             outside = activity.get("was_outside", False)
-            
+
             if fed and walked and outside:
                 return "✅ Alles erledigt"
             elif fed and (walked or outside):
