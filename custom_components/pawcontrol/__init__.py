@@ -7,10 +7,9 @@ from typing import Any
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 
+from .actionable_push import setup_actionable_notifications
+from .const import DOMAIN
 from .installation_manager import InstallationManager
-
-# Integration domain
-DOMAIN = "pawcontrol"
 
 
 def _get_domain_data(hass: HomeAssistant) -> dict[str, Any]:
@@ -24,6 +23,7 @@ def _get_domain_data(hass: HomeAssistant) -> dict[str, Any]:
 async def async_setup(hass: HomeAssistant, config: dict) -> bool:
     """Set up the Paw Control integration (YAML not supported)."""
     _get_domain_data(hass)
+    setup_actionable_notifications(hass)
     return True
 
 
@@ -43,10 +43,8 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         return False
     return await manager.unload_entry(hass, entry)
 
-
 async def async_reload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Handle reloading a config entry by unloading and setting it up again."""
     if not await async_unload_entry(hass, entry):
         return False
     return await async_setup_entry(hass, entry)
-
