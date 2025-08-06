@@ -42,6 +42,21 @@ class RepairResult:
     error: str | None = None
 
 
+def _categorize_entity(
+    report: CriticalEntityReport, entity_id: str, state: Any
+) -> None:
+    """Update ``report`` lists based on the entity ``state``."""
+    if not state:
+        report.critical_entities_missing.append(entity_id)
+        return
+
+    report.critical_entities_found += 1
+    if state.state in ["unknown", "unavailable"]:
+        report.critical_entities_broken.append(entity_id)
+    else:
+        report.critical_entities_working.append(entity_id)
+
+
 async def async_verify_critical_entities(
     hass: HomeAssistant, dog_name: str
 ) -> Dict[str, Any]:
@@ -61,16 +76,7 @@ async def async_verify_critical_entities(
 
     try:
         for entity_id in critical_entities:
-            state = hass.states.get(entity_id)
-            if not state:
-                report.critical_entities_missing.append(entity_id)
-                continue
-
-            report.critical_entities_found += 1
-            if state.state in ["unknown", "unavailable"]:
-                report.critical_entities_broken.append(entity_id)
-            else:
-                report.critical_entities_working.append(entity_id)
+            _categorize_entity(report, entity_id, hass.states.get(entity_id))
 
         working_count = len(report.critical_entities_working)
         report.is_functional = (

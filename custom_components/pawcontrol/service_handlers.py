@@ -544,3 +544,30 @@ async def end_walk_tracking(hass: HomeAssistant, dog_name: str, data: dict) -> N
         
     except Exception as e:
         _LOGGER.error("Error ending walk tracking for %s: %s", dog_name, e)
+
+
+SERVICE_HANDLERS = {
+    "start_walk_tracking": start_walk_tracking,
+    "end_walk_tracking": end_walk_tracking,
+}
+
+
+__all__ = [
+    "update_feeding_entities",
+    "update_walk_start_entities",
+    "update_walk_end_entities",
+    "update_health_entities",
+    "update_mood_entities",
+    "update_training_start_entities",
+    "update_training_end_entities",
+    "update_medication_entities",
+    "update_vet_entities",
+    "update_playtime_start_entities",
+    "update_playtime_end_entities",
+    "reset_all_entities",
+    "update_gps_entities",
+    "setup_gps_automation",
+    "start_walk_tracking",
+    "end_walk_tracking",
+    "SERVICE_HANDLERS",
+]

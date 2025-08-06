@@ -35,13 +35,7 @@ class InstallationManager:
             _LOGGER.exception("Error setting up modules for entry %s", entry.entry_id)
             return False
 
-        if opts.get(CONF_CREATE_DASHBOARD, False):
-            if dog_present and dog_name:
-                await dashboard.create_dashboard(hass, dog_name)
-            else:
-                _LOGGER.warning(
-                    "Dashboard creation requested but no dog name provided",
-                )
+        await self._maybe_create_dashboard(hass, dog_name, dog_present, opts)
 
         return True
 
@@ -53,3 +47,17 @@ class InstallationManager:
             _LOGGER.exception("Error unloading modules for entry %s", entry.entry_id)
             return False
         return True
+
+    async def _maybe_create_dashboard(
+        self, hass: HomeAssistant, dog_name: str, dog_present: bool, opts: dict
+    ) -> None:
+        """Create dashboard if requested via options."""
+        if not opts.get(CONF_CREATE_DASHBOARD, False):
+            return
+        if dog_present and dog_name:
+            try:
+                await dashboard.create_dashboard(hass, dog_name)
+            except Exception:  # pragma: no cover - defensive programming
+                _LOGGER.exception("Error creating dashboard for %s", dog_name)
+        else:
+            _LOGGER.warning("Dashboard creation requested but no dog name provided")

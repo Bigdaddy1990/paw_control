@@ -151,3 +151,28 @@ daily_reset:
       required: true
       selector:
         text:
+
+start_walk_tracking:
+  description: Startet das GPS-Tracking eines Spaziergangs.
+  fields:
+    dog_name:
+      description: Name des Hundes
+      example: "buddy"
+      required: true
+      selector:
+        text:
+    walk_name:
+      description: Optionaler Name des Spaziergangs
+      example: "Abendrunde"
+      selector:
+        text:
+
+end_walk_tracking:
+  description: Beendet das GPS-Tracking und aktualisiert die Statistiken.
+  fields:
+    dog_name:
+      description: Name des Hundes
+      example: "buddy"
+      required: true
+      selector:
+        text:

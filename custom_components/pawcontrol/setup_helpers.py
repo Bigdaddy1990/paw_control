@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+import logging
 
 from homeassistant.core import HomeAssistant
 from homeassistant.components.input_datetime import (
@@ -18,12 +19,19 @@ from homeassistant.util.dt import now
 
 from .utils import safe_service_call
 
+_LOGGER = logging.getLogger(__name__)
+
 
 async def async_create_helpers_for_dog(hass: HomeAssistant, dog_id: str) -> None:
     """Create helper entities required for core features."""
 
     async def _svc(domain: str, service: str, data: dict) -> None:
-        await safe_service_call(hass, domain, service, data)
+        try:
+            await safe_service_call(hass, domain, service, data)
+        except Exception:  # pragma: no cover - defensive programming
+            _LOGGER.exception(
+                "Error creating helper %s for dog %s", data.get("entity_id", "?"), dog_id
+            )
 
     helper_calls: list[tuple[str, str, dict]] = [
         (
@@ -68,3 +76,6 @@ async def async_create_helpers_for_dog(hass: HomeAssistant, dog_id: str) -> None
     await asyncio.gather(
         *(_svc(domain, service, data) for domain, service, data in helper_calls)
     )
+
+
+__all__ = ["async_create_helpers_for_dog"]
