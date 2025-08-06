@@ -123,14 +123,22 @@ def test_unload_entry_calls_module_unload():
         )
 
         unload_mock = AsyncMock()
+        remove_mock = AsyncMock()
 
-        with patch(
-            "custom_components.pawcontrol.installation_manager.async_unload_modules",
-            unload_mock,
+        with (
+            patch(
+                "custom_components.pawcontrol.installation_manager.async_unload_modules",
+                unload_mock,
+            ),
+            patch(
+                "custom_components.pawcontrol.installation_manager.async_remove_helpers_for_dog",
+                remove_mock,
+            ),
         ):
             result = await manager.unload_entry(hass, entry)
 
         unload_mock.assert_called_once_with(hass, entry)
+        remove_mock.assert_called_once_with(hass, "Fido")
         assert result is True
 
     import asyncio

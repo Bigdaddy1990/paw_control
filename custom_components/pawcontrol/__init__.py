@@ -4,6 +4,8 @@ from __future__ import annotations
 
 from typing import Any
 
+import logging
+
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 
@@ -11,6 +13,8 @@ from .installation_manager import InstallationManager
 
 # Integration domain
 DOMAIN = "pawcontrol"
+
+_LOGGER = logging.getLogger(__name__)
 
 
 def _get_domain_data(hass: HomeAssistant) -> dict[str, Any]:
@@ -22,8 +26,12 @@ def _get_domain_data(hass: HomeAssistant) -> dict[str, Any]:
 
 
 async def async_setup(hass: HomeAssistant, config: dict) -> bool:
-    """Set up the Paw Control integration (YAML not supported)."""
+    """Set up the Paw Control integration (YAML configuration not supported)."""
     _get_domain_data(hass)
+
+    if DOMAIN in config:
+        _LOGGER.warning("Configuration via YAML is not supported")
+
     return True
 
 
@@ -42,4 +50,19 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     if manager is None:
         return False
     return await manager.unload_entry(hass, entry)
+
+
+async def async_reload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
+    """Handle reload of a config entry."""
+    await async_unload_entry(hass, entry)
+    return await async_setup_entry(hass, entry)
+
+
+__all__ = [
+    "DOMAIN",
+    "async_setup",
+    "async_setup_entry",
+    "async_unload_entry",
+    "async_reload_entry",
+]
 
