@@ -87,4 +87,47 @@ async def async_create_helpers_for_dog(hass: HomeAssistant, dog_id: str) -> None
     await asyncio.gather(*(_svc(call) for call in helper_calls))
 
 
-__all__ = ["async_create_helpers_for_dog"]
+async def async_remove_helpers_for_dog(hass: HomeAssistant, dog_id: str) -> None:
+    """Remove helper entities created for core features."""
+
+    async def _svc(domain: str, service: str, data: dict) -> None:
+        try:
+            await safe_service_call(hass, domain, service, data)
+        except Exception:  # pragma: no cover - defensive programming
+            _LOGGER.exception(
+                "Error removing helper %s for dog %s", data.get("entity_id", "?"), dog_id
+            )
+
+    helper_calls: list[tuple[str, str, dict]] = [
+        (
+            INPUT_DATETIME_DOMAIN,
+            "remove",
+            {"entity_id": f"input_datetime.last_walk_{dog_id}"},
+        ),
+        (
+            INPUT_BOOLEAN_DOMAIN,
+            "remove",
+            {"entity_id": f"input_boolean.visitor_mode_{dog_id}"},
+        ),
+        (
+            "input_text",
+            "remove",
+            {"entity_id": f"input_text.last_activity_{dog_id}"},
+        ),
+    ]
+
+    for counter in ["feeding", "walk", "potty"]:
+        helper_calls.append(
+            (
+                COUNTER_DOMAIN,
+                "remove",
+                {"entity_id": f"counter.{counter}_{dog_id}"},
+            )
+        )
+
+    await asyncio.gather(
+        *(_svc(domain, service, data) for domain, service, data in helper_calls)
+    )
+
+
+__all__ = ["async_create_helpers_for_dog", "async_remove_helpers_for_dog"]
