@@ -21,17 +21,23 @@ from .utils import safe_service_call
 
 _LOGGER = logging.getLogger(__name__)
 
+COUNTERS = ("feeding", "walk", "potty")
+
+
+async def _call_service(
+    hass: HomeAssistant, dog_id: str, domain: str, service: str, data: dict
+) -> None:
+    """Execute a helper service call and log errors."""
+    try:
+        await safe_service_call(hass, domain, service, data)
+    except Exception:  # pragma: no cover - defensive programming
+        _LOGGER.exception(
+            "Error creating helper %s for dog %s", data.get("entity_id", "?"), dog_id
+        )
+
 
 async def async_create_helpers_for_dog(hass: HomeAssistant, dog_id: str) -> None:
     """Create helper entities required for core features."""
-
-    async def _svc(domain: str, service: str, data: dict) -> None:
-        try:
-            await safe_service_call(hass, domain, service, data)
-        except Exception:  # pragma: no cover - defensive programming
-            _LOGGER.exception(
-                "Error creating helper %s for dog %s", data.get("entity_id", "?"), dog_id
-            )
 
     helper_calls: list[tuple[str, str, dict]] = [
         (
@@ -64,7 +70,7 @@ async def async_create_helpers_for_dog(hass: HomeAssistant, dog_id: str) -> None
         "step": 1,
         "restore": True,
     }
-    for counter in ["feeding", "walk", "potty"]:
+    for counter in COUNTERS:
         helper_calls.append(
             (
                 COUNTER_DOMAIN,
@@ -74,7 +80,10 @@ async def async_create_helpers_for_dog(hass: HomeAssistant, dog_id: str) -> None
         )
 
     await asyncio.gather(
-        *(_svc(domain, service, data) for domain, service, data in helper_calls)
+        *(
+            _call_service(hass, dog_id, domain, service, data)
+            for domain, service, data in helper_calls
+        )
     )
 
 
