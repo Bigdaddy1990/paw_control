@@ -43,3 +43,10 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         return False
     return await manager.unload_entry(hass, entry)
 
+
+async def async_reload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
+    """Handle reloading a config entry by unloading and setting it up again."""
+    if not await async_unload_entry(hass, entry):
+        return False
+    return await async_setup_entry(hass, entry)
+
