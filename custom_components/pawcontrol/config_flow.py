@@ -33,6 +33,26 @@ from .config_helpers import build_module_schema
 from .utils import merge_entry_options
 
 
+def _validate_schema(
+    schema: vol.Schema, user_input: dict[str, Any]
+) -> tuple[dict[str, Any] | None, dict[str, str]]:
+    """Validate ``user_input`` against ``schema``.
+
+    Returns the validated data and a dict of errors. Any validation error is mapped
+    to ``invalid_input`` for the corresponding field, with ``base`` used for
+    general errors.
+    """
+
+    try:
+        return schema(user_input), {}
+    except vol.MultipleInvalid as err:
+        errors: dict[str, str] = {}
+        for error in err.errors:
+            key = str(error.path[0]) if error.path else "base"
+            errors[key] = "invalid_input"
+        return None, errors
+
+
 class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     """Handle the initial configuration for Paw Control."""
 
@@ -40,8 +60,6 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         self, user_input: dict[str, Any] | None = None
     ) -> FlowResult:
         """Handle the first step of the configuration flow."""
-
-        errors: dict[str, str] = {}
 
         schema_dict: dict[Any, Any] = {
             vol.Required(CONF_DOG_NAME): str,
@@ -64,24 +82,16 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         schema_dict.update(build_module_schema())
         schema = vol.Schema(schema_dict, extra=vol.PREVENT_EXTRA)
 
+        errors: dict[str, str] = {}
         if user_input is not None:
-            try:
-                user_input = schema(user_input)
-            except vol.MultipleInvalid as err:
-                for error in err.errors:
-                    if error.path:
-                        errors[str(error.path[0])] = "invalid_input"
-                    else:
-                        errors["base"] = "invalid_input"
-            else:
+            user_input, errors = _validate_schema(schema, user_input)
+            if not errors:
                 return self.async_create_entry(
                     title=user_input[CONF_DOG_NAME], data=user_input
                 )
 
         return self.async_show_form(
-            step_id="user",
-            data_schema=schema,
-            errors=errors,
+            step_id="user", data_schema=schema, errors=errors
         )
 
     @staticmethod
@@ -108,11 +118,8 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
 
         errors: dict[str, str] = {}
         if user_input is not None:
-            try:
-                user_input = schema(user_input)
-            except vol.MultipleInvalid:
-                errors["base"] = "invalid_input"
-            else:
+            user_input, errors = _validate_schema(schema, user_input)
+            if not errors:
                 return self.async_create_entry(title="", data=user_input)
 
         return self.async_show_form(
