@@ -61,3 +61,6 @@ class InstallationManager:
                 _LOGGER.exception("Error creating dashboard for %s", dog_name)
         else:
             _LOGGER.warning("Dashboard creation requested but no dog name provided")
+
+
+__all__ = ["InstallationManager"]
