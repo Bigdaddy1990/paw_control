@@ -90,10 +90,23 @@ def test_calculate_speed_kmh_handles_invalid_inputs():
     assert calculate_speed_kmh(100, "bad") == 0.0
 
 
-@pytest.mark.parametrize("value", [None, "10", 5.5, -1, 0])
+@pytest.mark.parametrize("value", [None, "bad", -1, 0])
 def test_format_duration_invalid_types_and_values(value):
     """Invalid types or non-positive durations should return '0 min'."""
     assert format_duration(value) == "0 min"
+
+
+@pytest.mark.parametrize(
+    "value,expected",
+    [
+        ("10", "10 min"),
+        (5.5, "5 min"),
+        (125.0, "2h 5min"),
+    ],
+)
+def test_format_duration_accepts_numeric_strings_and_floats(value, expected):
+    """Numeric strings and floats should be converted to minutes."""
+    assert format_duration(value) == expected
 
 
 def test_format_duration_under_an_hour():
@@ -145,6 +158,12 @@ def test_time_since_last_activity_accepts_datetime_object():
     assert isinstance(result, timedelta)
     assert abs(result - expected) <= tolerance
 
+
+def test_time_since_last_activity_future_time_clamped():
+    """Future timestamps should be treated as 0 elapsed time."""
+    future_time = datetime.now() + timedelta(minutes=5)
+    result = time_since_last_activity(future_time.isoformat())
+    assert result == timedelta(0)
 
 def test_validate_dog_name_enforces_rules():
     """Dog names must follow pattern, length and start with a letter."""

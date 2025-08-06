@@ -1,10 +1,16 @@
-from homeassistant.core import HomeAssistant, ServiceCall
+"""Actionable push notification helpers for Paw Control."""
+
+from __future__ import annotations
+
 import logging
 
-_LOGGER = logging.getLogger(__name__)
-DOMAIN = "pawcontrol"
+from homeassistant.core import HomeAssistant, ServiceCall
 
+from .const import DOMAIN
 from .utils import register_services
+
+_LOGGER = logging.getLogger(__name__)
+
 
 async def handle_send_notification(call: ServiceCall):
     hass: HomeAssistant = call.hass
@@ -32,28 +38,24 @@ async def handle_send_notification(call: ServiceCall):
         _LOGGER.warning("Keine gültigen Notify-Ziele gefunden")
         return
 
-    actions = call.data.get("actions", [
-        {"action": "yes", "title": "Ja"},
-        {"action": "no", "title": "Nein"}
-    ])
+    actions = call.data.get(
+        "actions", [{"action": "yes", "title": "Ja"}, {"action": "no", "title": "Nein"}]
+    )
     data = {
         "actions": actions,
         "tag": f"{dog_name}_frage",
         "group": f"paw_control_{dog_name}",
-        "clickAction": "/lovelace/pawcontrol"
+        "clickAction": "/lovelace/pawcontrol",
     }
 
     for notify_target in notify_targets:
         await hass.services.async_call(
             "notify",
             notify_target,
-            {
-                "title": title,
-                "message": message,
-                "data": data
-            },
+            {"title": title, "message": message, "data": data},
             blocking=False,
         )
+
 
 def setup_actionable_notifications(hass: HomeAssistant):
     register_services(hass, DOMAIN, {"send_notification": handle_send_notification})
