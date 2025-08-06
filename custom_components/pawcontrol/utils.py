@@ -304,27 +304,32 @@ def generate_entity_id(dog_name: str, entity_type: str, suffix: str) -> str:
 
 
 def parse_coordinates_string(coord_string: str) -> Tuple[float, float]:
-    """Parse coordinates from string format 'latitude,longitude'.
+    """Parse coordinates from a string.
 
-    Any parsing issues should raise :class:`InvalidCoordinates` rather than
-    bubbling up builtin exceptions like ``AttributeError`` or ``TypeError``.
-    This ensures callers can consistently handle invalid input types or
-    malformed strings.
+    Accepts latitude/longitude pairs separated by a comma, semicolon or
+    whitespace. Any parsing issues raise :class:`InvalidCoordinates` so callers
+    can handle failures consistently without dealing with builtin exceptions
+    like ``TypeError`` or ``ValueError``.
     """
+
     try:
-        parts = coord_string.split(',')
+        if coord_string is None:
+            raise TypeError("No coordinate string supplied")
+
+        # Split on comma, semicolon or whitespace and remove empty entries
+        parts = [p for p in re.split(r"[;,\s]+", coord_string.strip()) if p]
         if len(parts) != 2:
             raise ValueError("Invalid coordinate format")
 
-        lat = float(parts[0].strip())
-        lon = float(parts[1].strip())
+        lat = float(parts[0])
+        lon = float(parts[1])
 
         if not validate_coordinates(lat, lon):
             raise ValueError("Invalid coordinate values")
 
         return lat, lon
 
-    except (ValueError, IndexError, TypeError, AttributeError) as e:
+    except (ValueError, TypeError, AttributeError) as e:
         raise InvalidCoordinates(
             f"Could not parse coordinates '{coord_string}': {e}"
         ) from e
