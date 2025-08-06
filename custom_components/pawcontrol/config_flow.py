@@ -14,6 +14,7 @@ import voluptuous as vol
 from homeassistant import config_entries
 from homeassistant.core import callback
 from homeassistant.data_entry_flow import FlowResult
+from homeassistant.helpers import config_validation as cv
 
 from .const import (
     CONF_DOG_AGE,
@@ -52,7 +53,7 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             ),
             vol.Optional(
                 CONF_FEEDING_TIMES, default=list(DEFAULT_FEEDING_TIMES)
-            ): list,
+            ): cv.multi_select(DEFAULT_FEEDING_TIMES),
             vol.Optional(CONF_WALK_DURATION, default=DEFAULT_WALK_DURATION): vol.All(
                 vol.Coerce(int), vol.Range(min=0)
             ),
