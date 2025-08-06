@@ -13,6 +13,7 @@ from .module_registry import (
     async_setup_modules,
     async_unload_modules,
 )
+from .setup_helpers import async_remove_helpers_for_dog
 from .utils import merge_entry_options
 
 _LOGGER = logging.getLogger(__name__)
@@ -43,6 +44,8 @@ class InstallationManager:
         """Unload the integration and clean up modules."""
         try:
             await async_unload_modules(hass, entry)
+            dog_id = entry.data.get(CONF_DOG_NAME, entry.title)
+            await async_remove_helpers_for_dog(hass, dog_id)
         except Exception:  # pragma: no cover - defensive programming
             _LOGGER.exception("Error unloading modules for entry %s", entry.entry_id)
             return False

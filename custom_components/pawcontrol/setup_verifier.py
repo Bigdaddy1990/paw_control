@@ -598,4 +598,11 @@ __all__ = [
     "async_generate_installation_report",
     "async_verify_and_fix_installation",
     "async_cleanup_duplicate_entities",
+    "CriticalEntityReport",
+    "RepairResult",
+    "async_verify_critical_entities",
+    "async_repair_broken_entities",
+    "async_generate_installation_report",
+    "async_cleanup_duplicate_entities",
 ]
+
