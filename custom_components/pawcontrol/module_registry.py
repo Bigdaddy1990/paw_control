@@ -70,6 +70,24 @@ MODULES: dict[str, Module] = {
 _LOGGER = logging.getLogger(__name__)
 
 
+def enabled_modules(opts: dict[str, bool]) -> dict[str, Module]:
+    """Return modules that should be enabled based on ``opts``."""
+    return {
+        key: module
+        for key, module in MODULES.items()
+        if opts.get(key, module.default)
+    }
+
+
+def disabled_modules(opts: dict[str, bool]) -> dict[str, Module]:
+    """Return modules explicitly disabled via ``opts``."""
+    return {
+        key: module
+        for key, module in MODULES.items()
+        if key in opts and not opts.get(key)
+    }
+
+
 async def _call_module_func(
     func: ModuleFunc | None,
     log_msg: str,
@@ -98,15 +116,14 @@ async def ensure_helpers(hass: HomeAssistant, opts: dict[str, bool]) -> None:
 
     Errors from individual modules are logged but do not halt processing.
     """
-    for key, module in MODULES.items():
-        if opts.get(key, module.default):
-            await _call_module_func(
-                module.ensure_helpers,
-                "Error ensuring helpers for module %s",
-                (key,),
-                hass,
-                opts,
-            )
+    for key, module in enabled_modules(opts).items():
+        await _call_module_func(
+            module.ensure_helpers,
+            "Error ensuring helpers for module %s",
+            (key,),
+            hass,
+            opts,
+        )
 
 
 async def setup_modules(
@@ -118,24 +135,23 @@ async def setup_modules(
     Teardown handlers run only for modules explicitly present in ``opts`` with a
     value of ``False``; modules that default to off and are omitted are skipped.
     """
-    for key, module in MODULES.items():
-        enabled = opts.get(key, module.default)
-        if enabled:
-            await _call_module_func(
-                module.setup,
-                "Error %s module %s",
-                ("setting up", key),
-                hass,
-                entry,
-            )
-        elif key in opts:
-            await _call_module_func(
-                module.teardown,
-                "Error %s module %s",
-                ("tearing down", key),
-                hass,
-                entry,
-            )
+    for key, module in enabled_modules(opts).items():
+        await _call_module_func(
+            module.setup,
+            "Error %s module %s",
+            ("setting up", key),
+            hass,
+            entry,
+        )
+
+    for key, module in disabled_modules(opts).items():
+        await _call_module_func(
+            module.teardown,
+            "Error %s module %s",
+            ("tearing down", key),
+            hass,
+            entry,
+        )
 
 
 async def unload_modules(hass: HomeAssistant, entry: ConfigEntry) -> None:

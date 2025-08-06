@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import logging
 from datetime import datetime
+from collections.abc import Awaitable, Callable
 
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant, ServiceCall
@@ -17,6 +18,7 @@ from .const import (
     STATUS_MESSAGES,
 )
 from .utils import register_services
+from . import service_handlers
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -93,6 +95,14 @@ class PawControlScriptManager:
                 SERVICE_GENERATE_REPORT: self._generate_report_service,
             }
 
+            external = {
+                name: self._wrap_external_handler(handler)
+                for name, handler in service_handlers.SERVICE_HANDLERS.items()
+                if name not in services
+            }
+
+            services.update(external)
+
             register_services(self.hass, DOMAIN, services)
 
             _LOGGER.info(
@@ -102,6 +112,25 @@ class PawControlScriptManager:
         except Exception as e:
             _LOGGER.error("Error setting up services for %s: %s", self._dog_name, e)
             raise
+
+    def _wrap_external_handler(
+        self, handler: Callable[[HomeAssistant, str, dict], Awaitable[None]]
+    ) -> Callable[[ServiceCall], Awaitable[None]]:
+        """Convert a simple handler into a ServiceCall compatible function."""
+
+        async def _call(call: ServiceCall) -> None:
+            dog_name = call.data.get("dog_name", self._dog_name)
+            await handler(self.hass, dog_name, call.data)
+            self._update_stats("maintenance_actions")
+
+        return _call
+
+    def _update_stats(self, category: str) -> None:
+        """Update service call statistics."""
+        self._service_stats["total_executions"] += 1
+        self._service_stats["last_execution"] = datetime.now()
+        if category in self._service_stats:
+            self._service_stats[category] += 1
 
     # FEEDING SERVICES
     
@@ -1008,48 +1037,17 @@ class PawControlScriptManager:
             _LOGGER.error("Error in daily reset service for %s: %s", self._dog_name, e)
 
     async def _execute_daily_reset(self) -> None:
-        """Execute daily reset."""
+        """Execute daily reset using shared handler."""
         try:
-            # Reset daily feeding booleans
-            feeding_entities = [f"input_boolean.{self._dog_name}_feeding_{meal}" for meal in FEEDING_TYPES]
-            for entity_id in feeding_entities:
-                await self.hass.services.async_call(
-                    "input_boolean", "turn_off",
-                    {"entity_id": entity_id}
-                )
-            
-            # Reset daily activity booleans
-            daily_booleans = [
-                f"input_boolean.{self._dog_name}_outside",
-                f"input_boolean.{self._dog_name}_poop_done",
-                f"input_boolean.{self._dog_name}_walked_today",
-                f"input_boolean.{self._dog_name}_played_today",
-                f"input_boolean.{self._dog_name}_socialized_today",
-                f"input_boolean.{self._dog_name}_medication_given",
-            ]
-            
-            for entity_id in daily_booleans:
-                await self.hass.services.async_call(
-                    "input_boolean", "turn_off",
-                    {"entity_id": entity_id}
-                )
-            
-            # Clear daily notes
-            await self.hass.services.async_call(
-                "input_text", "set_value",
+            await service_handlers.reset_all_entities(self.hass, self._dog_name, {})
+            await self._add_activity_notes(
+                "Tagesreset",
                 {
-                    "entity_id": f"input_text.{self._dog_name}_daily_notes",
-                    "value": f"Tagesreset: {datetime.now().strftime('%d.%m.%Y')}"
-                }
+                    "reset_time": datetime.now().strftime("%H:%M:%S"),
+                    "reset_date": datetime.now().date().isoformat(),
+                    "status": "Alle täglichen Einstellungen zurückgesetzt",
+                },
             )
-            
-            # Add reset note
-            await self._add_activity_notes("Tagesreset", {
-                "reset_time": datetime.now().strftime("%H:%M:%S"),
-                "reset_date": datetime.now().date().isoformat(),
-                "status": "Alle täglichen Einstellungen zurückgesetzt"
-            })
-            
-        except Exception as e:
+        except Exception as e:  # pragma: no cover - defensive programming
             _LOGGER.error("Error executing daily reset: %s", e)
             raise
