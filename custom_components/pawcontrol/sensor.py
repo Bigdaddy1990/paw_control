@@ -34,6 +34,7 @@ async def async_setup_entry(
         PawControlWeightSensor(coordinator, dog_name),
         PawControlHealthStatusSensor(coordinator, dog_name),
         PawControlLocationSensor(coordinator, dog_name),
+        PawControlHappinessSensor(coordinator, dog_name),
         PawControlGPSSignalSensor(coordinator, dog_name),
     ]
     
@@ -268,3 +269,23 @@ class PawControlGPSSignalSensor(PawControlSensorEntity):
         
         location = self.coordinator.data.get("location_status", {})
         return location.get("gps_signal", 0)
+
+
+class PawControlHappinessSensor(PawControlSensorEntity):
+    """Sensor for overall happiness of the dog."""
+
+    def __init__(self, coordinator: PawControlCoordinator, dog_name: str) -> None:
+        """Initialize the sensor."""
+        super().__init__(
+            coordinator,
+            dog_name=dog_name,
+            key="happiness_status",
+            icon=get_icon("mood"),
+        )
+
+    @property
+    def native_value(self) -> str | None:
+        """Return the state of the sensor."""
+        if not self.coordinator.data:
+            return "Unknown"
+        return self.coordinator.data.get("happiness_status", "Unknown")
