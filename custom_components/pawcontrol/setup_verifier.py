@@ -9,7 +9,6 @@ from datetime import datetime
 from typing import Any, Dict
 
 from homeassistant.core import HomeAssistant
-from homeassistant.helpers import entity_registry as er
 
 from .utils import safe_service_call
 
@@ -589,11 +588,16 @@ async def async_cleanup_duplicate_entities(hass: HomeAssistant, dog_name: str) -
         _LOGGER.error("Error during duplicate cleanup: %s", e)
         return {
             **cleanup_result,
-            "error": str(e)
+            "error": str(e),
         }
 
 
 __all__ = [
+    "async_verify_critical_entities",
+    "async_repair_broken_entities",
+    "async_generate_installation_report",
+    "async_verify_and_fix_installation",
+    "async_cleanup_duplicate_entities",
     "CriticalEntityReport",
     "RepairResult",
     "async_verify_critical_entities",
@@ -601,3 +605,4 @@ __all__ = [
     "async_generate_installation_report",
     "async_cleanup_duplicate_entities",
 ]
+

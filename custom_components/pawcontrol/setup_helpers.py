@@ -52,6 +52,15 @@ COUNTER_CFG: dict[str, Any] = {
 }
 
 
+COUNTER_CONFIG = {
+    "initial": 0,
+    "minimum": 0,
+    "maximum": 20,
+    "step": 1,
+    "restore": True,
+}
+
+
 async def async_create_helpers_for_dog(hass: HomeAssistant, dog_id: str) -> None:
     """Create helper entities required for core features."""
 
@@ -88,6 +97,7 @@ async def async_create_helpers_for_dog(hass: HomeAssistant, dog_id: str) -> None
             },
         ),
     ]
+
 
     for counter in COUNTER_HELPERS:
         helper_calls.append(
@@ -134,6 +144,8 @@ async def async_remove_helpers_for_dog(hass: HomeAssistant, dog_id: str) -> None
         helper_calls.append(
             (
                 COUNTER_DOMAIN,
+                "configure",
+                {"entity_id": f"counter.{counter}_{dog_id}", **COUNTER_CONFIG},
                 "remove",
                 {"entity_id": f"counter.{counter}_{dog_id}"},
             )
