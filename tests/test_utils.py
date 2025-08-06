@@ -154,6 +154,13 @@ def test_validate_dog_name_enforces_rules():
     assert not validate_dog_name("a" * 31)
 
 
+def test_parse_coordinates_string_accepts_various_separators():
+    """Valid coordinate strings may use commas, semicolons or whitespace."""
+    assert parse_coordinates_string("10 , 20") == (10.0, 20.0)
+    assert parse_coordinates_string("10 ;20") == (10.0, 20.0)
+    assert parse_coordinates_string("10 20") == (10.0, 20.0)
+
+
 def test_parse_coordinates_string_invalid_inputs():
     """parse_coordinates_string should raise InvalidCoordinates for bad input."""
     with pytest.raises(InvalidCoordinates):
