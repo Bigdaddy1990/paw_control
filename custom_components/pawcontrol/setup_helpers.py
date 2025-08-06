@@ -18,6 +18,20 @@ from .utils import safe_service_call
 
 _LOGGER = logging.getLogger(__name__)
 
+COUNTERS = ("feeding", "walk", "potty")
+
+
+async def _call_service(
+    hass: HomeAssistant, dog_id: str, domain: str, service: str, data: dict
+) -> None:
+    """Execute a helper service call and log errors."""
+    try:
+        await safe_service_call(hass, domain, service, data)
+    except Exception:  # pragma: no cover - defensive programming
+        _LOGGER.exception(
+            "Error creating helper %s for dog %s", data.get("entity_id", "?"), dog_id
+        )
+
 
 @dataclass(frozen=True)
 class HelperCall:
@@ -126,7 +140,10 @@ async def async_remove_helpers_for_dog(hass: HomeAssistant, dog_id: str) -> None
         )
 
     await asyncio.gather(
-        *(_svc(domain, service, data) for domain, service, data in helper_calls)
+        *(
+            _call_service(hass, dog_id, domain, service, data)
+            for domain, service, data in helper_calls
+        )
     )
 
 

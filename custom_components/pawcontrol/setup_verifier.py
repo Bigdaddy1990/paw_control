@@ -591,3 +591,13 @@ async def async_cleanup_duplicate_entities(hass: HomeAssistant, dog_name: str) -
             **cleanup_result,
             "error": str(e)
         }
+
+
+__all__ = [
+    "CriticalEntityReport",
+    "RepairResult",
+    "async_verify_critical_entities",
+    "async_repair_broken_entities",
+    "async_generate_installation_report",
+    "async_cleanup_duplicate_entities",
+]
