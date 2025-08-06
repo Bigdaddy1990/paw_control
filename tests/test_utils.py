@@ -1,15 +1,17 @@
 import os
 import sys
-import asyncio
 from datetime import datetime, timedelta, timezone
 from types import SimpleNamespace
-from unittest.mock import AsyncMock
 
 import pytest
 
 # Ensure custom component package is importable
 sys.path.insert(0, os.path.abspath("."))
 
+from custom_components.pawcontrol.exceptions import (
+    DataValidationError,
+    InvalidCoordinates,
+)
 from custom_components.pawcontrol.utils import (
     calculate_dog_calories_per_day,
     calculate_speed_kmh,
@@ -17,13 +19,12 @@ from custom_components.pawcontrol.utils import (
     format_duration,
     format_weight,
     merge_entry_options,
-    call_service,
+    parse_coordinates_string,
     time_since_last_activity,
     validate_dog_name,
+    validate_service_data,
     validate_weight,
-    parse_coordinates_string,
 )
-from custom_components.pawcontrol.exceptions import InvalidCoordinates
 
 
 def test_calculate_dog_calories_positive():
@@ -41,18 +42,6 @@ def test_merge_entry_options_overrides_data():
     """Options should override data when merged."""
     entry = SimpleNamespace(data={"a": 1, "c": 3}, options={"b": 2, "c": 4})
     assert merge_entry_options(entry) == {"a": 1, "b": 2, "c": 4}
-
-
-def test_call_service_wrapper():
-    """call_service should proxy to hass.services.async_call."""
-
-    async def run_test():
-        mock_call = AsyncMock()
-        hass = SimpleNamespace(services=SimpleNamespace(async_call=mock_call))
-        await call_service(hass, "test", "do", {"x": 1})
-        mock_call.assert_called_once_with("test", "do", {"x": 1}, blocking=True)
-
-    asyncio.run(run_test())
 
 
 def test_format_distance_handles_various_inputs():
@@ -167,3 +156,12 @@ def test_parse_coordinates_string_invalid_inputs():
         parse_coordinates_string("10")  # missing lon
     with pytest.raises(InvalidCoordinates):
         parse_coordinates_string(None)
+
+
+def test_validate_service_data_raises_for_missing_fields():
+    """validate_service_data should raise when required keys are absent."""
+    with pytest.raises(DataValidationError):
+        validate_service_data({"foo": 1}, ["bar"])
+
+    # Should not raise when all required fields are present
+    validate_service_data({"foo": 1, "bar": 2}, ["foo", "bar"])

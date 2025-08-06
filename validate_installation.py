@@ -3,10 +3,13 @@
 from __future__ import annotations
 
 import json
+import logging
 import sys
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Callable, List
+from typing import Callable
+
+_LOGGER = logging.getLogger(__name__)
 
 
 def validate_manifest() -> list[str]:
@@ -17,14 +20,19 @@ def validate_manifest() -> list[str]:
         return ["❌ manifest.json not found"]
 
     try:
-        with open(manifest_path) as f:
-            manifest = json.load(f)
+        with manifest_path.open() as file:
+            manifest = json.load(file)
     except json.JSONDecodeError as e:
         return [f"❌ manifest.json is invalid JSON: {e}"]
 
     required_fields = [
-        "domain", "name", "version", "documentation",
-        "issue_tracker", "codeowners", "requirements"
+        "domain",
+        "name",
+        "version",
+        "documentation",
+        "issue_tracker",
+        "codeowners",
+        "requirements",
     ]
 
     for field in required_fields:
@@ -33,7 +41,14 @@ def validate_manifest() -> list[str]:
 
     # Validate version format
     version = manifest.get("version", "")
-    if not version or not version.replace(".", "").replace("-", "").replace("beta", "").replace("alpha", "").isalnum():
+    if (
+        not version
+        or not version.replace(".", "")
+        .replace("-", "")
+        .replace("beta", "")
+        .replace("alpha", "")
+        .isalnum()
+    ):
         errors.append(f"❌ Invalid version format: {version}")
 
     # Check Home Assistant version
@@ -52,8 +67,9 @@ def validate_services() -> list[str]:
 
     try:
         import yaml
-        with open(services_path) as f:
-            services = yaml.safe_load(f)
+
+        with services_path.open() as file:
+            services = yaml.safe_load(file)
     except yaml.YAMLError as e:
         return [f"❌ services.yaml is invalid YAML: {e}"]
     except ImportError:
@@ -73,8 +89,8 @@ def validate_strings() -> list[str]:
         return ["⚠️ strings.json not found (optional)"]
 
     try:
-        with open(strings_path) as f:
-            strings = json.load(f)
+        with strings_path.open() as file:
+            strings = json.load(file)
     except json.JSONDecodeError as e:
         return [f"❌ strings.json is invalid JSON: {e}"]
 
@@ -95,12 +111,11 @@ def validate_python_files() -> list[str]:
 
     for file_path in python_files:
         try:
-            with open(file_path) as f:
-                compile(f.read(), file_path, "exec")
+            compile(file_path.read_text(), file_path, "exec")
         except SyntaxError as e:
             errors.append(f"❌ Syntax error in {file_path.name}: {e}")
-        except Exception as e:
-            errors.append(f"❌ Error compiling {file_path.name}: {e}")
+        except OSError as e:
+            errors.append(f"❌ Error reading {file_path.name}: {e}")
 
     return errors
 
@@ -130,7 +145,7 @@ class Validation:
     func: Callable[[], list[str]]
 
 
-VALIDATIONS: List[Validation] = [
+VALIDATIONS: list[Validation] = [
     Validation("Required Files", validate_required_files),
     Validation("Manifest", validate_manifest),
     Validation("Services", validate_services),
@@ -141,28 +156,29 @@ VALIDATIONS: List[Validation] = [
 
 def main() -> None:
     """Run all validations."""
-    print("🔍 Validating Paw Control installation...\n")
+    logging.basicConfig(level=logging.INFO, format="%(message)s")
+    _LOGGER.info("🔍 Validating Paw Control installation...\n")
 
     all_errors: list[str] = []
 
     for validation in VALIDATIONS:
-        print(f"📋 Checking {validation.name}...")
+        _LOGGER.info("📋 Checking %s...", validation.name)
         errors = validation.func()
         if errors:
             all_errors.extend(errors)
             for error in errors:
-                print(f"  {error}")
+                _LOGGER.error("  %s", error)
         else:
-            print(f"  ✅ {validation.name} validation passed")
-        print()
+            _LOGGER.info("  ✅ %s validation passed", validation.name)
+        _LOGGER.info("")
 
     if all_errors:
-        print(f"❌ Validation failed with {len(all_errors)} errors:")
+        _LOGGER.error("❌ Validation failed with %d errors:", len(all_errors))
         for error in all_errors:
-            print(f"  {error}")
+            _LOGGER.error("  %s", error)
         sys.exit(1)
 
-    print("✅ All validations passed! Installation is ready.")
+    _LOGGER.info("✅ All validations passed! Installation is ready.")
     sys.exit(0)
 
 
