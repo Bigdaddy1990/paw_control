@@ -1,29 +1,29 @@
-import os
-import sys
 import asyncio
-from datetime import datetime, timedelta, timezone
+import sys
+from datetime import UTC, datetime, timedelta, timezone
+from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import AsyncMock
 
 import pytest
 
 # Ensure custom component package is importable
-sys.path.insert(0, os.path.abspath("."))
+sys.path.insert(0, str(Path().resolve()))
 
+from custom_components.pawcontrol.exceptions import InvalidCoordinates
 from custom_components.pawcontrol.utils import (
     calculate_dog_calories_per_day,
     calculate_speed_kmh,
+    call_service,
     format_distance,
     format_duration,
     format_weight,
     merge_entry_options,
-    call_service,
+    parse_coordinates_string,
     time_since_last_activity,
     validate_dog_name,
     validate_weight,
-    parse_coordinates_string,
 )
-from custom_components.pawcontrol.exceptions import InvalidCoordinates
 
 
 def test_calculate_dog_calories_positive():
@@ -32,7 +32,7 @@ def test_calculate_dog_calories_positive():
 
 
 def test_calculate_dog_calories_invalid_weight():
-    """Invalid or negative weights should return 0 calories instead of raising errors."""
+    """Invalid or negative weights return 0 calories."""
     assert calculate_dog_calories_per_day(-5) == 0
     assert calculate_dog_calories_per_day("bad") == 0
 
@@ -97,7 +97,7 @@ def test_format_duration_invalid_types_and_values(value):
 
 
 @pytest.mark.parametrize(
-    "value,expected",
+    ("value", "expected"),
     [
         ("10", "10 min"),
         (5.5, "5 min"),
@@ -129,16 +129,17 @@ def test_time_since_last_activity_handles_naive_and_aware():
     tolerance = timedelta(seconds=1)
 
     # Naive timestamp without timezone info
-    past_naive = datetime.now() - timedelta(minutes=5)
+    past_naive = datetime.now(UTC) - timedelta(minutes=5)
+    past_naive = past_naive.replace(tzinfo=None)
     naive_result = time_since_last_activity(past_naive.isoformat())
-    expected_naive = datetime.now() - past_naive
+    expected_naive = datetime.now(UTC).replace(tzinfo=None) - past_naive
     assert isinstance(naive_result, timedelta)
     assert abs(naive_result - expected_naive) <= tolerance
 
     # UTC timestamp with trailing 'Z'
-    past_utc = datetime.now(timezone.utc) - timedelta(minutes=5)
+    past_utc = datetime.now(UTC) - timedelta(minutes=5)
     utc_result = time_since_last_activity(past_utc.isoformat().replace("+00:00", "Z"))
-    expected_utc = datetime.now(timezone.utc) - past_utc
+    expected_utc = datetime.now(UTC) - past_utc
     assert abs(utc_result - expected_utc) <= tolerance
 
     # Timestamp with explicit timezone offset
@@ -152,16 +153,16 @@ def test_time_since_last_activity_handles_naive_and_aware():
 def test_time_since_last_activity_accepts_datetime_object():
     """Datetime objects should be handled directly without requiring conversion."""
     tolerance = timedelta(seconds=1)
-    past_time = datetime.now() - timedelta(minutes=5)
+    past_time = datetime.now(UTC) - timedelta(minutes=5)
     result = time_since_last_activity(past_time)
-    expected = datetime.now() - past_time
+    expected = datetime.now(UTC) - past_time
     assert isinstance(result, timedelta)
     assert abs(result - expected) <= tolerance
 
 
 def test_time_since_last_activity_future_time_clamped():
     """Future timestamps should be treated as 0 elapsed time."""
-    future_time = datetime.now() + timedelta(minutes=5)
+    future_time = datetime.now(UTC) + timedelta(minutes=5)
     result = time_since_last_activity(future_time.isoformat())
     assert result == timedelta(0)
 
