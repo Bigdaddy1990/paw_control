@@ -118,9 +118,8 @@ class PawControlAutomationManager(RestoreEntity):
 
         # Restore previous state
         if (
-            (old_state := await self.async_get_last_state()) is not None
-            and old_state.attributes
-        ):
+            old_state := await self.async_get_last_state()
+        ) is not None and old_state.attributes:
             self._automation_stats = old_state.attributes.get(
                 "automation_stats", self._automation_stats
             )
@@ -541,9 +540,7 @@ class PawControlAutomationManager(RestoreEntity):
                 )
 
         except Exception:
-            _LOGGER.exception(
-                "Error in visitor mode automation for %s", self._dog_name
-            )
+            _LOGGER.exception("Error in visitor mode automation for %s", self._dog_name)
 
     async def _handle_daily_summary(self) -> None:
         """Handle daily summary generation."""
