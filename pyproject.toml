@@ -322,37 +322,17 @@ overgeneral-exceptions = [
 
 [[tool.pre-commit.repos]]
 repo = "https://github.com/pre-commit/pre-commit-hooks"
-rev = "v4.6.0"
+rev = "v6.0.0"
 hooks = [
     {id = "trailing-whitespace"},
     {id = "end-of-file-fixer"},
-    {id = "check-yaml"},
+    {id = "check-yaml" args: "--unsafe, --allow-multiple-documents",  exclude: = ".tests/|.docs/|.examples"},
+    {id = "check-toml"},
     {id = "check-added-large-files"},
     {id = "check-case-conflict"},
     {id = "check-merge-conflict"},
     {id = "debug-statements"},
     {id = "check-json", exclude = ".vscode/.*"},
-]
-
-[[tool.pre-commit.repos]]
-repo = "https://github.com/psf/black"
-rev = "24.4.2"
-hooks = [
-    {id = "black", language_version = "python3"},
-]
-
-[[tool.pre-commit.repos]]
-repo = "https://github.com/pycqa/isort"
-rev = "5.13.2"
-hooks = [
-    {id = "isort"},
-]
-
-[[tool.pre-commit.repos]]
-repo = "https://github.com/charliermarsh/ruff-pre-commit"
-rev = "v0.1.15"
-hooks = [
-    {id = "ruff", args = ["--fix"]},
 ]
 
 [[tool.pre-commit.repos]]
