@@ -3,11 +3,10 @@
 from __future__ import annotations
 
 from collections.abc import Mapping
-from typing import Any, TypeAlias
-
 from dataclasses import asdict, is_dataclass
 from datetime import date, datetime, timedelta
 from enum import Enum
+from typing import Any
 
 from homeassistant.util.json import JsonValueType
 
@@ -32,7 +31,8 @@ def _normalise_json(value: Any) -> JsonValueType:
         return value.decode(errors="replace")
     return str(value)
 
-JSONMutableMapping: TypeAlias = dict[str, JsonValueType]
+
+type JSONMutableMapping = dict[str, JsonValueType]
 
 
 def ensure_json_mapping(data: Mapping[str, Any] | None) -> JSONMutableMapping:

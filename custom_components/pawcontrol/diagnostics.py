@@ -2,12 +2,15 @@
 
 from __future__ import annotations
 
-from homeassistant.config_entries import ConfigEntry
-from homeassistant.core import HomeAssistant
-from homeassistant.util.json import JsonValueType
+from typing import TYPE_CHECKING
 
 from .const import DOMAIN
 from .helpers.json import _normalise_json
+
+if TYPE_CHECKING:
+    from homeassistant.config_entries import ConfigEntry
+    from homeassistant.core import HomeAssistant
+    from homeassistant.util.json import JsonValueType
 
 
 async def async_get_config_entry_diagnostics(
@@ -31,5 +34,7 @@ async def async_get_config_entry_diagnostics(
                 getattr(coordinator, "last_update_success", None)
             ),
         },
-        "gps_handler": _normalise_json(gps_handler.get_diagnostics_data() if gps_handler else None),
+        "gps_handler": _normalise_json(
+            gps_handler.get_diagnostics_data() if gps_handler else None
+        ),
     }

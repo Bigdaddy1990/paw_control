@@ -8,39 +8,42 @@ modular.
 
 from __future__ import annotations
 
-from typing import Any, TypeVar, cast
+from typing import TYPE_CHECKING, Any, TypeVar, cast
 
 import voluptuous as vol
 from homeassistant import config_entries
 from homeassistant.core import callback
-from homeassistant.data_entry_flow import FlowResult
 from homeassistant.helpers import config_validation as cv
 
+from .config_helpers import build_module_schema
 from .const import (
     CONF_DOG_AGE,
     CONF_DOG_BREED,
     CONF_DOG_NAME,
     CONF_DOG_WEIGHT,
     CONF_FEEDING_TIMES,
-    FEEDING_TYPES,
     CONF_VET_CONTACT,
     CONF_WALK_DURATION,
     DEFAULT_FEEDING_TIMES,
     DEFAULT_WALK_DURATION,
     DOMAIN,
-)
-from .config_helpers import build_module_schema
-from .types import (
-    PawControlConfigData,
-    PawControlConfigFlowInput,
-    PawControlOptionsFlowInput,
+    FEEDING_TYPES,
 )
 from .utils import merge_entry_options
+
+if TYPE_CHECKING:
+    from homeassistant.data_entry_flow import FlowResult
+
+    from .types import (
+        PawControlConfigData,
+        PawControlConfigFlowInput,
+        PawControlOptionsFlowInput,
+    )
 
 _FlowInputT = TypeVar("_FlowInputT", bound=dict[str, Any])
 
 
-def _validate_schema(
+def _validate_schema[FlowInputT: dict[str, Any]](
     schema: vol.Schema, user_input: _FlowInputT
 ) -> tuple[_FlowInputT | None, dict[str, str]]:
     """Validate ``user_input`` against ``schema``.
@@ -51,7 +54,7 @@ def _validate_schema(
     """
 
     try:
-        return cast(_FlowInputT, schema(user_input)), {}
+        return cast("_FlowInputT", schema(user_input)), {}
     except vol.MultipleInvalid as err:
         errors: dict[str, str] = {}
         for error in err.errors:
@@ -93,14 +96,12 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         if user_input is not None:
             user_input, errors = _validate_schema(schema, user_input)
             if not errors:
-                user_input = cast(PawControlConfigData, user_input)
+                user_input = cast("PawControlConfigData", user_input)
                 return self.async_create_entry(
                     title=user_input[CONF_DOG_NAME], data=user_input
                 )
 
-        return self.async_show_form(
-            step_id="user", data_schema=schema, errors=errors
-        )
+        return self.async_show_form(step_id="user", data_schema=schema, errors=errors)
 
     @staticmethod
     @callback
@@ -130,6 +131,4 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
             if not errors:
                 return self.async_create_entry(title="", data=user_input)
 
-        return self.async_show_form(
-            step_id="init", data_schema=schema, errors=errors
-        )
+        return self.async_show_form(step_id="init", data_schema=schema, errors=errors)

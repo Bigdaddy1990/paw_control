@@ -179,7 +179,12 @@ ENTITIES = {
         "walk_in_progress": {"name": "Spaziergang läuft", "icon": "mdi:walk"},
     },
     "counter": {
-        "walk_count": {"name": "Spaziergänge", "initial": 0, "step": 1, "icon": "mdi:walk"},
+        "walk_count": {
+            "name": "Spaziergänge",
+            "initial": 0,
+            "step": 1,
+            "icon": "mdi:walk",
+        },
         "feeding_morning_count": {
             "name": "Frühstücks-Zähler",
             "initial": 0,

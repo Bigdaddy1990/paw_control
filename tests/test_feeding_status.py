@@ -25,8 +25,8 @@ def make_coordinator(morning="off", evening="off"):
     coordinator = PawControlCoordinator.__new__(PawControlCoordinator)
     coordinator.hass = DummyHass(
         {
-            f"input_boolean.Bello_feeding_morning": DummyState(morning),
-            f"input_boolean.Bello_feeding_evening": DummyState(evening),
+            "input_boolean.Bello_feeding_morning": DummyState(morning),
+            "input_boolean.Bello_feeding_evening": DummyState(evening),
         }
     )
     coordinator.dog_name = "Bello"

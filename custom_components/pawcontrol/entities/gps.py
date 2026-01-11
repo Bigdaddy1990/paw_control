@@ -1,8 +1,9 @@
 """Gemeinsame GPS-Basisklasse für alle Paw Control GPS-Entities."""
 
+from pawcontrol.helpers.gps import is_valid_gps_coords
+from pawcontrol.helpers.json import JSONMutableMapping
+
 from .base import PawControlBaseEntity
-from ..helpers.gps import is_valid_gps_coords
-from ..helpers.json import JSONMutableMapping
 
 
 class PawControlGpsEntity(PawControlBaseEntity):

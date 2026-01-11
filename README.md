@@ -123,7 +123,7 @@ Paw Control ist kostenlos und Open Source. Wenn es Ihnen und Ihrem Hund hilft, f
 
 💝 **Was Ihre Spende bewirkt:**
 - 🚀 Neue GPS-Tracker Integrationen
-- 📱 Mobile App Entwicklung  
+- 📱 Mobile App Entwicklung
 - 🤖 KI-basierte Gesundheitsempfehlungen
 - 🌍 Weitere Sprachen und Länder
 - 🔧 24/7 Support und Updates

@@ -5,7 +5,8 @@ from __future__ import annotations
 from datetime import datetime
 from typing import Any
 
-from ..const import ATTR_DOG_NAME, ATTR_LAST_UPDATED, ICONS
+from pawcontrol.const import ATTR_DOG_NAME, ATTR_LAST_UPDATED, ICONS
+
 from .json import JSONMutableMapping, ensure_json_mapping
 
 

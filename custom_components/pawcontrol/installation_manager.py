@@ -1,11 +1,9 @@
 """Modular setup and teardown manager for Paw Control."""
+
 from __future__ import annotations
 
 import logging
-from typing import cast
-
-from homeassistant.config_entries import ConfigEntry
-from homeassistant.core import HomeAssistant
+from typing import TYPE_CHECKING, cast
 
 from . import dashboard
 from .const import CONF_CREATE_DASHBOARD, CONF_DOG_NAME
@@ -15,8 +13,13 @@ from .module_registry import (
     async_unload_modules,
 )
 from .setup_helpers import async_remove_helpers_for_dog
-from .types import PawControlConfigData, PawControlOptions
 from .utils import merge_entry_options
+
+if TYPE_CHECKING:
+    from homeassistant.config_entries import ConfigEntry
+    from homeassistant.core import HomeAssistant
+
+    from .types import PawControlConfigData, PawControlOptions
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -27,7 +30,7 @@ class InstallationManager:
     async def setup_entry(self, hass: HomeAssistant, entry: ConfigEntry) -> bool:
         """Set up the integration and selected modules."""
         opts = merge_entry_options(entry)
-        module_opts = cast(PawControlOptions, opts)
+        module_opts = cast("PawControlOptions", opts)
 
         dog_present = CONF_DOG_NAME in opts
         dog_name = opts.setdefault(CONF_DOG_NAME, entry.title)

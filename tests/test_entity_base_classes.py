@@ -1,8 +1,7 @@
+import asyncio
 import os
 import sys
 from datetime import datetime
-
-import asyncio
 
 sys.path.insert(0, os.path.abspath("."))
 
@@ -33,14 +32,21 @@ class DummyCoordinator:
 
 
 def test_text_entity_clamps_value():
-    entity = PawControlTextEntity(DummyCoordinator(), "Name", dog_name="Bello", unique_suffix="name", max_length=5)
+    entity = PawControlTextEntity(
+        DummyCoordinator(), "Name", dog_name="Bello", unique_suffix="name", max_length=5
+    )
     asyncio.run(entity.async_set_value("abcdefgh"))
     assert entity.native_value == "abcde"
 
 
 def test_number_entity_clamps_value():
     entity = PawControlNumberEntity(
-        DummyCoordinator(), "Level", dog_name="Bello", unique_suffix="level", min_value=0, max_value=10
+        DummyCoordinator(),
+        "Level",
+        dog_name="Bello",
+        unique_suffix="level",
+        min_value=0,
+        max_value=10,
     )
     asyncio.run(entity.async_set_native_value(15))
     assert entity.native_value == 10
@@ -50,7 +56,11 @@ def test_number_entity_clamps_value():
 
 def test_select_entity_validates_option():
     entity = PawControlSelectEntity(
-        DummyCoordinator(), "Mode", dog_name="Bello", unique_suffix="mode", options=["a", "b"]
+        DummyCoordinator(),
+        "Mode",
+        dog_name="Bello",
+        unique_suffix="mode",
+        options=["a", "b"],
     )
     asyncio.run(entity.async_select_option("c"))
     assert entity.current_option == "a"

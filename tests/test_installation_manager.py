@@ -7,13 +7,14 @@ from unittest.mock import AsyncMock, patch
 # Ensure the custom component package is importable
 sys.path.insert(0, os.path.abspath("."))
 
+from homeassistant import config_entries
+
 from custom_components.pawcontrol.const import (
     CONF_CREATE_DASHBOARD,
     CONF_DOG_NAME,
     DOMAIN,
 )
 from custom_components.pawcontrol.installation_manager import InstallationManager
-from homeassistant import config_entries
 
 
 def test_dashboard_not_created_without_dog_name():
@@ -144,4 +145,3 @@ def test_unload_entry_calls_module_unload():
     import asyncio
 
     asyncio.run(run_test())
-

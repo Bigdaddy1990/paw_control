@@ -1,28 +1,33 @@
 """Utility functions for Paw Control integration."""
+
 from __future__ import annotations
 
-import re
 import logging
-from datetime import datetime, timedelta, timezone
-from math import radians, sin, cos, sqrt, atan2, isfinite
-from typing import Any, Callable, Dict, List, Mapping, Optional, Tuple, cast
+import re
+from datetime import UTC, datetime, timedelta
+from math import atan2, cos, isfinite, radians, sin, sqrt
+from typing import TYPE_CHECKING, Any, cast
 
-from homeassistant.core import HomeAssistant
-from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import CONF_NAME
 from homeassistant.util import slugify
 
 from .const import (
-    MIN_DOG_NAME_LENGTH,
-    MAX_DOG_NAME_LENGTH,
-    MIN_DOG_AGE,
-    MAX_DOG_AGE,
     DOG_NAME_PATTERN,
     GPS_ACCURACY_THRESHOLDS,
+    MAX_DOG_AGE,
+    MAX_DOG_NAME_LENGTH,
+    MIN_DOG_AGE,
+    MIN_DOG_NAME_LENGTH,
     VALIDATION_RULES,
 )
-from .exceptions import InvalidCoordinates, DataValidationError
-from .types import PawControlConfigData
+from .exceptions import InvalidCoordinates
+
+if TYPE_CHECKING:
+    from collections.abc import Callable, Mapping
+
+    from homeassistant.config_entries import ConfigEntry
+    from homeassistant.core import HomeAssistant
+
+    from .types import PawControlConfigData
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -39,7 +44,7 @@ def merge_entry_options(entry: ConfigEntry) -> PawControlConfigData:
     """
 
     merged: dict[str, Any] = {**entry.data, **entry.options}
-    return cast(PawControlConfigData, merged)
+    return cast("PawControlConfigData", merged)
 
 
 def register_services(
@@ -92,10 +97,7 @@ def validate_dog_name(name: str) -> bool:
         return False
 
     # Must start with a letter
-    if not name[0].isalpha():
-        return False
-
-    return True
+    return name[0].isalpha()
 
 
 def validate_weight(weight: float) -> bool:
@@ -132,26 +134,31 @@ def validate_gps_accuracy(accuracy: float) -> bool:
         return False
 
 
-def calculate_distance(coord1: Tuple[float, float], coord2: Tuple[float, float]) -> float:
+def calculate_distance(
+    coord1: tuple[float, float], coord2: tuple[float, float]
+) -> float:
     """Calculate distance between two GPS coordinates in meters using Haversine formula."""
-    if not validate_coordinates(coord1[0], coord1[1]) or not validate_coordinates(coord2[0], coord2[1]):
-        raise InvalidCoordinates("Invalid GPS coordinates provided")
-    
+    if not validate_coordinates(coord1[0], coord1[1]) or not validate_coordinates(
+        coord2[0], coord2[1]
+    ):
+        msg = "Invalid GPS coordinates provided"
+        raise InvalidCoordinates(msg)
+
     lat1, lon1 = coord1
     lat2, lon2 = coord2
-    
+
     # Convert to radians
     lat1, lon1, lat2, lon2 = map(radians, [lat1, lon1, lat2, lon2])
-    
+
     # Haversine formula
     dlat = lat2 - lat1
     dlon = lon2 - lon1
-    a = sin(dlat/2)**2 + cos(lat1) * cos(lat2) * sin(dlon/2)**2
-    c = 2 * atan2(sqrt(a), sqrt(1-a))
-    
+    a = sin(dlat / 2) ** 2 + cos(lat1) * cos(lat2) * sin(dlon / 2) ** 2
+    c = 2 * atan2(sqrt(a), sqrt(1 - a))
+
     # Earth's radius in meters
     r = 6371000
-    
+
     return r * c
 
 
@@ -217,15 +224,16 @@ def get_gps_accuracy_level(accuracy: float) -> str:
     """Get GPS accuracy level description."""
     if accuracy <= GPS_ACCURACY_THRESHOLDS["excellent"]:
         return "Ausgezeichnet"
-    elif accuracy <= GPS_ACCURACY_THRESHOLDS["good"]:
+    if accuracy <= GPS_ACCURACY_THRESHOLDS["good"]:
         return "Gut"
-    elif accuracy <= GPS_ACCURACY_THRESHOLDS["acceptable"]:
+    if accuracy <= GPS_ACCURACY_THRESHOLDS["acceptable"]:
         return "Akzeptabel"
-    else:
-        return "Schlecht"
+    return "Schlecht"
 
 
-def calculate_dog_calories_per_day(weight_kg: float, activity_level: str = "normal") -> int:
+def calculate_dog_calories_per_day(
+    weight_kg: float, activity_level: str = "normal"
+) -> int:
     """Calculate daily calorie needs for a dog based on weight and activity level."""
     # Validate weight to avoid math errors with invalid or negative values
     if not validate_weight(weight_kg):
@@ -234,7 +242,7 @@ def calculate_dog_calories_per_day(weight_kg: float, activity_level: str = "norm
     weight = float(weight_kg)
 
     # Base formula: RER = 70 * (weight in kg)^0.75
-    rer = 70 * (weight ** 0.75)
+    rer = 70 * (weight**0.75)
 
     # Activity multipliers
     multipliers = {
@@ -249,11 +257,13 @@ def calculate_dog_calories_per_day(weight_kg: float, activity_level: str = "norm
     return int(rer * multiplier)
 
 
-def calculate_ideal_walk_duration(weight_kg: float, age_years: float, activity_level: str = "normal") -> int:
+def calculate_ideal_walk_duration(
+    weight_kg: float, age_years: float, activity_level: str = "normal"
+) -> int:
     """Calculate ideal daily walk duration in minutes."""
     # Base time per kg (adult dog)
     base_minutes_per_kg = 2
-    
+
     # Age adjustments
     if age_years < 1:  # Puppy
         age_multiplier = 0.5
@@ -261,36 +271,32 @@ def calculate_ideal_walk_duration(weight_kg: float, age_years: float, activity_l
         age_multiplier = 0.7
     else:  # Adult
         age_multiplier = 1.0
-    
+
     # Activity level adjustments
     activity_multipliers = {
         "very_low": 0.5,
         "low": 0.7,
         "normal": 1.0,
         "high": 1.3,
-        "very_high": 1.5
+        "very_high": 1.5,
     }
-    
+
     activity_multiplier = activity_multipliers.get(activity_level, 1.0)
-    
+
     # Calculate
     base_time = weight_kg * base_minutes_per_kg
     adjusted_time = base_time * age_multiplier * activity_multiplier
-    
+
     # Reasonable bounds
     return max(15, min(180, int(adjusted_time)))
 
 
-def validate_service_data(data: Dict[str, Any], required_fields: List[str]) -> bool:
+def validate_service_data(data: dict[str, Any], required_fields: list[str]) -> bool:
     """Validate service call data."""
     if not isinstance(data, dict):
         return False
-    
-    for field in required_fields:
-        if field not in data:
-            return False
-    
-    return True
+
+    return all(field in data for field in required_fields)
 
 
 def safe_float_convert(value: Any, default: float = 0.0) -> float:
@@ -315,7 +321,7 @@ def generate_entity_id(dog_name: str, entity_type: str, suffix: str) -> str:
     return f"{entity_type}.{dog_slug}_{suffix}"
 
 
-def parse_coordinates_string(coord_string: str) -> Tuple[float, float]:
+def parse_coordinates_string(coord_string: str) -> tuple[float, float]:
     """Parse coordinates from a string.
 
     Accepts latitude/longitude pairs separated by a comma, semicolon or
@@ -326,25 +332,27 @@ def parse_coordinates_string(coord_string: str) -> Tuple[float, float]:
 
     try:
         if coord_string is None:
-            raise TypeError("No coordinate string supplied")
+            msg = "No coordinate string supplied"
+            raise TypeError(msg)
 
         # Split on comma, semicolon or whitespace and remove empty entries
         parts = [p for p in re.split(r"[;,\s]+", coord_string.strip()) if p]
         if len(parts) != 2:
-            raise ValueError("Invalid coordinate format")
+            msg = "Invalid coordinate format"
+            raise ValueError(msg)
 
         lat = float(parts[0])
         lon = float(parts[1])
 
         if not validate_coordinates(lat, lon):
-            raise ValueError("Invalid coordinate values")
+            msg = "Invalid coordinate values"
+            raise ValueError(msg)
 
         return lat, lon
 
     except (ValueError, TypeError, AttributeError) as e:
-        raise InvalidCoordinates(
-            f"Could not parse coordinates '{coord_string}': {e}"
-        ) from e
+        msg = f"Could not parse coordinates '{coord_string}': {e}"
+        raise InvalidCoordinates(msg) from e
 
 
 def format_coordinates(latitude: float, longitude: float, precision: int = 6) -> str:
@@ -370,22 +378,19 @@ def calculate_speed_kmh(distance_m: float, time_seconds: float) -> float:
     return round(speed_kmh, 1)
 
 
-def estimate_calories_burned(distance_km: float, weight_kg: float, activity_intensity: str = "medium") -> int:
+def estimate_calories_burned(
+    distance_km: float, weight_kg: float, activity_intensity: str = "medium"
+) -> int:
     """Estimate calories burned during activity."""
     # Base calories per km per kg
     base_cal_per_km_per_kg = 0.8
-    
+
     # Intensity multipliers
-    intensity_multipliers = {
-        "low": 0.7,
-        "medium": 1.0,
-        "high": 1.4,
-        "extreme": 1.8
-    }
-    
+    intensity_multipliers = {"low": 0.7, "medium": 1.0, "high": 1.4, "extreme": 1.8}
+
     multiplier = intensity_multipliers.get(activity_intensity, 1.0)
     calories = distance_km * weight_kg * base_cal_per_km_per_kg * multiplier
-    
+
     return max(1, int(calories))
 
 
@@ -403,11 +408,13 @@ def time_since_last_activity(last_activity_time: str | datetime) -> timedelta:
         if isinstance(last_activity_time, datetime):
             last_time = last_activity_time
         else:
-            last_time = datetime.fromisoformat(str(last_activity_time).replace("Z", "+00:00"))
+            last_time = datetime.fromisoformat(
+                str(last_activity_time).replace("Z", "+00:00")
+            )
 
         if last_time.tzinfo:
-            now = datetime.now(timezone.utc)
-            last_time = last_time.astimezone(timezone.utc)
+            now = datetime.now(UTC)
+            last_time = last_time.astimezone(UTC)
         else:
             now = datetime.now()
 
@@ -441,34 +448,38 @@ def get_activity_status_emoji(activity_type: str, completed: bool) -> str:
         "health": "🏥",
         "grooming": "✂️",
         "medication": "💊",
-        "vet": "🩺"
+        "vet": "🩺",
     }
-    
+
     emoji = activity_emojis.get(activity_type, "📝")
     status = "✅" if completed else "⏳"
-    
+
     return f"{emoji} {status}"
 
 
-def validate_data_against_rules(data: Dict[str, Any]) -> List[str]:
+def validate_data_against_rules(data: dict[str, Any]) -> list[str]:
     """Validate data against defined validation rules."""
     errors = []
-    
+
     for field, value in data.items():
         if field in VALIDATION_RULES:
             rule = VALIDATION_RULES[field]
-            
+
             try:
                 num_value = float(value)
-                
+
                 if num_value < rule["min"]:
-                    errors.append(f"{field} must be at least {rule['min']} {rule['unit']}")
+                    errors.append(
+                        f"{field} must be at least {rule['min']} {rule['unit']}"
+                    )
                 elif num_value > rule["max"]:
-                    errors.append(f"{field} must be at most {rule['max']} {rule['unit']}")
-                    
+                    errors.append(
+                        f"{field} must be at most {rule['max']} {rule['unit']}"
+                    )
+
             except (ValueError, TypeError):
                 errors.append(f"{field} must be a valid number")
-    
+
     return errors
 
 
@@ -483,7 +494,7 @@ def normalize_dog_name(name: str) -> str:
     """Normalize dog name for consistent use."""
     if not name:
         return ""
-    
+
     # Remove extra whitespace and convert to title case
     normalized = " ".join(name.strip().split())
     return normalized.title()
@@ -493,15 +504,16 @@ def get_meal_time_category(hour: int) -> str:
     """Get meal category based on hour of day."""
     if 5 <= hour < 10:
         return "morning"
-    elif 11 <= hour < 15:
+    if 11 <= hour < 15:
         return "lunch"
-    elif 17 <= hour < 21:
+    if 17 <= hour < 21:
         return "evening"
-    else:
-        return "snack"
+    return "snack"
 
 
-def calculate_dog_age_in_human_years(dog_age_years: float, size_category: str = "medium") -> int:
+def calculate_dog_age_in_human_years(
+    dog_age_years: float, size_category: str = "medium"
+) -> int:
     """Calculate dog age in human equivalent years."""
     # Different aging rates by size
     if dog_age_years <= 2:
@@ -514,12 +526,12 @@ def calculate_dog_age_in_human_years(dog_age_years: float, size_category: str = 
             "small": 4.5,
             "medium": 5,
             "large": 5.5,
-            "giant": 6
+            "giant": 6,
         }
-        
+
         multiplier = size_multipliers.get(size_category, 5)
         human_years = 21 + (dog_age_years - 2) * multiplier
-    
+
     return int(human_years)
 
 
@@ -530,34 +542,36 @@ def is_healthy_weight_for_breed(weight_kg: float, breed_size: str) -> bool:
         "small": (6, 12),
         "medium": (12, 27),
         "large": (27, 45),
-        "giant": (45, 90)
+        "giant": (45, 90),
     }
-    
+
     if breed_size not in weight_ranges:
         return True  # Unknown breed, assume healthy
-    
+
     min_weight, max_weight = weight_ranges[breed_size]
     return min_weight <= weight_kg <= max_weight
 
 
-async def safe_service_call(hass: HomeAssistant, domain: str, service: str, data: dict) -> bool:
+async def safe_service_call(
+    hass: HomeAssistant, domain: str, service: str, data: dict
+) -> bool:
     """Make a safe service call with error handling."""
     try:
         entity_id = data.get("entity_id")
-        
+
         # Check if service exists
         if not hass.services.has_service(domain, service):
             _LOGGER.debug("Service %s.%s not available", domain, service)
             return False
-        
+
         # Check if entity exists (if specified)
         if entity_id and not hass.states.get(entity_id):
             _LOGGER.debug("Entity %s not found, skipping service call", entity_id)
             return False
-        
+
         await hass.services.async_call(domain, service, data, blocking=True)
         return True
-        
+
     except Exception as e:
         _LOGGER.debug("Service call %s.%s failed: %s", domain, service, e)
         return False
@@ -568,11 +582,11 @@ def extract_dog_name_from_entity_id(entity_id: str) -> str:
     try:
         # Remove domain prefix
         entity_name = entity_id.split(".", 1)[1] if "." in entity_id else entity_id
-        
+
         # Extract dog name (first part before underscore)
         parts = entity_name.split("_")
         return parts[0] if parts else entity_name
-        
+
     except (IndexError, AttributeError):
         return ""
 
@@ -588,17 +602,16 @@ def format_time_ago(dt: datetime) -> str:
     """Format datetime as 'time ago' string."""
     now = datetime.now()
     diff = now - dt
-    
+
     if diff.days > 0:
         return f"vor {diff.days} Tag{'en' if diff.days > 1 else ''}"
-    elif diff.seconds >= 3600:
+    if diff.seconds >= 3600:
         hours = diff.seconds // 3600
         return f"vor {hours} Stunde{'n' if hours > 1 else ''}"
-    elif diff.seconds >= 60:
+    if diff.seconds >= 60:
         minutes = diff.seconds // 60
         return f"vor {minutes} Minute{'n' if minutes > 1 else ''}"
-    else:
-        return "gerade eben"
+    return "gerade eben"
 
 
 def get_health_status_color(status: str) -> str:
@@ -610,9 +623,9 @@ def get_health_status_color(status: str) -> str:
         "normal": "blue",
         "unwohl": "orange",
         "krank": "red",
-        "notfall": "darkred"
+        "notfall": "darkred",
     }
-    
+
     return status_colors.get(status.lower(), "gray")
 
 
@@ -638,15 +651,15 @@ def calculate_feeding_amount_by_weight(weight_kg: float, meals_per_day: int = 2)
     return int(daily_amount / meals)
 
 
-def is_emergency_situation(health_data: Dict[str, Any]) -> bool:
+def is_emergency_situation(health_data: dict[str, Any]) -> bool:
     """Determine if health data indicates emergency situation."""
     emergency_indicators = [
         health_data.get("temperature", 0) > 41.0,  # High fever
         health_data.get("temperature", 0) < 37.0,  # Hypothermia
-        health_data.get("heart_rate", 0) > 180,    # Tachycardia
-        health_data.get("heart_rate", 0) < 50,     # Bradycardia
+        health_data.get("heart_rate", 0) > 180,  # Tachycardia
+        health_data.get("heart_rate", 0) < 50,  # Bradycardia
         "notfall" in str(health_data.get("health_status", "")).lower(),
-        "emergency" in str(health_data.get("emergency_mode", "")).lower()
+        "emergency" in str(health_data.get("emergency_mode", "")).lower(),
     ]
-    
+
     return any(emergency_indicators)

@@ -10,15 +10,17 @@ from __future__ import annotations
 import asyncio
 import logging
 from dataclasses import dataclass
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from homeassistant.components.counter import DOMAIN as COUNTER_DOMAIN
 from homeassistant.components.input_boolean import DOMAIN as INPUT_BOOLEAN_DOMAIN
 from homeassistant.components.input_datetime import DOMAIN as INPUT_DATETIME_DOMAIN
-from homeassistant.core import HomeAssistant
 from homeassistant.util.dt import now
 
 from .utils import safe_service_call
+
+if TYPE_CHECKING:
+    from homeassistant.core import HomeAssistant
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -42,9 +44,7 @@ async def _call_service(
     try:
         await safe_service_call(hass, domain, service, data)
     except Exception:  # pragma: no cover - defensive programming
-        _LOGGER.exception(
-            "Error executing %s.%s for dog %s", domain, service, dog_id
-        )
+        _LOGGER.exception("Error executing %s.%s for dog %s", domain, service, dog_id)
 
 
 @dataclass(frozen=True)
@@ -136,4 +136,3 @@ async def async_remove_helpers_for_dog(hass: HomeAssistant, dog_id: str) -> None
 
 
 __all__ = ["async_create_helpers_for_dog", "async_remove_helpers_for_dog"]
-

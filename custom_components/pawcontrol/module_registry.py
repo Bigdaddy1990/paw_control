@@ -9,6 +9,7 @@ Teardown handlers are invoked only when a module is explicitly disabled in the
 options. Modules that default to off and are omitted from the options are left
 untouched.
 """
+
 from __future__ import annotations
 
 import logging
@@ -23,11 +24,12 @@ from .const import (
     CONF_NOTIFICATIONS_ENABLED,
     CONF_WALK_MODULE,
 )
-from .types import PawControlModuleKey, PawControlOptions
 
 if TYPE_CHECKING:
     from homeassistant.config_entries import ConfigEntry
     from homeassistant.core import HomeAssistant
+
+    from .types import PawControlModuleKey, PawControlOptions
 
 ModuleFunc = Callable[..., Awaitable[None]]
 
@@ -74,9 +76,7 @@ _LOGGER = logging.getLogger(__name__)
 def enabled_modules(opts: PawControlOptions) -> dict[PawControlModuleKey, Module]:
     """Return modules that should be enabled based on ``opts``."""
     return {
-        key: module
-        for key, module in MODULES.items()
-        if opts.get(key, module.default)
+        key: module for key, module in MODULES.items() if opts.get(key, module.default)
     }
 
 
@@ -178,9 +178,9 @@ async_unload_modules = unload_modules
 __all__ = [
     "MODULES",
     "Module",
-    "enabled_modules",
-    "disabled_modules",
     "async_ensure_helpers",
     "async_setup_modules",
     "async_unload_modules",
+    "disabled_modules",
+    "enabled_modules",
 ]

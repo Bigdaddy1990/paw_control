@@ -1,6 +1,6 @@
 # 🔮 Paw Control Roadmap - Zukünftige Features
 
-Diese Datei enthält alle geplanten Features und Entwicklungsschritte für Paw Control. 
+Diese Datei enthält alle geplanten Features und Entwicklungsschritte für Paw Control.
 
 > **Hinweis**: Dies sind Ideen und Konzepte für die zukünftige Entwicklung. Nicht alle Features werden zwangsläufig implementiert.
 

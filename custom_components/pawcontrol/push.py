@@ -1,6 +1,6 @@
 """Push module for Paw Control – service, target handling, setup/teardown."""
 
-from typing import Any, Optional
+from typing import Any
 
 from .const import CONF_DOG_NAME, DOMAIN, SERVICE_SEND_NOTIFICATION
 from .utils import register_services
@@ -12,7 +12,7 @@ async def send_notification(
     helper_id: str,
     message: str,
     title: str,
-    target: Optional[str] = None,
+    target: str | None = None,
 ) -> None:
     """Send a notification if the helper is active.
 

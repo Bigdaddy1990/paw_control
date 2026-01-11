@@ -1,15 +1,20 @@
 """Datetime platform for Paw Control integration."""
+
 from __future__ import annotations
 
 import logging
-from homeassistant.config_entries import ConfigEntry
-from homeassistant.core import HomeAssistant
-from homeassistant.helpers.entity_platform import AddEntitiesCallback
+from typing import TYPE_CHECKING
 
 from .const import DOMAIN
-from .coordinator import PawControlCoordinator
 from .entities import PawControlDateTimeEntity
 from .helpers.entity import get_icon
+
+if TYPE_CHECKING:
+    from homeassistant.config_entries import ConfigEntry
+    from homeassistant.core import HomeAssistant
+    from homeassistant.helpers.entity_platform import AddEntitiesCallback
+
+    from .coordinator import PawControlCoordinator
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -44,7 +49,9 @@ async def async_setup_entry(
     async_add_entities: AddEntitiesCallback,
 ) -> None:
     """Set up the datetime platform."""
-    coordinator: PawControlCoordinator = hass.data[DOMAIN][config_entry.entry_id]["coordinator"]
+    coordinator: PawControlCoordinator = hass.data[DOMAIN][config_entry.entry_id][
+        "coordinator"
+    ]
     dog_name = coordinator.dog_name
 
     entities = [
@@ -53,4 +60,3 @@ async def async_setup_entry(
     ]
 
     async_add_entities(entities)
-

@@ -1,4 +1,5 @@
 """Utilities for building configuration and option schemas."""
+
 from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
@@ -7,14 +8,20 @@ import voluptuous as vol
 
 from .const import CONF_CREATE_DASHBOARD
 from .module_registry import MODULES
-from .types import PawControlConfigData, PawControlOptions, PawControlOptionsFlowInput
 
 if TYPE_CHECKING:
-    from collections.abc import Mapping
+    from .types import (
+        PawControlConfigData,
+        PawControlOptions,
+        PawControlOptionsFlowInput,
+    )
 
 
 def build_module_schema(
-    data: PawControlOptions | PawControlOptionsFlowInput | PawControlConfigData | None = None,
+    data: PawControlOptions
+    | PawControlOptionsFlowInput
+    | PawControlConfigData
+    | None = None,
 ) -> dict[Any, Any]:
     """Create schema entries for module toggles.
 
@@ -27,7 +34,9 @@ def build_module_schema(
         vol.Optional(key, default=defaults.get(key, module.default)): bool
         for key, module in MODULES.items()
     }
-    schema[vol.Optional(
-        CONF_CREATE_DASHBOARD, default=defaults.get(CONF_CREATE_DASHBOARD, False)
-    )] = bool
+    schema[
+        vol.Optional(
+            CONF_CREATE_DASHBOARD, default=defaults.get(CONF_CREATE_DASHBOARD, False)
+        )
+    ] = bool
     return schema

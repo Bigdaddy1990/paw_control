@@ -1,6 +1,6 @@
+import asyncio
 import os
 import sys
-import asyncio
 from unittest.mock import AsyncMock, patch
 
 # Ensure custom component package is importable

@@ -5,10 +5,11 @@ from unittest.mock import AsyncMock
 
 sys.path.insert(0, os.path.abspath("."))
 
+from homeassistant import config_entries
+
 import custom_components.pawcontrol as integration
 from custom_components.pawcontrol.const import DOMAIN
 from custom_components.pawcontrol.installation_manager import InstallationManager
-from homeassistant import config_entries
 
 
 def test_manager_lifecycle(monkeypatch):
@@ -40,4 +41,5 @@ def test_manager_lifecycle(monkeypatch):
         unload_mock.assert_awaited_once_with(hass, entry)
 
     import asyncio
+
     asyncio.run(run_test())

@@ -59,7 +59,9 @@ async def teardown_walk(hass: HomeAssistant, entry: ConfigEntry) -> None:
         await call_service(hass, "counter", "reset", {"entity_id": walk_counter_id})
         await call_service(hass, "counter", "remove", {"entity_id": walk_counter_id})
     if hass.states.get(walk_active_id):
-        await call_service(hass, "input_boolean", "remove", {"entity_id": walk_active_id})
+        await call_service(
+            hass, "input_boolean", "remove", {"entity_id": walk_active_id}
+        )
 
 
 async def ensure_helpers(hass: HomeAssistant, opts: dict) -> None:
@@ -87,4 +89,3 @@ async def ensure_helpers(hass: HomeAssistant, opts: dict) -> None:
             "create",
             {"name": f"{dog} Gassi läuft", "entity_id": walk_active_id},
         )
-

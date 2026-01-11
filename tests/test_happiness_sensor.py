@@ -35,4 +35,3 @@ def test_calculate_happiness_logic():
     data["feeding_status"]["evening_fed"] = True
     data["activity_status"]["walked_today"] = False
     assert coordinator._calculate_happiness(data) == "Needs attention"
-

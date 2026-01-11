@@ -22,9 +22,12 @@ def _hass(states_state="on"):
 def test_send_notification_helper_off():
     async def run_test():
         hass = _hass(states_state="off")
-        await send_notification(hass, "Buddy", "input_boolean.Buddy_push_active", "Hi", "Title")
+        await send_notification(
+            hass, "Buddy", "input_boolean.Buddy_push_active", "Hi", "Title"
+        )
         hass.services.async_call.assert_not_called()
         hass.components.persistent_notification.create.assert_not_called()
+
     asyncio.run(run_test())
 
 
@@ -40,9 +43,13 @@ def test_send_notification_with_target_calls_notify():
             "mobile",
         )
         hass.services.async_call.assert_called_once_with(
-            "notify", "mobile", {"message": "Buddy: Hello", "title": "Title"}, blocking=True
+            "notify",
+            "mobile",
+            {"message": "Buddy: Hello", "title": "Title"},
+            blocking=True,
         )
         hass.components.persistent_notification.create.assert_not_called()
+
     asyncio.run(run_test())
 
 
@@ -60,4 +67,5 @@ def test_send_notification_without_target_creates_persistent_notification():
             "Buddy: Hello", title="Title"
         )
         hass.services.async_call.assert_not_called()
+
     asyncio.run(run_test())

@@ -7,9 +7,7 @@ import pytest
 
 sys.path.insert(0, os.path.abspath("."))
 
-import custom_components.pawcontrol.config_flow as config_flow
-import custom_components.pawcontrol.const as const
-
+from custom_components.pawcontrol import config_flow, const
 from custom_components.pawcontrol.const import CONF_DOG_NAME, CONF_FEEDING_TIMES
 
 
@@ -35,8 +33,8 @@ def test_feeding_times_default_is_copied(defaults, monkeypatch):
     assert data[CONF_FEEDING_TIMES] == defaults
     assert data[CONF_FEEDING_TIMES] is not config_flow.DEFAULT_FEEDING_TIMES
     data[CONF_FEEDING_TIMES].append("extra")
-    assert config_flow.DEFAULT_FEEDING_TIMES == defaults
-    assert const.DEFAULT_FEEDING_TIMES == defaults
+    assert defaults == config_flow.DEFAULT_FEEDING_TIMES
+    assert defaults == const.DEFAULT_FEEDING_TIMES
 
 
 def test_feeding_times_options(monkeypatch):
