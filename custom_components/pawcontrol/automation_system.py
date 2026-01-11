@@ -20,7 +20,7 @@ from .const import (
     FEEDING_TYPES,
     MEAL_TYPES,
 )
-from .helpers.json import JSONMutableMapping, ensure_json_mapping
+from .helpers.json import JSONMutableMapping
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -163,18 +163,16 @@ class PawControlAutomationManager(RestoreEntity):
     @property
     def extra_state_attributes(self) -> JSONMutableMapping:
         """Return extra state attributes."""
-        return ensure_json_mapping(
-            {
-                "automation_registry": list(self._automation_registry.keys()),
-                "total_automations": len(self._automation_registry),
-                "feeding_automation_active": self._feeding_automation_active,
-                "activity_automation_active": self._activity_automation_active,
-                "health_automation_active": self._health_automation_active,
-                "emergency_automation_active": self._emergency_automation_active,
-                "automation_stats": self._automation_stats,
-                "last_updated": dt_now().isoformat(),
-            }
-        )
+        return {
+            "automation_registry": list(self._automation_registry.keys()),
+            "total_automations": len(self._automation_registry),
+            "feeding_automation_active": self._feeding_automation_active,
+            "activity_automation_active": self._activity_automation_active,
+            "health_automation_active": self._health_automation_active,
+            "emergency_automation_active": self._emergency_automation_active,
+            "automation_stats": self._automation_stats,
+            "last_updated": dt_now().isoformat(),
+        }
 
     async def _setup_feeding_automations(self) -> None:
         """Set up feeding-related automations."""
