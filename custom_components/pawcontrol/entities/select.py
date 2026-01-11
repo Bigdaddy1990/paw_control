@@ -1,7 +1,7 @@
 # entities/select.py
 from homeassistant.components.select import SelectEntity
 
-from ..helpers.entity import ensure_option
+from pawcontrol.helpers.entity import ensure_option
 
 from .base import PawControlBaseEntity
 

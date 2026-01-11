@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from homeassistant.components.datetime import DateTimeEntity
 
-from ..helpers.entity import parse_datetime
+from pawcontrol.helpers.entity import parse_datetime
 
 from .base import PawControlBaseEntity
 
