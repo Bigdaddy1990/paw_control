@@ -163,7 +163,7 @@ class PawControlAutomationManager(RestoreEntity):
     @property
     def extra_state_attributes(self) -> JSONMutableMapping:
         """Return extra state attributes."""
-        return {
+        attributes: JSONMutableMapping = {
             "automation_registry": list(self._automation_registry.keys()),
             "total_automations": len(self._automation_registry),
             "feeding_automation_active": self._feeding_automation_active,
@@ -173,6 +173,7 @@ class PawControlAutomationManager(RestoreEntity):
             "automation_stats": self._automation_stats,
             "last_updated": dt_now().isoformat(),
         }
+        return attributes
 
     async def _setup_feeding_automations(self) -> None:
         """Set up feeding-related automations."""
