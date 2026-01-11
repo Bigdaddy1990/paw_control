@@ -6,12 +6,12 @@ from typing import TYPE_CHECKING, Any
 
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
-from pawcontrol.const import DOMAIN
-from pawcontrol.helpers.entity import build_attributes, format_name, get_icon
-from pawcontrol.utils import safe_service_call
+from ..const import DOMAIN
+from ..helpers.entity import build_attributes, format_name, get_icon
+from ..utils import safe_service_call
 
 if TYPE_CHECKING:
-    from pawcontrol.helpers.json import JSONMutableMapping
+    from ..helpers.json import JSONMutableMapping
 
 
 class PawControlBaseEntity(CoordinatorEntity):
