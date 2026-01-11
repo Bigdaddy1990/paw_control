@@ -124,6 +124,36 @@ class PawControlGPSHandler:
         self._listeners.clear()
         _LOGGER.info("GPS handler cleanup completed for %s", self.dog_name)
 
+    def get_diagnostics_data(self) -> dict[str, Any]:
+        """Return diagnostics data for the GPS handler."""
+        return {
+            "dog_name": self.dog_name,
+            "gps_source_type": self._gps_source_type,
+            "gps_entity_id": self._gps_entity_id,
+            "gps_webhook_id": self._gps_webhook_id,
+            "auto_walk_detection": self._auto_walk_detection,
+            "auto_walk_sensitivity": self._auto_walk_sensitivity,
+            "current_location": self._current_location,
+            "previous_location": self._previous_location,
+            "home_location": self._home_location,
+            "last_update": self._last_update,
+            "accuracy": self._accuracy,
+            "speed": self._speed,
+            "walk_active": self._walk_active,
+            "walk_start_time": self._walk_start_time,
+            "walk_distance": self._walk_distance,
+            "walk_max_speed": self._walk_max_speed,
+            "walk_avg_speed": self._walk_avg_speed,
+            "total_distance_today": self._total_distance_today,
+            "total_walks_today": self._total_walks_today,
+            "calories_burned": self._calories_burned,
+            "geofences": self._geofences,
+            "last_geofence_status": self._last_geofence_status,
+            "movement_history": self._movement_history,
+            "stationary_since": self._stationary_since,
+            "is_moving": self._is_moving,
+        }
+
     # ================================================================================
     # GPS SOURCE CONFIGURATION
     # ================================================================================

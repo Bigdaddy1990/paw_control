@@ -5,6 +5,8 @@ from __future__ import annotations
 from datetime import datetime
 from typing import Any
 
+from homeassistant.util.json import JsonValueType
+
 from pawcontrol.const import ATTR_DOG_NAME, ATTR_LAST_UPDATED, ICONS
 
 from .json import JSONMutableMapping, ensure_json_mapping
@@ -30,7 +32,9 @@ def format_name(dog_name: str, key: str) -> str:
     return f"{dog_name.title()} {key.replace('_', ' ').title()}"
 
 
-def build_attributes(dog_name: str | None = None, **extra: Any) -> JSONMutableMapping:
+def build_attributes(
+    dog_name: str | None = None, **extra: JsonValueType
+) -> JSONMutableMapping:
     """Erzeuge ein Attribut-Dictionary mit Standardwerten."""
     attrs: dict[str, Any] = {ATTR_LAST_UPDATED: datetime.now().isoformat()}
     if dog_name:

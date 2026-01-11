@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import base64
+import logging
 from collections.abc import Mapping
 from dataclasses import asdict, is_dataclass
 from datetime import date, datetime, timedelta
@@ -9,6 +11,8 @@ from enum import Enum
 from typing import Any
 
 from homeassistant.util.json import JsonValueType
+
+_LOGGER = logging.getLogger(__name__)
 
 
 def _normalise_json(value: Any) -> JsonValueType:
@@ -28,7 +32,10 @@ def _normalise_json(value: Any) -> JsonValueType:
     if isinstance(value, (list, tuple, set)):
         return [_normalise_json(item) for item in value]
     if isinstance(value, bytes):
-        return value.decode(errors="replace")
+        return base64.b64encode(value).decode("ascii")
+    _LOGGER.debug(
+        "Converting unexpected type %s to string: %r", type(value).__name__, value
+    )
     return str(value)
 
 
@@ -40,6 +47,9 @@ def ensure_json_mapping(data: Mapping[str, Any] | None) -> JSONMutableMapping:
     if not data:
         return {}
     normalised = _normalise_json(data)
-    if isinstance(normalised, dict):
-        return normalised
-    return {}
+    if not isinstance(normalised, dict):
+        raise TypeError(
+            "Data must normalize to a dict, got "
+            f"{type(normalised).__name__}: {normalised!r}"
+        )
+    return normalised
