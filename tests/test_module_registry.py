@@ -233,18 +233,20 @@ def test_module_error_handling(caplog):
         entry = object()
         opts = {"fail": True, "ok": True}
 
-        with patch.dict(
-            module_registry.MODULES, {"fail": failing, "ok": working}, clear=True
-        ):
-            with patch.object(
+        with (
+            patch.dict(
+                module_registry.MODULES, {"fail": failing, "ok": working}, clear=True
+            ),
+            patch.object(
                 module_registry._LOGGER,
                 "exception",
                 wraps=module_registry._LOGGER.exception,
-            ) as log_exc:
-                with caplog.at_level(logging.ERROR):
-                    await module_registry.async_ensure_helpers(hass, opts)
-                    await module_registry.async_setup_modules(hass, entry, opts)
-                    await module_registry.async_unload_modules(hass, entry)
+            ) as log_exc,
+            caplog.at_level(logging.ERROR),
+        ):
+            await module_registry.async_ensure_helpers(hass, opts)
+            await module_registry.async_setup_modules(hass, entry, opts)
+            await module_registry.async_unload_modules(hass, entry)
 
         failing.ensure_helpers.assert_called_once_with(hass, opts)
         failing.setup.assert_called_once_with(hass, entry)

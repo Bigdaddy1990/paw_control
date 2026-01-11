@@ -48,8 +48,9 @@ def ensure_json_mapping(data: Mapping[str, Any] | None) -> JSONMutableMapping:
         return {}
     normalised = _normalise_json(data)
     if not isinstance(normalised, dict):
-        raise TypeError(
+        msg = (
             "Data must normalize to a dict, got "
             f"{type(normalised).__name__}: {normalised!r}"
         )
+        raise TypeError(msg)
     return normalised

@@ -3,13 +3,14 @@
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Any
-
-from homeassistant.util.json import JsonValueType
+from typing import TYPE_CHECKING, Any
 
 from pawcontrol.const import ATTR_DOG_NAME, ATTR_LAST_UPDATED, ICONS
 
 from .json import JSONMutableMapping, ensure_json_mapping
+
+if TYPE_CHECKING:
+    from homeassistant.util.json import JsonValueType
 
 
 def get_icon_by_status(status: str) -> str:
