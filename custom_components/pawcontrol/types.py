@@ -55,21 +55,21 @@ class PawControlOptions(TypedDict, total=False):
     create_dashboard: bool
 
 
-class PawControlConfigData(TypedDict):
+class PawControlConfigData(TypedDict, total=False):
     """TypedDict for config entries created by the config flow."""
 
-    dog_name: str
-    dog_breed: str
-    dog_age: int
-    dog_weight: float
-    feeding_times: list[str]
-    walk_duration: int
-    vet_contact: str
-    gps_enable: bool
-    notifications_enabled: bool
-    health_module: bool
-    walk_module: bool
-    create_dashboard: bool
+    dog_name: Required[str]
+    dog_breed: NotRequired[str]
+    dog_age: NotRequired[int]
+    dog_weight: NotRequired[float]
+    feeding_times: NotRequired[list[str]]
+    walk_duration: NotRequired[int]
+    vet_contact: NotRequired[str]
+    gps_enable: NotRequired[bool]
+    notifications_enabled: NotRequired[bool]
+    health_module: NotRequired[bool]
+    walk_module: NotRequired[bool]
+    create_dashboard: NotRequired[bool]
 
 
 class PawControlConfigFlowInput(TypedDict, total=False):
