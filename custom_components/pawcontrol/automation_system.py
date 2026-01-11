@@ -20,13 +20,14 @@ from .const import (
     FEEDING_TYPES,
     MEAL_TYPES,
 )
-from .helpers.json import JSONMutableMapping
 
 if TYPE_CHECKING:
     from collections.abc import Callable
 
     from homeassistant.config_entries import ConfigEntry
     from homeassistant.helpers.entity_platform import AddEntitiesCallback
+
+    from .helpers.json import JSONMutableMapping
 
 _LOGGER = logging.getLogger(__name__)
 
