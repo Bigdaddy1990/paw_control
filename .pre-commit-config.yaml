@@ -5,6 +5,7 @@
 ci:
   autoupdate_schedule: monthly
   autofix_prs: true
+  autofix_commit_msg: "chore(pre-commit): auto fixes"
 
 repos:
   - repo: https://github.com/astral-sh/ruff-pre-commit
