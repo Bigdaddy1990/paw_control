@@ -1,8 +1,10 @@
 # entities/number.py
 from homeassistant.components.number import NumberEntity
 
+from pawcontrol.helpers.entity import clamp_value
+
 from .base import PawControlBaseEntity
-from ..helpers.entity import clamp_value
+
 
 class PawControlNumberEntity(PawControlBaseEntity, NumberEntity):
     """Basisklasse für Number-Entities mit Validierung."""

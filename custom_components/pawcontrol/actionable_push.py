@@ -3,11 +3,13 @@
 from __future__ import annotations
 
 import logging
-
-from homeassistant.core import HomeAssistant, ServiceCall
+from typing import TYPE_CHECKING
 
 from .const import DOMAIN
 from .utils import register_services
+
+if TYPE_CHECKING:
+    from homeassistant.core import HomeAssistant, ServiceCall
 
 _LOGGER = logging.getLogger(__name__)
 

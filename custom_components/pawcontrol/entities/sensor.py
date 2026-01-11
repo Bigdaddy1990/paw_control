@@ -1,5 +1,6 @@
 from .base import PawControlBaseEntity
 
+
 class PawControlSensorEntity(PawControlBaseEntity):
     """Basisklasse für alle Sensoren mit gemeinsamer Initialisierung."""
 

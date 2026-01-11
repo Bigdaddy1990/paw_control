@@ -2,6 +2,7 @@
 
 from .const import *
 
+
 async def setup_health(hass, entry):
     """Initialisiert Gesundheits-Sensoren und Helper."""
     dog = entry.data[CONF_DOG_NAME]
@@ -16,7 +17,7 @@ async def setup_health(hass, entry):
             "medication": "",
             "weight": entry.data.get(CONF_DOG_WEIGHT, 0),
             "weight_history": [],
-        }
+        },
     )
     # Helper für Symptome, Medikamente etc.
     symptom_id = f"input_text.{dog}_symptoms"
@@ -26,22 +27,32 @@ async def setup_health(hass, entry):
     # Helper anlegen, falls nicht vorhanden
     if not hass.states.get(symptom_id):
         await hass.services.async_call(
-            "input_text", "create",
+            "input_text",
+            "create",
             {"name": f"{dog} Symptome", "entity_id": symptom_id, "max": 120},
             blocking=True,
         )
     if not hass.states.get(med_id):
         await hass.services.async_call(
-            "input_text", "create",
+            "input_text",
+            "create",
             {"name": f"{dog} Medikamente", "entity_id": med_id, "max": 120},
             blocking=True,
         )
     if not hass.states.get(weight_id):
         await hass.services.async_call(
-            "input_number", "create",
-            {"name": f"{dog} Gewicht", "entity_id": weight_id, "min": 0, "max": 150, "step": 0.1},
+            "input_number",
+            "create",
+            {
+                "name": f"{dog} Gewicht",
+                "entity_id": weight_id,
+                "min": 0,
+                "max": 150,
+                "step": 0.1,
+            },
             blocking=True,
         )
+
 
 async def teardown_health(hass, entry):
     """Entfernt alle Gesundheits-Sensoren und Helper."""
@@ -60,10 +71,12 @@ async def teardown_health(hass, entry):
     ]:
         if hass.states.get(helper):
             await hass.services.async_call(
-                domain, "remove",
+                domain,
+                "remove",
                 {"entity_id": helper},
                 blocking=True,
             )
+
 
 async def ensure_helpers(hass, opts):
     """Stellt sicher, dass alle Health-Helper existieren."""
@@ -74,7 +87,13 @@ async def ensure_helpers(hass, opts):
     for eid, domain, params in [
         (symptom_id, "input_text", {"name": f"{dog} Symptome", "max": 120}),
         (med_id, "input_text", {"name": f"{dog} Medikamente", "max": 120}),
-        (weight_id, "input_number", {"name": f"{dog} Gewicht", "min": 0, "max": 150, "step": 0.1}),
+        (
+            weight_id,
+            "input_number",
+            {"name": f"{dog} Gewicht", "min": 0, "max": 150, "step": 0.1},
+        ),
     ]:
         if not hass.states.get(eid):
-            await hass.services.async_call(domain, "create", {**params, "entity_id": eid}, blocking=True)
+            await hass.services.async_call(
+                domain, "create", {**params, "entity_id": eid}, blocking=True
+            )

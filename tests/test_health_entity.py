@@ -1,7 +1,7 @@
 from typing import Any
 
-from custom_components.pawcontrol.entities.health import PawControlHealthEntity
 from custom_components.pawcontrol.const import ATTR_DOG_NAME, ATTR_LAST_UPDATED
+from custom_components.pawcontrol.entities.health import PawControlHealthEntity
 
 
 class DummyLogger:
@@ -16,7 +16,9 @@ class DummyLogger:
 
 def test_health_entity_attributes_use_helper():
     logger = DummyLogger()
-    entity = PawControlHealthEntity(logger, "entry", "Health", "health", dog_name="Bello")
+    entity = PawControlHealthEntity(
+        logger, "entry", "Health", "health", dog_name="Bello"
+    )
 
     attrs = entity.extra_state_attributes
 

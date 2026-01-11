@@ -1,8 +1,10 @@
 # entities/device_tracker.py
 from homeassistant.components.device_tracker import TrackerEntity
 
+from pawcontrol.helpers.gps import format_gps_coords, is_valid_gps_coords
+from pawcontrol.helpers.json import JSONMutableMapping
+
 from .base import PawControlBaseEntity
-from ..helpers.gps import format_gps_coords, is_valid_gps_coords
 
 
 class PawControlDeviceTrackerEntity(PawControlBaseEntity, TrackerEntity):
@@ -46,7 +48,7 @@ class PawControlDeviceTrackerEntity(PawControlBaseEntity, TrackerEntity):
         return self._state["lon"] if self._state else None
 
     @property
-    def extra_state_attributes(self):
+    def extra_state_attributes(self) -> JSONMutableMapping:
         if self._state:
             return self.build_extra_attributes(
                 coords=format_gps_coords(self.latitude, self.longitude)

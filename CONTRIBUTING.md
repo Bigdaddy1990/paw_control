@@ -50,7 +50,7 @@ pre-commit install
 main                    # Stabile Releases (v1.0.0, v1.1.0, ...)
 ├── develop             # Development Branch
 ├── feature/gps-xyz     # GPS-Features
-├── feature/mobile-app  # Mobile Features  
+├── feature/mobile-app  # Mobile Features
 ├── feature/health-ai   # Gesundheits-KI
 ├── bugfix/gps-timeout  # GPS-Bugfixes
 └── docs/gps-guide      # Dokumentations-Updates
@@ -70,7 +70,7 @@ async def update_gps_position(
     source: str = "unknown"
 ) -> bool:
     """Update GPS position and trigger walk analysis.
-    
+
     Args:
         hass: Home Assistant instance
         entity_id: Target entity ID
@@ -78,10 +78,10 @@ async def update_gps_position(
         longitude: GPS longitude coordinate
         accuracy: GPS accuracy in meters
         source: GPS data source identifier
-        
+
     Returns:
         bool: True if update successful
-        
+
     Raises:
         ServiceNotFound: If GPS service not available
         InvalidCoordinates: If coordinates out of range
@@ -89,7 +89,7 @@ async def update_gps_position(
     # Input validation
     if not (-90 <= latitude <= 90):
         raise InvalidCoordinates(f"Invalid latitude: {latitude}")
-    
+
     # Service call mit error handling
     try:
         await hass.services.async_call(
@@ -122,12 +122,12 @@ Wir suchen besonders Beiträge in diesen Bereichen:
 # Beispiel: Neue GPS-Tracker Integration
 class FressnapfGPSTracker:
     """Integration für Fressnapf GPS-Tracker."""
-    
+
     async def setup_webhook(self, hass: HomeAssistant) -> str:
         """Setup webhook für Fressnapf GPS updates."""
         # Implementation für Fressnapf-spezifische API
         pass
-    
+
     async def process_gps_data(self, webhook_data: dict) -> GPSPosition:
         """Verarbeite GPS-Daten von Fressnapf."""
         # Fressnapf-spezifische Datenverarbeitung
@@ -181,7 +181,7 @@ pytest tests/ -v --cov=custom_components/pawcontrol
 
 **🦴 Spenden Sie Hundekekse für:**
 - 🛰️ Neue GPS-Tracker Integrationen
-- 📱 Mobile App Entwicklung  
+- 📱 Mobile App Entwicklung
 - 🤖 KI-basierte GPS-Empfehlungen
 - 🌍 Weltweite GPS-Unterstützung
 

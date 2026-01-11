@@ -3,8 +3,6 @@ from unittest.mock import AsyncMock, patch
 
 from custom_components.pawcontrol import (
     async_reload_entry,
-    async_setup_entry,
-    async_unload_entry,
 )
 
 

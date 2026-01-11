@@ -9,6 +9,7 @@ Teardown handlers are invoked only when a module is explicitly disabled in the
 options. Modules that default to off and are omitted from the options are left
 untouched.
 """
+
 from __future__ import annotations
 
 import logging
@@ -28,6 +29,8 @@ if TYPE_CHECKING:
     from homeassistant.config_entries import ConfigEntry
     from homeassistant.core import HomeAssistant
 
+    from .types import PawControlModuleKey, PawControlOptions
+
 ModuleFunc = Callable[..., Awaitable[None]]
 
 
@@ -41,7 +44,7 @@ class Module:
     default: bool = True
 
 
-MODULES: dict[str, Module] = {
+MODULES: dict[PawControlModuleKey, Module] = {
     CONF_GPS_ENABLE: Module(
         setup=gps.setup_gps,
         teardown=gps.teardown_gps,
@@ -70,16 +73,14 @@ MODULES: dict[str, Module] = {
 _LOGGER = logging.getLogger(__name__)
 
 
-def enabled_modules(opts: dict[str, bool]) -> dict[str, Module]:
+def enabled_modules(opts: PawControlOptions) -> dict[PawControlModuleKey, Module]:
     """Return modules that should be enabled based on ``opts``."""
     return {
-        key: module
-        for key, module in MODULES.items()
-        if opts.get(key, module.default)
+        key: module for key, module in MODULES.items() if opts.get(key, module.default)
     }
 
 
-def disabled_modules(opts: dict[str, bool]) -> dict[str, Module]:
+def disabled_modules(opts: PawControlOptions) -> dict[PawControlModuleKey, Module]:
     """Return modules explicitly disabled via ``opts``."""
     return {
         key: module
@@ -111,7 +112,7 @@ async def _call_module_func(
         _LOGGER.exception(log_msg, *log_args)
 
 
-async def ensure_helpers(hass: HomeAssistant, opts: dict[str, bool]) -> None:
+async def ensure_helpers(hass: HomeAssistant, opts: PawControlOptions) -> None:
     """Ensure helpers for all enabled modules.
 
     Errors from individual modules are logged but do not halt processing.
@@ -127,7 +128,7 @@ async def ensure_helpers(hass: HomeAssistant, opts: dict[str, bool]) -> None:
 
 
 async def setup_modules(
-    hass: HomeAssistant, entry: ConfigEntry, opts: dict[str, bool]
+    hass: HomeAssistant, entry: ConfigEntry, opts: PawControlOptions
 ) -> None:
     """Set up or tear down modules based on options.
 
@@ -177,10 +178,9 @@ async_unload_modules = unload_modules
 __all__ = [
     "MODULES",
     "Module",
-    "enabled_modules",
-    "disabled_modules",
     "async_ensure_helpers",
     "async_setup_modules",
     "async_unload_modules",
+    "disabled_modules",
+    "enabled_modules",
 ]
-

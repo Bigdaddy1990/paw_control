@@ -166,6 +166,7 @@ def test_time_since_last_activity_future_time_clamped():
     result = time_since_last_activity(future_time.isoformat())
     assert result == timedelta(0)
 
+
 def test_validate_dog_name_enforces_rules():
     """Dog names must follow pattern, length and start with a letter."""
     assert validate_dog_name("Buddy")

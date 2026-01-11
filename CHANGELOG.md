@@ -144,5 +144,5 @@ Nach monatelanger Entwicklung ist **Paw Control** endlich da! Dies ist erst der 
 
 ---
 
-**Hinweis**: Dieses Changelog wird automatisch bei jedem Release aktualisiert. 
+**Hinweis**: Dieses Changelog wird automatisch bei jedem Release aktualisiert.
 Für die neuesten Änderungen siehe die [GitHub Releases](https://github.com/BigDaddy1990/paw_control/releases)

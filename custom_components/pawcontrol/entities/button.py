@@ -30,6 +30,8 @@ class PawControlButtonEntity(PawControlBaseEntity, ButtonEntity):
             icon=icon,
         )
 
-    async def async_press(self) -> None:  # pragma: no cover - muss in Unterklassen implementiert werden
+    async def async_press(
+        self,
+    ) -> None:  # pragma: no cover - muss in Unterklassen implementiert werden
         """Button-Logik in Unterklassen bereitstellen."""
         raise NotImplementedError

@@ -2,13 +2,16 @@
 
 from __future__ import annotations
 
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
-from ..const import DOMAIN
-from ..helpers.entity import build_attributes, format_name, get_icon
-from ..utils import safe_service_call
+from pawcontrol.const import DOMAIN
+from pawcontrol.helpers.entity import build_attributes, format_name, get_icon
+from pawcontrol.utils import safe_service_call
+
+if TYPE_CHECKING:
+    from pawcontrol.helpers.json import JSONMutableMapping
 
 
 class PawControlBaseEntity(CoordinatorEntity):
@@ -68,13 +71,13 @@ class PawControlBaseEntity(CoordinatorEntity):
         }
 
     @property
-    def extra_state_attributes(self) -> dict[str, Any]:
+    def extra_state_attributes(self) -> JSONMutableMapping:
         """Zusätzliche Attribute für den Entity-State."""
         if not self._dog_name:
             return {}
         return self.build_extra_attributes()
 
-    def build_extra_attributes(self, **extra: Any) -> dict[str, Any]:
+    def build_extra_attributes(self, **extra: Any) -> JSONMutableMapping:
         """Hilfsfunktion für Unterklassen zur Attribut-Erstellung."""
         return build_attributes(self._dog_name, **extra)
 

@@ -3,11 +3,13 @@
 from __future__ import annotations
 
 import logging
-
-from homeassistant.config_entries import ConfigEntry
-from homeassistant.core import HomeAssistant
+from typing import TYPE_CHECKING
 
 from .utils import generate_entity_id
+
+if TYPE_CHECKING:
+    from homeassistant.config_entries import ConfigEntry
+    from homeassistant.core import HomeAssistant
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -19,9 +21,7 @@ async def create_dashboard(hass: HomeAssistant, dog_name: str) -> None:
     dog_slug_last_walk = generate_entity_id(dog_name, "sensor", "last_walk")
     dog_slug_gps_location = generate_entity_id(dog_name, "sensor", "gps_location")
     dog_slug_walks = generate_entity_id(dog_name, "counter", "walks")
-    dog_slug_walk_active = generate_entity_id(
-        dog_name, "input_boolean", "walk_active"
-    )
+    dog_slug_walk_active = generate_entity_id(dog_name, "input_boolean", "walk_active")
     dog_slug_gps_active = generate_entity_id(dog_name, "input_boolean", "gps_active")
     dog_slug_push_active = generate_entity_id(dog_name, "input_boolean", "push_active")
     dog_slug_symptoms = generate_entity_id(dog_name, "input_text", "symptoms")
@@ -73,31 +73,30 @@ views:
         {"friendly_name": f"{dog_name} Dashboard-Vorlage (Kopieren für Lovelace)"},
     )
 
+
 DEFAULT_DASHBOARD_NAME = "PawControl"
 
 MODULE_CARDS = {
     "gps": {
         "type": "map",
         "entities": ["device_tracker.paw_control_gps"],
-        "title": "GPS-Tracking"
+        "title": "GPS-Tracking",
     },
     "health": {
         "type": "entities",
         "entities": [
             "sensor.paw_control_health_status",
-            "sensor.paw_control_last_checkup"
+            "sensor.paw_control_last_checkup",
         ],
-        "title": "Gesundheit"
+        "title": "Gesundheit",
     },
     "walk": {
         "type": "history-graph",
-        "entities": [
-            "sensor.paw_control_last_walk",
-            "sensor.paw_control_walk_count"
-        ],
-        "title": "Gassi"
-    }
+        "entities": ["sensor.paw_control_last_walk", "sensor.paw_control_walk_count"],
+        "title": "Gassi",
+    },
 }
+
 
 async def async_create_dashboard(hass: HomeAssistant, entry: ConfigEntry):
     modules = entry.options.get("modules", ["gps"])
@@ -108,15 +107,16 @@ async def async_create_dashboard(hass: HomeAssistant, entry: ConfigEntry):
             cards.append(card)
     if not cards:
         _LOGGER.warning("No module cards selected for dashboard generation.")
-        return
+        return None
     view = {
         "title": DEFAULT_DASHBOARD_NAME,
         "path": "pawcontrol",
         "icon": "mdi:paw",
-        "cards": cards
+        "cards": cards,
     }
     _LOGGER.info(f"Generated PawControl dashboard: {view}")
     return view
+
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
     await async_create_dashboard(hass, entry)

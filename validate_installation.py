@@ -39,8 +39,13 @@ def validate_manifest() -> list[str]:
         return [f"❌ manifest.json is invalid JSON: {e}"]
 
     required_fields = [
-        "domain", "name", "version", "documentation",
-        "issue_tracker", "codeowners", "requirements"
+        "domain",
+        "name",
+        "version",
+        "documentation",
+        "issue_tracker",
+        "codeowners",
+        "requirements",
     ]
 
     for field in required_fields:

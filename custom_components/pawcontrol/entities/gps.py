@@ -1,7 +1,9 @@
 """Gemeinsame GPS-Basisklasse für alle Paw Control GPS-Entities."""
 
+from pawcontrol.helpers.gps import is_valid_gps_coords
+from pawcontrol.helpers.json import JSONMutableMapping
+
 from .base import PawControlBaseEntity
-from ..helpers.gps import is_valid_gps_coords
 
 
 class PawControlGpsEntity(PawControlBaseEntity):
@@ -26,7 +28,7 @@ class PawControlGpsEntity(PawControlBaseEntity):
             self._state = None
 
     @property
-    def extra_state_attributes(self):
+    def extra_state_attributes(self) -> JSONMutableMapping:
         if self._state:
             lat, lon = self._state
             return self.build_extra_attributes(lat=lat, lon=lon)

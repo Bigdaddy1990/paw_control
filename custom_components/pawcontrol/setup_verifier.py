@@ -6,11 +6,12 @@ import asyncio
 import logging
 from dataclasses import asdict, dataclass, field
 from datetime import datetime
-from typing import Any, Dict
-
-from homeassistant.core import HomeAssistant
+from typing import TYPE_CHECKING, Any
 
 from .utils import safe_service_call
+
+if TYPE_CHECKING:
+    from homeassistant.core import HomeAssistant
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -58,7 +59,7 @@ def _categorize_entity(
 
 async def async_verify_critical_entities(
     hass: HomeAssistant, dog_name: str
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """Verify that critical entities exist and are functional."""
     critical_entities = [
         f"input_boolean.{dog_name}_feeding_morning",
@@ -94,14 +95,14 @@ async def async_verify_critical_entities(
 
     except Exception as e:
         report.error = str(e)
-        _LOGGER.error("Error during critical entity verification: %s", e)
+        _LOGGER.exception("Error during critical entity verification: %s", e)
         report.is_functional = False
         return asdict(report)
 
 
 async def async_repair_broken_entities(
-    hass: HomeAssistant, dog_name: str, expected_entities: Dict[str, Dict[str, Any]]
-) -> Dict[str, Any]:
+    hass: HomeAssistant, dog_name: str, expected_entities: dict[str, dict[str, Any]]
+) -> dict[str, Any]:
     """Attempt to repair broken entities by recreating them."""
     result = RepairResult()
 
@@ -164,11 +165,9 @@ async def async_repair_broken_entities(
                 except Exception as repair_error:
                     result.entities_failed += 1
                     result.failed_entities.append(entity_id)
-                    error_msg = (
-                        f"Exception repairing {entity_id}: {str(repair_error)}"
-                    )
+                    error_msg = f"Exception repairing {entity_id}: {repair_error!s}"
                     result.repair_actions.append(error_msg)
-                    _LOGGER.error("❌ %s", error_msg)
+                    _LOGGER.exception("❌ %s", error_msg)
 
                 await asyncio.sleep(0.5)
 
@@ -182,84 +181,95 @@ async def async_repair_broken_entities(
         return asdict(result)
 
     except Exception as e:  # pragma: no cover - defensive programming
-        _LOGGER.error("Critical error during entity repair: %s", e)
+        _LOGGER.exception("Critical error during entity repair: %s", e)
         result.error = str(e)
         return asdict(result)
 
 
-async def async_generate_installation_report(hass: HomeAssistant, dog_name: str, verification_result: Dict[str, Any], critical_check: Dict[str, Any]) -> str:
+async def async_generate_installation_report(
+    hass: HomeAssistant,
+    dog_name: str,
+    verification_result: dict[str, Any],
+    critical_check: dict[str, Any],
+) -> str:
     """Generate a comprehensive installation report."""
     try:
         _LOGGER.info("Generating installation report for %s", dog_name)
-        
+
         report = f"""
 # 🐕 Paw Control Installation Report - {dog_name.title()}
 
 **Generated:** {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}
 
 ## 📊 Overview
-- **Status:** {verification_result.get('status', 'unknown').upper()}
-- **Success Rate:** {verification_result.get('success_rate', 0):.1f}%
-- **Total Expected Entities:** {verification_result.get('total_entities_expected', 0)}
-- **Total Found Entities:** {verification_result.get('total_entities_found', 0)}
+- **Status:** {verification_result.get("status", "unknown").upper()}
+- **Success Rate:** {verification_result.get("success_rate", 0):.1f}%
+- **Total Expected Entities:** {verification_result.get("total_entities_expected", 0)}
+- **Total Found Entities:** {verification_result.get("total_entities_found", 0)}
 
 ## 🎯 Critical Entities Status
-- **Critical Entities Working:** {critical_check.get('critical_entities_found', 0)}/{critical_check.get('critical_entities_total', 0)}
-- **Installation Functional:** {'✅ YES' if critical_check.get('is_functional') else '❌ NO'}
+- **Critical Entities Working:** {critical_check.get("critical_entities_found", 0)}/{critical_check.get("critical_entities_total", 0)}
+- **Installation Functional:** {"✅ YES" if critical_check.get("is_functional") else "❌ NO"}
 
 ## 🔧 Auto-Fix Results
 """
-        
-        if verification_result.get('created_entities'):
+
+        if verification_result.get("created_entities"):
             report += f"- **Entities Created:** {len(verification_result['created_entities'])}\n"
-            for entity in verification_result['created_entities'][:10]:
+            for entity in verification_result["created_entities"][:10]:
                 report += f"  - ✅ {entity}\n"
-            if len(verification_result['created_entities']) > 10:
+            if len(verification_result["created_entities"]) > 10:
                 report += f"  - ... and {len(verification_result['created_entities']) - 10} more\n"
         else:
             report += "- **No entities needed to be created**\n"
-        
-        if verification_result.get('errors'):
+
+        if verification_result.get("errors"):
             report += f"\n## ❌ Errors ({len(verification_result['errors'])})\n"
-            for error in verification_result['errors'][:5]:
+            for error in verification_result["errors"][:5]:
                 report += f"- {error}\n"
-            if len(verification_result['errors']) > 5:
-                report += f"- ... and {len(verification_result['errors']) - 5} more errors\n"
-        
-        if verification_result.get('missing_entities'):
+            if len(verification_result["errors"]) > 5:
+                report += (
+                    f"- ... and {len(verification_result['errors']) - 5} more errors\n"
+                )
+
+        if verification_result.get("missing_entities"):
             report += f"\n## 🚫 Still Missing Entities ({len(verification_result['missing_entities'])})\n"
-            for entity in verification_result['missing_entities'][:10]:
+            for entity in verification_result["missing_entities"][:10]:
                 report += f"- {entity}\n"
-            if len(verification_result['missing_entities']) > 10:
+            if len(verification_result["missing_entities"]) > 10:
                 report += f"- ... and {len(verification_result['missing_entities']) - 10} more\n"
-        
+
         report += "\n## 💡 Recommendations\n"
-        if verification_result.get('success_rate', 0) >= 95:
+        if verification_result.get("success_rate", 0) >= 95:
             report += "- ✅ Installation is excellent! All systems ready.\n"
-        elif verification_result.get('success_rate', 0) >= 80:
+        elif verification_result.get("success_rate", 0) >= 80:
             report += "- ⚡ Installation is good. Minor issues auto-fixed.\n"
-        elif verification_result.get('success_rate', 0) >= 60:
-            report += "- ⚠️ Installation has some issues. Consider manual intervention.\n"
+        elif verification_result.get("success_rate", 0) >= 60:
+            report += (
+                "- ⚠️ Installation has some issues. Consider manual intervention.\n"
+            )
         else:
             report += "- 🚨 Installation has significant problems. Manual setup may be required.\n"
-        
-        if not critical_check.get('is_functional'):
+
+        if not critical_check.get("is_functional"):
             report += "- 🔧 Critical entities are missing. Run verification again or recreate integration.\n"
-        
+
         report += f"\n---\n*Report generated by Paw Control v1.0 for {dog_name}*"
-        
+
         return report
-        
+
     except Exception as e:
-        _LOGGER.error("Error generating installation report: %s", e)
-        return f"# Error Generating Report\n\nAn error occurred: {str(e)}"
+        _LOGGER.exception("Error generating installation report: %s", e)
+        return f"# Error Generating Report\n\nAn error occurred: {e!s}"
 
 
-async def async_verify_and_fix_installation(hass: HomeAssistant, dog_name: str) -> Dict[str, Any]:
+async def async_verify_and_fix_installation(
+    hass: HomeAssistant, dog_name: str
+) -> dict[str, Any]:
     """Verify Paw Control installation and auto-fix any issues."""
     try:
         _LOGGER.info("🔍 Starting installation verification for %s", dog_name)
-        
+
         verification_result = {
             "status": "unknown",
             "dog_name": dog_name,
@@ -269,152 +279,181 @@ async def async_verify_and_fix_installation(hass: HomeAssistant, dog_name: str) 
             "created_entities": [],
             "errors": [],
             "success_rate": 0.0,
-            "verification_timestamp": datetime.now().isoformat()
+            "verification_timestamp": datetime.now().isoformat(),
         }
-        
+
         # Define all expected entities
         expected_entities = await _get_expected_entities(dog_name)
         verification_result["total_entities_expected"] = len(expected_entities)
-        
+
         # Check which entities exist
         existing_entities = []
         missing_entities = []
-        
+
         for entity_id, entity_info in expected_entities.items():
             if hass.states.get(entity_id):
                 existing_entities.append(entity_id)
             else:
-                missing_entities.append({
-                    "entity_id": entity_id,
-                    "domain": entity_info["domain"],
-                    "friendly_name": entity_info["friendly_name"],
-                    "icon": entity_info.get("icon", "mdi:dog"),
-                    "config": entity_info.get("config", {})
-                })
-        
+                missing_entities.append(
+                    {
+                        "entity_id": entity_id,
+                        "domain": entity_info["domain"],
+                        "friendly_name": entity_info["friendly_name"],
+                        "icon": entity_info.get("icon", "mdi:dog"),
+                        "config": entity_info.get("config", {}),
+                    }
+                )
+
         verification_result["total_entities_found"] = len(existing_entities)
-        verification_result["missing_entities"] = [e["entity_id"] for e in missing_entities]
-        verification_result["success_rate"] = (len(existing_entities) / len(expected_entities)) * 100 if expected_entities else 0
-        
-        _LOGGER.info("📊 Initial verification: %d/%d entities found (%.1f%%)", 
-                    len(existing_entities), len(expected_entities), 
-                    verification_result["success_rate"])
-        
+        verification_result["missing_entities"] = [
+            e["entity_id"] for e in missing_entities
+        ]
+        verification_result["success_rate"] = (
+            (len(existing_entities) / len(expected_entities)) * 100
+            if expected_entities
+            else 0
+        )
+
+        _LOGGER.info(
+            "📊 Initial verification: %d/%d entities found (%.1f%%)",
+            len(existing_entities),
+            len(expected_entities),
+            verification_result["success_rate"],
+        )
+
         # Auto-fix missing entities
         if missing_entities:
             _LOGGER.info("🔧 Auto-fixing %d missing entities...", len(missing_entities))
-            
+
             created_entities = []
             fix_errors = []
-            
+
             for missing_entity in missing_entities:
                 try:
-                    success = await _create_missing_entity(hass, missing_entity["entity_id"], missing_entity, dog_name)
+                    success = await _create_missing_entity(
+                        hass, missing_entity["entity_id"], missing_entity, dog_name
+                    )
                     if success:
                         created_entities.append(missing_entity["entity_id"])
                         _LOGGER.debug("✅ Created: %s", missing_entity["entity_id"])
                     else:
-                        fix_errors.append(f"Failed to create {missing_entity['entity_id']}")
-                        
+                        fix_errors.append(
+                            f"Failed to create {missing_entity['entity_id']}"
+                        )
+
                 except Exception as e:
-                    error_msg = f"Error creating {missing_entity['entity_id']}: {str(e)}"
+                    error_msg = f"Error creating {missing_entity['entity_id']}: {e!s}"
                     fix_errors.append(error_msg)
-                    _LOGGER.error("❌ %s", error_msg)
-                
+                    _LOGGER.exception("❌ %s", error_msg)
+
                 # Brief pause between entity creations
                 await asyncio.sleep(0.5)
-            
+
             verification_result["created_entities"] = created_entities
             verification_result["errors"] = fix_errors
-            
+
             # Update statistics
-            total_now_existing = verification_result["total_entities_found"] + len(created_entities)
+            total_now_existing = verification_result["total_entities_found"] + len(
+                created_entities
+            )
             verification_result["total_entities_found"] = total_now_existing
-            verification_result["success_rate"] = (total_now_existing / len(expected_entities)) * 100 if expected_entities else 0
-            
-            _LOGGER.info("🔧 Auto-fix completed: %d entities created, %d errors", 
-                        len(created_entities), len(fix_errors))
-        
+            verification_result["success_rate"] = (
+                (total_now_existing / len(expected_entities)) * 100
+                if expected_entities
+                else 0
+            )
+
+            _LOGGER.info(
+                "🔧 Auto-fix completed: %d entities created, %d errors",
+                len(created_entities),
+                len(fix_errors),
+            )
+
         # Determine final status
         if verification_result["success_rate"] >= 100.0:
             verification_result["status"] = "success"
-        elif verification_result["success_rate"] >= 80.0 and verification_result["created_entities"]:
+        elif (
+            verification_result["success_rate"] >= 80.0
+            and verification_result["created_entities"]
+        ):
             verification_result["status"] = "fixed"
         elif verification_result["success_rate"] >= 50.0:
             verification_result["status"] = "partial"
         else:
             verification_result["status"] = "failed"
-        
+
         # Set smart defaults after entity creation
         await _set_smart_default_values(hass, dog_name)
-        
-        _LOGGER.info("🎯 Final verification result for %s: %s (%.1f%% success)", 
-                    dog_name, verification_result["status"], verification_result["success_rate"])
-        
+
+        _LOGGER.info(
+            "🎯 Final verification result for %s: %s (%.1f%% success)",
+            dog_name,
+            verification_result["status"],
+            verification_result["success_rate"],
+        )
+
         return verification_result
-        
+
     except Exception as e:
-        _LOGGER.error("❌ Critical error during installation verification: %s", e)
+        _LOGGER.exception("❌ Critical error during installation verification: %s", e)
         return {
             "status": "error",
             "dog_name": dog_name,
             "error": str(e),
-            "verification_timestamp": datetime.now().isoformat()
+            "verification_timestamp": datetime.now().isoformat(),
         }
 
 
-async def _get_expected_entities(dog_name: str) -> Dict[str, Dict[str, Any]]:
+async def _get_expected_entities(dog_name: str) -> dict[str, dict[str, Any]]:
     """Get dictionary of all expected entities for a dog."""
     from .const import ENTITIES
-    
+
     expected_entities = {}
-    
+
     # Process each entity type from ENTITIES constant
     for entity_type, entities_config in ENTITIES.items():
         for entity_suffix, entity_config in entities_config.items():
             entity_id = f"{entity_type}.{dog_name}_{entity_suffix}"
-            
+
             expected_entities[entity_id] = {
                 "domain": entity_type,
                 "friendly_name": f"{dog_name.title()} {entity_config['name']}",
                 "icon": entity_config.get("icon", "mdi:dog"),
-                "config": entity_config
+                "config": entity_config,
             }
-    
+
     return expected_entities
 
 
-async def _create_missing_entity(hass: HomeAssistant, entity_id: str, entity_info: Dict[str, Any], dog_name: str) -> bool:
+async def _create_missing_entity(
+    hass: HomeAssistant, entity_id: str, entity_info: dict[str, Any], dog_name: str
+) -> bool:
     """Create a single missing entity."""
     try:
         domain = entity_info["domain"]
         friendly_name = entity_info["friendly_name"]
         config = entity_info.get("config", {})
-        
-        service_data = {
-            "name": friendly_name,
-            **config
-        }
-        
+
+        service_data = {"name": friendly_name, **config}
+
         await asyncio.wait_for(
             hass.services.async_call(domain, "create", service_data, blocking=True),
-            timeout=30.0
+            timeout=30.0,
         )
         await asyncio.sleep(1.0)
-        
+
         state = hass.states.get(entity_id)
         if state:
             _LOGGER.debug("Successfully created entity: %s", entity_id)
             return True
-        else:
-            _LOGGER.warning("Entity created but not found in state registry: %s", entity_id)
-            return False
-            
-    except asyncio.TimeoutError:
-        _LOGGER.error("Timeout creating entity %s", entity_id)
+        _LOGGER.warning("Entity created but not found in state registry: %s", entity_id)
+        return False
+
+    except TimeoutError:
+        _LOGGER.exception("Timeout creating entity %s", entity_id)
         return False
     except Exception as e:
-        _LOGGER.error("Error creating entity %s: %s", entity_id, e)
+        _LOGGER.exception("Error creating entity %s: %s", entity_id, e)
         return False
 
 
@@ -427,14 +466,15 @@ async def _set_smart_default_values(hass: HomeAssistant, dog_name: str) -> None:
             state = hass.states.get(home_coords_entity)
             if not state.state or state.state == "":
                 await safe_service_call(
-                    hass, "input_text", "set_value",
-                    {
-                        "entity_id": home_coords_entity,
-                        "value": "52.233333,8.966667"
-                    }
+                    hass,
+                    "input_text",
+                    "set_value",
+                    {"entity_id": home_coords_entity, "value": "52.233333,8.966667"},
                 )
-                _LOGGER.info("🏠 Set default home coordinates for %s to Detmold", dog_name)
-        
+                _LOGGER.info(
+                    "🏠 Set default home coordinates for %s to Detmold", dog_name
+                )
+
         # Set GPS tracker status config
         gps_status_entity = f"input_text.{dog_name}_gps_tracker_status"
         if hass.states.get(gps_status_entity):
@@ -455,24 +495,23 @@ async def _set_smart_default_values(hass: HomeAssistant, dog_name: str) -> None:
                         "speed_calculation": True,
                         "route_recording": True,
                         "geofencing": True,
-                        "automatic_detection": False
+                        "automatic_detection": False,
                     },
                     "thresholds": {
                         "movement_threshold_m": 50,
                         "home_zone_radius_m": 100,
                         "min_walk_duration_min": 5,
-                        "max_walk_duration_min": 180
-                    }
+                        "max_walk_duration_min": 180,
+                    },
                 }
                 await safe_service_call(
-                    hass, "input_text", "set_value",
-                    {
-                        "entity_id": gps_status_entity,
-                        "value": str(intelligent_config)
-                    }
+                    hass,
+                    "input_text",
+                    "set_value",
+                    {"entity_id": gps_status_entity, "value": str(intelligent_config)},
                 )
                 _LOGGER.info("🔧 Set intelligent GPS configuration for %s", dog_name)
-        
+
         # Set smart default metrics
         smart_defaults = {
             f"input_number.{dog_name}_gps_signal_strength": 100,
@@ -483,19 +522,21 @@ async def _set_smart_default_values(hass: HomeAssistant, dog_name: str) -> None:
             f"input_number.{dog_name}_age_years": 3.0,
             f"input_number.{dog_name}_daily_food_amount": 400,
         }
-        
+
         for entity_id, value in smart_defaults.items():
             if hass.states.get(entity_id):
                 state = hass.states.get(entity_id)
                 try:
                     if not state.state or float(state.state) == 0:
                         await safe_service_call(
-                            hass, "input_number", "set_value",
-                            {"entity_id": entity_id, "value": value}
+                            hass,
+                            "input_number",
+                            "set_value",
+                            {"entity_id": entity_id, "value": value},
                         )
                 except Exception:
                     pass
-        
+
         # Set smart select defaults
         select_defaults = {
             f"input_select.{dog_name}_health_status": "Gut",
@@ -503,89 +544,99 @@ async def _set_smart_default_values(hass: HomeAssistant, dog_name: str) -> None:
             f"input_select.{dog_name}_activity_level": "Normal",
             f"input_select.{dog_name}_size_category": "Mittel (10-25kg)",
         }
-        
+
         for entity_id, value in select_defaults.items():
             if hass.states.get(entity_id):
                 state = hass.states.get(entity_id)
                 if not state.state:
                     await safe_service_call(
-                        hass, "input_select", "select_option",
-                        {"entity_id": entity_id, "option": value}
+                        hass,
+                        "input_select",
+                        "select_option",
+                        {"entity_id": entity_id, "option": value},
                     )
-        
+
         _LOGGER.info("✅ Smart default values set successfully")
-        
+
     except Exception as e:
         _LOGGER.warning("⚠️ Error setting smart defaults: %s", e)
 
 
-async def async_cleanup_duplicate_entities(hass: HomeAssistant, dog_name: str) -> Dict[str, Any]:
+async def async_cleanup_duplicate_entities(
+    hass: HomeAssistant, dog_name: str
+) -> dict[str, Any]:
     """Clean up any duplicate entities that might exist."""
     cleanup_result = {
         "duplicates_found": 0,
         "duplicates_removed": 0,
         "cleanup_errors": [],
-        "cleaned_entities": []
+        "cleaned_entities": [],
     }
-    
+
     try:
         all_entities = hass.states.async_all()
         dog_entities = []
-        
+
         for state in all_entities:
             entity_id = state.entity_id
             if dog_name in entity_id.lower():
                 dog_entities.append(entity_id)
-        
+
         potential_duplicates = []
         checked_entities = set()
-        
+
         for entity_id in dog_entities:
             if entity_id in checked_entities:
                 continue
-            
-            base_name = entity_id.lower().replace("_1", "").replace("_2", "").replace("_copy", "")
+
+            base_name = (
+                entity_id.lower()
+                .replace("_1", "")
+                .replace("_2", "")
+                .replace("_copy", "")
+            )
             similar_entities = []
-            
+
             for other_entity in dog_entities:
                 if other_entity != entity_id and base_name in other_entity.lower():
                     similar_entities.append(other_entity)
-            
+
             if similar_entities:
-                potential_duplicates.append({
-                    "base": entity_id,
-                    "duplicates": similar_entities
-                })
-                checked_entities.update([entity_id] + similar_entities)
-        
+                potential_duplicates.append(
+                    {"base": entity_id, "duplicates": similar_entities}
+                )
+                checked_entities.update([entity_id, *similar_entities])
+
         cleanup_result["duplicates_found"] = len(potential_duplicates)
-        
+
         for duplicate_group in potential_duplicates:
             duplicates_to_remove = duplicate_group["duplicates"]
-            
+
             for duplicate_entity in duplicates_to_remove:
                 try:
-                    domain = duplicate_entity.split('.')[0]
+                    domain = duplicate_entity.split(".")[0]
                     await hass.services.async_call(
-                        domain, "remove",
-                        {"entity_id": duplicate_entity},
-                        blocking=True
+                        domain, "remove", {"entity_id": duplicate_entity}, blocking=True
                     )
                     cleanup_result["duplicates_removed"] += 1
                     cleanup_result["cleaned_entities"].append(duplicate_entity)
                     _LOGGER.info("Removed duplicate entity: %s", duplicate_entity)
                 except Exception as e:
-                    error_msg = f"Failed to remove duplicate {duplicate_entity}: {str(e)}"
+                    error_msg = f"Failed to remove duplicate {duplicate_entity}: {e!s}"
                     cleanup_result["cleanup_errors"].append(error_msg)
-                    _LOGGER.error("❌ %s", error_msg)
-        
-        _LOGGER.info("Duplicate cleanup completed for %s: %d removed, %d errors", 
-                    dog_name, cleanup_result["duplicates_removed"], len(cleanup_result["cleanup_errors"]))
-        
+                    _LOGGER.exception("❌ %s", error_msg)
+
+        _LOGGER.info(
+            "Duplicate cleanup completed for %s: %d removed, %d errors",
+            dog_name,
+            cleanup_result["duplicates_removed"],
+            len(cleanup_result["cleanup_errors"]),
+        )
+
         return cleanup_result
-        
+
     except Exception as e:
-        _LOGGER.error("Error during duplicate cleanup: %s", e)
+        _LOGGER.exception("Error during duplicate cleanup: %s", e)
         return {
             **cleanup_result,
             "error": str(e),
@@ -593,16 +644,15 @@ async def async_cleanup_duplicate_entities(hass: HomeAssistant, dog_name: str) -
 
 
 __all__ = [
-    "async_verify_critical_entities",
-    "async_repair_broken_entities",
-    "async_generate_installation_report",
-    "async_verify_and_fix_installation",
-    "async_cleanup_duplicate_entities",
     "CriticalEntityReport",
     "RepairResult",
-    "async_verify_critical_entities",
-    "async_repair_broken_entities",
-    "async_generate_installation_report",
     "async_cleanup_duplicate_entities",
+    "async_cleanup_duplicate_entities",
+    "async_generate_installation_report",
+    "async_generate_installation_report",
+    "async_repair_broken_entities",
+    "async_repair_broken_entities",
+    "async_verify_and_fix_installation",
+    "async_verify_critical_entities",
+    "async_verify_critical_entities",
 ]
-

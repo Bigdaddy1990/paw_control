@@ -1,8 +1,9 @@
 # entities/binary_sensor.py
 from homeassistant.components.binary_sensor import BinarySensorEntity
 
+from pawcontrol.helpers.entity import as_bool
+
 from .base import PawControlBaseEntity
-from ..helpers.entity import as_bool
 
 
 class PawControlBinarySensorEntity(PawControlBaseEntity, BinarySensorEntity):

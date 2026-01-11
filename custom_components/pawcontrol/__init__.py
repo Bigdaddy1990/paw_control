@@ -3,19 +3,20 @@
 from __future__ import annotations
 
 import logging
-from typing import Dict, Optional
-
-from homeassistant.config_entries import ConfigEntry
-from homeassistant.core import HomeAssistant
+from typing import TYPE_CHECKING
 
 from .actionable_push import setup_actionable_notifications
 from .const import DOMAIN
 from .installation_manager import InstallationManager
 
+if TYPE_CHECKING:
+    from homeassistant.config_entries import ConfigEntry
+    from homeassistant.core import HomeAssistant
+
 _LOGGER = logging.getLogger(__name__)
 
 
-def get_domain_data(hass: HomeAssistant) -> Dict[str, InstallationManager]:
+def get_domain_data(hass: HomeAssistant) -> dict[str, InstallationManager]:
     """Return the storage dictionary for this domain."""
     data = getattr(hass, "data", None)
     if data is None:
@@ -23,7 +24,7 @@ def get_domain_data(hass: HomeAssistant) -> Dict[str, InstallationManager]:
     return data.setdefault(DOMAIN, {})
 
 
-def get_manager(hass: HomeAssistant, entry_id: str) -> Optional[InstallationManager]:
+def get_manager(hass: HomeAssistant, entry_id: str) -> InstallationManager | None:
     """Return the :class:`InstallationManager` for ``entry_id`` if available."""
     return get_domain_data(hass).get(entry_id)
 
@@ -64,11 +65,10 @@ async def async_reload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
 __all__ = [
     "DOMAIN",
+    "async_reload_entry",
     "async_setup",
     "async_setup_entry",
     "async_unload_entry",
-    "async_reload_entry",
     "get_domain_data",
     "get_manager",
 ]
-

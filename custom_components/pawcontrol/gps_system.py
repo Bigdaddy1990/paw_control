@@ -1,18 +1,22 @@
-import logging
-import asyncio
 import datetime
-from typing import Optional, Callable, Any, Dict
-from homeassistant.core import HomeAssistant, callback
-from homeassistant.const import ATTR_LATITUDE, ATTR_LONGITUDE
+import logging
+
+from homeassistant.components.binary_sensor import (
+    DEVICE_CLASS_PROBLEM,
+    BinarySensorEntity,
+)
+from homeassistant.components.button import ButtonEntity
+from homeassistant.components.device_tracker import DeviceTrackerEntity, SourceType
+from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity import DeviceInfo, Entity, EntityCategory
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
-from homeassistant.components.device_tracker import SourceType, DeviceTrackerEntity
-from homeassistant.components.binary_sensor import BinarySensorEntity, DEVICE_CLASS_PROBLEM
-from homeassistant.components.button import ButtonEntity
+
 from .const import DOMAIN
+from .helpers.json import JSONMutableMapping, ensure_json_mapping
 from .utils import register_services
 
 _LOGGER = logging.getLogger(__name__)
+
 
 class PawControlGPSCoordinator(DataUpdateCoordinator):
     def __init__(self, hass: HomeAssistant, device_id: str, update_interval: int = 30):
@@ -23,8 +27,8 @@ class PawControlGPSCoordinator(DataUpdateCoordinator):
             update_interval=datetime.timedelta(seconds=update_interval),
         )
         self.device_id = device_id
-        self.latitude: Optional[float] = None
-        self.longitude: Optional[float] = None
+        self.latitude: float | None = None
+        self.longitude: float | None = None
         self.gps_source = None
 
     async def _async_update_data(self):
@@ -34,8 +38,9 @@ class PawControlGPSCoordinator(DataUpdateCoordinator):
         return {
             "latitude": self.latitude,
             "longitude": self.longitude,
-            "source": self.gps_source
+            "source": self.gps_source,
         }
+
 
 class PawControlGPSTracker(DeviceTrackerEntity):
     def __init__(self, coordinator: PawControlGPSCoordinator, device_id: str):
@@ -47,27 +52,28 @@ class PawControlGPSTracker(DeviceTrackerEntity):
         self._attr_source_type = SourceType.GPS
 
     @property
-    def latitude(self) -> Optional[float]:
+    def latitude(self) -> float | None:
         return self.coordinator.latitude
 
     @property
-    def longitude(self) -> Optional[float]:
+    def longitude(self) -> float | None:
         return self.coordinator.longitude
 
     @property
-    def extra_state_attributes(self) -> Dict[str, Any]:
-        return {"source": self.coordinator.gps_source}
+    def extra_state_attributes(self) -> JSONMutableMapping:
+        return ensure_json_mapping({"source": self.coordinator.gps_source})
 
     @property
     def device_info(self) -> DeviceInfo:
         return DeviceInfo(
-            identifiers = {(DOMAIN, self._device_id)},
-            name = self._attr_name,
-            manufacturer = "PawControl"
+            identifiers={(DOMAIN, self._device_id)},
+            name=self._attr_name,
+            manufacturer="PawControl",
         )
 
     async def async_update(self):
         await self.coordinator.async_request_refresh()
+
 
 class PawControlLocationSensor(Entity):
     def __init__(self, coordinator, device_id: str):
@@ -81,15 +87,19 @@ class PawControlLocationSensor(Entity):
     def state(self):
         return (
             f"{self._coordinator.latitude}, {self._coordinator.longitude}"
-            if self._coordinator.latitude and self._coordinator.longitude else None
+            if self._coordinator.latitude and self._coordinator.longitude
+            else None
         )
 
     @property
-    def extra_state_attributes(self):
-        return {
-            "latitude": self._coordinator.latitude,
-            "longitude": self._coordinator.longitude
-        }
+    def extra_state_attributes(self) -> JSONMutableMapping:
+        return ensure_json_mapping(
+            {
+                "latitude": self._coordinator.latitude,
+                "longitude": self._coordinator.longitude,
+            }
+        )
+
 
 class PawControlInZoneBinarySensor(BinarySensorEntity):
     def __init__(self, coordinator, device_id: str):
@@ -104,11 +114,14 @@ class PawControlInZoneBinarySensor(BinarySensorEntity):
         return True
 
     @property
-    def extra_state_attributes(self):
-        return {
-            "latitude": self._coordinator.latitude,
-            "longitude": self._coordinator.longitude
-        }
+    def extra_state_attributes(self) -> JSONMutableMapping:
+        return ensure_json_mapping(
+            {
+                "latitude": self._coordinator.latitude,
+                "longitude": self._coordinator.longitude,
+            }
+        )
+
 
 class PawControlRefreshGPSButton(ButtonEntity):
     def __init__(self, coordinator, device_id: str):
@@ -118,6 +131,7 @@ class PawControlRefreshGPSButton(ButtonEntity):
 
     async def async_press(self):
         await self._coordinator._async_update_data()
+
 
 async def async_setup_entry(hass: HomeAssistant, entry):
     _LOGGER.info("Setting up PawControl GPS system from config entry")
@@ -145,6 +159,7 @@ async def async_setup_entry(hass: HomeAssistant, entry):
     register_services(hass, DOMAIN, {"update_gps": handle_manual_gps_update})
 
     return True
+
 
 async def async_unload_entry(hass: HomeAssistant, entry):
     _LOGGER.info("Unloading PawControl GPS system")
