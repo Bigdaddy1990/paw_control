@@ -20,6 +20,7 @@ from .const import (
     FEEDING_TYPES,
     MEAL_TYPES,
 )
+from .helpers.json import JSONMutableMapping
 
 if TYPE_CHECKING:
     from collections.abc import Callable
