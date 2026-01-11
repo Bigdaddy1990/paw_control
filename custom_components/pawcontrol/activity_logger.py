@@ -56,7 +56,7 @@ async def async_log_activity(
         activity_label = readable_activities.get(activity_type, activity_type.title())
         time_str = timestamp.strftime("%H:%M")
 
-        last_activity_text = f"{time_str} – {activity_label}"
+        last_activity_text = f"{time_str} - {activity_label}"
         if notes:
             last_activity_text += f" ({notes})"
 
@@ -92,10 +92,8 @@ async def async_log_activity(
 
         _LOGGER.info("Activity logged for %s: %s", dog_name, activity_label)
 
-    except Exception as e:
-        _LOGGER.exception(
-            "Failed to log activity %s for %s: %s", activity_type, dog_name, e
-        )
+    except Exception:
+        _LOGGER.exception("Failed to log activity %s for %s", activity_type, dog_name)
 
 
 async def async_log_feeding(
@@ -189,6 +187,6 @@ async def async_get_daily_summary(hass: HomeAssistant, dog_name: str) -> str:
 
         return f"{dog_name.title()}: " + ", ".join(summary_parts)
 
-    except Exception as e:
-        _LOGGER.exception("Failed to generate daily summary for %s: %s", dog_name, e)
+    except Exception:
+        _LOGGER.exception("Failed to generate daily summary for %s", dog_name)
         return f"{dog_name.title()}: Summary not available"

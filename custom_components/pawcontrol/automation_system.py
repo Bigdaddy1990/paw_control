@@ -12,6 +12,7 @@ from homeassistant.helpers.event import (
     async_track_time_interval,
 )
 from homeassistant.helpers.restore_state import RestoreEntity
+from homeassistant.util.dt import now as dt_now
 
 from .const import (
     CONF_DOG_NAME,
@@ -45,7 +46,7 @@ async def async_setup_entry(
     await automation_manager.async_setup()
 
     # Register automation manager as a single entity for management
-    async_add_entities([automation_manager], True)
+    async_add_entities([automation_manager], update_before_add=True)
 
 
 class PawControlAutomationManager(RestoreEntity):
@@ -107,10 +108,8 @@ class PawControlAutomationManager(RestoreEntity):
                 self._dog_name,
             )
 
-        except Exception as e:
-            _LOGGER.exception(
-                "Error setting up automations for %s: %s", self._dog_name, e
-            )
+        except Exception:
+            _LOGGER.exception("Error setting up automations for %s", self._dog_name)
             raise
 
     async def async_added_to_hass(self) -> None:
@@ -118,11 +117,13 @@ class PawControlAutomationManager(RestoreEntity):
         await super().async_added_to_hass()
 
         # Restore previous state
-        if (old_state := await self.async_get_last_state()) is not None:
-            if old_state.attributes:
-                self._automation_stats = old_state.attributes.get(
-                    "automation_stats", self._automation_stats
-                )
+        if (
+            (old_state := await self.async_get_last_state()) is not None
+            and old_state.attributes
+        ):
+            self._automation_stats = old_state.attributes.get(
+                "automation_stats", self._automation_stats
+            )
 
     async def async_will_remove_from_hass(self) -> None:
         """Clean up when entity is removed."""
@@ -130,8 +131,8 @@ class PawControlAutomationManager(RestoreEntity):
         for remove_listener in self._listeners:
             try:
                 remove_listener()
-            except Exception as e:
-                _LOGGER.warning("Error removing automation listener: %s", e)
+            except RuntimeError as err:
+                _LOGGER.warning("Error removing automation listener: %s", err)
         self._listeners.clear()
 
         _LOGGER.info(
@@ -172,7 +173,7 @@ class PawControlAutomationManager(RestoreEntity):
                 "health_automation_active": self._health_automation_active,
                 "emergency_automation_active": self._emergency_automation_active,
                 "automation_stats": self._automation_stats,
-                "last_updated": datetime.now().isoformat(),
+                "last_updated": dt_now().isoformat(),
             }
         )
 
@@ -353,7 +354,7 @@ class PawControlAutomationManager(RestoreEntity):
 
         # Automation: Daily summary generation
         @callback
-        def daily_summary_trigger(time) -> None:
+        def daily_summary_trigger(_time: datetime) -> None:
             """Trigger daily summary automation."""
             self.hass.async_create_task(self._handle_daily_summary())
 
@@ -375,7 +376,7 @@ class PawControlAutomationManager(RestoreEntity):
 
         # Periodic system health check every 30 minutes
         @callback
-        def system_health_check(time) -> None:
+        def system_health_check(_time: datetime) -> None:
             """Periodic system health check."""
             self.hass.async_create_task(self._handle_system_health_check())
 
@@ -393,7 +394,7 @@ class PawControlAutomationManager(RestoreEntity):
 
     # AUTOMATION HANDLERS
 
-    async def _handle_feeding_reminder(self, meal_type: str, event: Event) -> None:
+    async def _handle_feeding_reminder(self, meal_type: str, _event: Event) -> None:
         """Handle feeding reminder automation."""
         try:
             self._update_stats("feeding_triggers")
@@ -417,14 +418,13 @@ class PawControlAutomationManager(RestoreEntity):
             meal_name = MEAL_TYPES.get(meal_type, meal_type)
 
             # Check if it's time for reminder (30 minutes before scheduled time)
-            now = datetime.now()
+            now = dt_now()
             try:
-                scheduled_dt = datetime.strptime(scheduled_time, "%H:%M:%S")
-                scheduled_today = now.replace(
-                    hour=scheduled_dt.hour,
-                    minute=scheduled_dt.minute,
-                    second=0,
-                    microsecond=0,
+                scheduled_time_obj = datetime.strptime(
+                    scheduled_time, "%H:%M:%S"
+                ).time()
+                scheduled_today = datetime.combine(
+                    now.date(), scheduled_time_obj, tzinfo=now.tzinfo
                 )
 
                 reminder_time = scheduled_today - timedelta(minutes=30)
@@ -438,9 +438,9 @@ class PawControlAutomationManager(RestoreEntity):
             except ValueError as e:
                 _LOGGER.warning("Error parsing feeding time for %s: %s", meal_type, e)
 
-        except Exception as e:
+        except Exception:
             _LOGGER.exception(
-                "Error in feeding reminder automation for %s: %s", self._dog_name, e
+                "Error in feeding reminder automation for %s", self._dog_name
             )
 
     async def _handle_activity_milestone(self, event: Event) -> None:
@@ -469,9 +469,9 @@ class PawControlAutomationManager(RestoreEntity):
             except ValueError:
                 pass  # Not a numeric state
 
-        except Exception as e:
+        except Exception:
             _LOGGER.exception(
-                "Error in activity milestone automation for %s: %s", self._dog_name, e
+                "Error in activity milestone automation for %s", self._dog_name
             )
 
     async def _handle_health_status_change(self, event: Event) -> None:
@@ -494,9 +494,9 @@ class PawControlAutomationManager(RestoreEntity):
             elif "mood" in entity_id:
                 await self._handle_mood_change(new_state.state, old_state.state)
 
-        except Exception as e:
+        except Exception:
             _LOGGER.exception(
-                "Error in health status automation for %s: %s", self._dog_name, e
+                "Error in health status automation for %s", self._dog_name
             )
 
     async def _handle_emergency_activation(self, event: Event) -> None:
@@ -512,9 +512,9 @@ class PawControlAutomationManager(RestoreEntity):
             # Emergency activated - immediate response
             await self._execute_emergency_protocol()
 
-        except Exception as e:
+        except Exception:
             _LOGGER.exception(
-                "Error in emergency activation automation for %s: %s", self._dog_name, e
+                "Error in emergency activation automation for %s", self._dog_name
             )
 
     async def _handle_visitor_mode_change(self, event: Event) -> None:
@@ -531,14 +531,18 @@ class PawControlAutomationManager(RestoreEntity):
                 if new_state.attributes:
                     visitor_name = new_state.attributes.get("visitor_name", "")
 
-                await self._send_visitor_mode_notification(True, visitor_name)
+                await self._send_visitor_mode_notification(
+                    activated=True, visitor_name=visitor_name
+                )
             else:
                 # Visitor mode deactivated
-                await self._send_visitor_mode_notification(False, "")
+                await self._send_visitor_mode_notification(
+                    activated=False, visitor_name=""
+                )
 
-        except Exception as e:
+        except Exception:
             _LOGGER.exception(
-                "Error in visitor mode automation for %s: %s", self._dog_name, e
+                "Error in visitor mode automation for %s", self._dog_name
             )
 
     async def _handle_daily_summary(self) -> None:
@@ -553,9 +557,9 @@ class PawControlAutomationManager(RestoreEntity):
                 summary_text = summary_sensor.state
                 await self._send_daily_summary_notification(summary_text)
 
-        except Exception as e:
+        except Exception:
             _LOGGER.exception(
-                "Error in daily summary automation for %s: %s", self._dog_name, e
+                "Error in daily summary automation for %s", self._dog_name
             )
 
     async def _handle_system_health_check(self) -> None:
@@ -576,9 +580,9 @@ class PawControlAutomationManager(RestoreEntity):
             if missing_entities:
                 await self._send_system_health_alert(missing_entities)
 
-        except Exception as e:
+        except Exception:
             _LOGGER.exception(
-                "Error in system health check automation for %s: %s", self._dog_name, e
+                "Error in system health check automation for %s", self._dog_name
             )
 
     # UTILITY METHODS
@@ -587,7 +591,7 @@ class PawControlAutomationManager(RestoreEntity):
         """Update automation statistics."""
         self._automation_stats["total_triggers"] += 1
         self._automation_stats[stat_type] += 1
-        self._automation_stats["last_trigger"] = datetime.now().isoformat()
+        self._automation_stats["last_trigger"] = dt_now().isoformat()
 
     def _extract_activity_type(self, entity_id: str) -> str:
         """Extract activity type from entity_id."""
@@ -614,8 +618,8 @@ class PawControlAutomationManager(RestoreEntity):
                         "notification_id": f"feeding_reminder_{self._dog_name}_{meal_name.lower()}",
                     },
                 )
-        except Exception as e:
-            _LOGGER.exception("Error sending feeding reminder: %s", e)
+        except Exception:
+            _LOGGER.exception("Error sending feeding reminder")
 
     async def _send_milestone_celebration(
         self, activity_type: str, milestone: int
@@ -632,8 +636,8 @@ class PawControlAutomationManager(RestoreEntity):
                         "notification_id": f"milestone_{self._dog_name}_{activity_type}_{milestone}",
                     },
                 )
-        except Exception as e:
-            _LOGGER.exception("Error sending milestone celebration: %s", e)
+        except Exception:
+            _LOGGER.exception("Error sending milestone celebration")
 
     async def _send_visitor_mode_notification(
         self, activated: bool, visitor_name: str
@@ -653,8 +657,8 @@ class PawControlAutomationManager(RestoreEntity):
                         "notification_id": f"visitor_mode_{self._dog_name}",
                     },
                 )
-        except Exception as e:
-            _LOGGER.exception("Error sending visitor mode notification: %s", e)
+        except Exception:
+            _LOGGER.exception("Error sending visitor mode notification")
 
     async def _send_daily_summary_notification(self, summary_text: str) -> None:
         """Send daily summary notification."""
@@ -669,8 +673,8 @@ class PawControlAutomationManager(RestoreEntity):
                         "notification_id": f"daily_summary_{self._dog_name}",
                     },
                 )
-        except Exception as e:
-            _LOGGER.exception("Error sending daily summary notification: %s", e)
+        except Exception:
+            _LOGGER.exception("Error sending daily summary notification")
 
     async def _send_system_health_alert(self, missing_entities: list[str]) -> None:
         """Send system health alert."""
@@ -685,8 +689,8 @@ class PawControlAutomationManager(RestoreEntity):
                         "notification_id": f"system_health_{self._dog_name}",
                     },
                 )
-        except Exception as e:
-            _LOGGER.exception("Error sending system health alert: %s", e)
+        except Exception:
+            _LOGGER.exception("Error sending system health alert")
 
     async def _execute_emergency_protocol(self) -> None:
         """Execute emergency protocol."""
@@ -701,8 +705,8 @@ class PawControlAutomationManager(RestoreEntity):
                         "notification_id": f"emergency_{self._dog_name}",
                     },
                 )
-        except Exception as e:
-            _LOGGER.exception("Error executing emergency protocol: %s", e)
+        except Exception:
+            _LOGGER.exception("Error executing emergency protocol")
 
     async def _handle_health_status_specific_change(
         self, new_status: str, old_status: str
@@ -734,8 +738,8 @@ class PawControlAutomationManager(RestoreEntity):
                             "notification_id": f"health_change_{self._dog_name}",
                         },
                     )
-        except Exception as e:
-            _LOGGER.exception("Error handling health status change: %s", e)
+        except Exception:
+            _LOGGER.exception("Error handling health status change")
 
     async def _handle_mood_change(self, new_mood: str, old_mood: str) -> None:
         """Handle mood changes."""
@@ -754,5 +758,5 @@ class PawControlAutomationManager(RestoreEntity):
                             "notification_id": f"mood_change_{self._dog_name}",
                         },
                     )
-        except Exception as e:
-            _LOGGER.exception("Error handling mood change: %s", e)
+        except Exception:
+            _LOGGER.exception("Error handling mood change")
