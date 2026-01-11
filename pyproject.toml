@@ -24,9 +24,9 @@ classifiers = [
     "Topic :: Scientific/Engineering :: Information Analysis",
     "Environment :: Plugins",
 ]
-requires-python = ">=3.11"
+requires-python = ">=3.13"
 dependencies = [
-    "homeassistant>=2024.1.0",
+    "homeassistant>=2026.1.0",
     "voluptuous>=0.13.1",
     "aiohttp>=3.8.0",
 ]
@@ -75,7 +75,7 @@ exclude = ["tests*"]
 # ==== CODE QUALITY TOOLS ====
 
 [tool.black]
-target-version = ["py311"]
+target-version = ["py313"]
 line-length = 88
 include = '\.pyi?$'
 extend-exclude = '''
@@ -103,7 +103,7 @@ ensure_newline_before_comments = true
 src_paths = ["custom_components", "tests"]
 
 [tool.ruff]
-target-version = "py311"
+target-version = "py313"
 line-length = 88
 select = [
     "B",    # flake8-bugbear
@@ -233,7 +233,7 @@ directory = "htmlcov"
 # ==== MYPY ====
 
 [tool.mypy]
-python_version = "3.11"
+python_version = "3.13"
 show_error_codes = true
 follow_imports = "silent"
 ignore_missing_imports = true
@@ -255,7 +255,7 @@ disallow_untyped_calls = false
 # ==== HOME ASSISTANT SPECIFIC ====
 
 [tool.pylint.MASTER]
-py-version = "3.11"
+py-version = "3.13"
 ignore = [
     "tests",
 ]
