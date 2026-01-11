@@ -3,7 +3,6 @@ from __future__ import annotations
 
 import logging
 from datetime import datetime, timedelta
-from typing import Any
 
 from homeassistant.components.binary_sensor import BinarySensorDeviceClass
 from homeassistant.config_entries import ConfigEntry
@@ -14,6 +13,7 @@ from .const import DOMAIN
 from .coordinator import PawControlCoordinator
 from .entities import PawControlBinarySensorEntity
 from .helpers.entity import get_icon, parse_datetime
+from .helpers.json import JSONMutableMapping, ensure_json_mapping
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -213,9 +213,9 @@ class PawControlGPSTrackingBinarySensor(PawControlBinarySensorEntity):
         return location.get("gps_available", False)
 
     @property
-    def extra_state_attributes(self) -> dict[str, Any]:
+    def extra_state_attributes(self) -> JSONMutableMapping:
         """Return extra state attributes."""
-        attrs = super().extra_state_attributes
+        attrs = dict(super().extra_state_attributes)
         
         if self.coordinator.data:
             location = self.coordinator.data.get("location_status", {})
@@ -224,4 +224,4 @@ class PawControlGPSTrackingBinarySensor(PawControlBinarySensorEntity):
                 "current_location": location.get("current_location", "Unknown"),
             })
         
-        return attrs
+        return ensure_json_mapping(attrs)

@@ -6,6 +6,7 @@ from homeassistant.helpers.entity import Entity
 
 from ..const import DOMAIN
 from ..helpers.entity import build_attributes
+from ..helpers.json import JSONMutableMapping
 
 
 class PawControlHealthEntity(Entity):
@@ -35,7 +36,7 @@ class PawControlHealthEntity(Entity):
         return self._activity_logger.get_latest("health")
 
     @property
-    def extra_state_attributes(self):
+    def extra_state_attributes(self) -> JSONMutableMapping:
         """Standard-Attribute enthalten den letzten Health-Eintrag."""
         latest = self._latest_health or {}
         return build_attributes(self._dog_name, **latest)

@@ -5,7 +5,7 @@ import re
 import logging
 from datetime import datetime, timedelta, timezone
 from math import radians, sin, cos, sqrt, atan2, isfinite
-from typing import Any, Callable, Dict, List, Mapping, Optional, Tuple
+from typing import Any, Callable, Dict, List, Mapping, Optional, Tuple, cast
 
 from homeassistant.core import HomeAssistant
 from homeassistant.config_entries import ConfigEntry
@@ -22,6 +22,7 @@ from .const import (
     VALIDATION_RULES,
 )
 from .exceptions import InvalidCoordinates, DataValidationError
+from .types import PawControlConfigData
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -30,14 +31,15 @@ _LOGGER = logging.getLogger(__name__)
 DOG_NAME_RE = re.compile(DOG_NAME_PATTERN)
 
 
-def merge_entry_options(entry: ConfigEntry) -> dict[str, Any]:
+def merge_entry_options(entry: ConfigEntry) -> PawControlConfigData:
     """Merge config entry data and options.
 
     Options take precedence over data. The returned dictionary is a new copy
     so callers can modify it without affecting the original entry.
     """
 
-    return {**entry.data, **entry.options}
+    merged: dict[str, Any] = {**entry.data, **entry.options}
+    return cast(PawControlConfigData, merged)
 
 
 def register_services(

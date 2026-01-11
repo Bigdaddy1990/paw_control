@@ -2,6 +2,7 @@
 
 from .base import PawControlBaseEntity
 from ..helpers.gps import is_valid_gps_coords
+from ..helpers.json import JSONMutableMapping
 
 
 class PawControlGpsEntity(PawControlBaseEntity):
@@ -26,7 +27,7 @@ class PawControlGpsEntity(PawControlBaseEntity):
             self._state = None
 
     @property
-    def extra_state_attributes(self):
+    def extra_state_attributes(self) -> JSONMutableMapping:
         if self._state:
             lat, lon = self._state
             return self.build_extra_attributes(lat=lat, lon=lon)

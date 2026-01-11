@@ -2,7 +2,6 @@
 from __future__ import annotations
 
 import logging
-from typing import Any
 
 from homeassistant.components.sensor import SensorDeviceClass
 from homeassistant.config_entries import ConfigEntry
@@ -13,6 +12,7 @@ from .const import DOMAIN
 from .coordinator import PawControlCoordinator
 from .entities import PawControlSensorEntity
 from .helpers.entity import get_icon, parse_datetime
+from .helpers.json import JSONMutableMapping, ensure_json_mapping
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -54,9 +54,9 @@ class PawControlStatusSensor(PawControlSensorEntity):
         return self.coordinator.get_status_summary()
 
     @property
-    def extra_state_attributes(self) -> dict[str, Any]:
+    def extra_state_attributes(self) -> JSONMutableMapping:
         """Return extra state attributes."""
-        attrs = super().extra_state_attributes
+        attrs = dict(super().extra_state_attributes)
         
         if self.coordinator.data:
             feeding = self.coordinator.data.get("feeding_status", {})
@@ -71,7 +71,7 @@ class PawControlStatusSensor(PawControlSensorEntity):
                 "walk_count": activity.get("walk_count", 0),
             })
         
-        return attrs
+        return ensure_json_mapping(attrs)
 
 
 class PawControlDailySummarySensor(PawControlSensorEntity):
@@ -190,9 +190,9 @@ class PawControlHealthStatusSensor(PawControlSensorEntity):
         return health.get("status", "Gut")
 
     @property
-    def extra_state_attributes(self) -> dict[str, Any]:
+    def extra_state_attributes(self) -> JSONMutableMapping:
         """Return extra state attributes."""
-        attrs = super().extra_state_attributes
+        attrs = dict(super().extra_state_attributes)
         
         if self.coordinator.data:
             health = self.coordinator.data.get("health_status", {})
@@ -201,7 +201,7 @@ class PawControlHealthStatusSensor(PawControlSensorEntity):
                 "health_notes": health.get("health_notes", ""),
             })
         
-        return attrs
+        return ensure_json_mapping(attrs)
 
 
 class PawControlLocationSensor(PawControlSensorEntity):
@@ -221,9 +221,9 @@ class PawControlLocationSensor(PawControlSensorEntity):
         return location.get("current_location", "Unbekannt")
 
     @property
-    def extra_state_attributes(self) -> dict[str, Any]:
+    def extra_state_attributes(self) -> JSONMutableMapping:
         """Return extra state attributes."""
-        attrs = super().extra_state_attributes
+        attrs = dict(super().extra_state_attributes)
         
         if self.coordinator.data:
             location = self.coordinator.data.get("location_status", {})
@@ -245,7 +245,7 @@ class PawControlLocationSensor(PawControlSensorEntity):
                 "gps_available": location.get("gps_available", False),
             })
         
-        return attrs
+        return ensure_json_mapping(attrs)
 
 
 class PawControlGPSSignalSensor(PawControlSensorEntity):

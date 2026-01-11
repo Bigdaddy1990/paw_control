@@ -8,7 +8,7 @@ modular.
 
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, TypeVar, cast
 
 import voluptuous as vol
 from homeassistant import config_entries
@@ -30,12 +30,19 @@ from .const import (
     DOMAIN,
 )
 from .config_helpers import build_module_schema
+from .types import (
+    PawControlConfigData,
+    PawControlConfigFlowInput,
+    PawControlOptionsFlowInput,
+)
 from .utils import merge_entry_options
+
+_FlowInputT = TypeVar("_FlowInputT", bound=dict[str, Any])
 
 
 def _validate_schema(
-    schema: vol.Schema, user_input: dict[str, Any]
-) -> tuple[dict[str, Any] | None, dict[str, str]]:
+    schema: vol.Schema, user_input: _FlowInputT
+) -> tuple[_FlowInputT | None, dict[str, str]]:
     """Validate ``user_input`` against ``schema``.
 
     Returns the validated data and a dict of errors. Any validation error is mapped
@@ -44,7 +51,7 @@ def _validate_schema(
     """
 
     try:
-        return schema(user_input), {}
+        return cast(_FlowInputT, schema(user_input)), {}
     except vol.MultipleInvalid as err:
         errors: dict[str, str] = {}
         for error in err.errors:
@@ -57,7 +64,7 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     """Handle the initial configuration for Paw Control."""
 
     async def async_step_user(
-        self, user_input: dict[str, Any] | None = None
+        self, user_input: PawControlConfigFlowInput | None = None
     ) -> FlowResult:
         """Handle the first step of the configuration flow."""
 
@@ -86,6 +93,7 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         if user_input is not None:
             user_input, errors = _validate_schema(schema, user_input)
             if not errors:
+                user_input = cast(PawControlConfigData, user_input)
                 return self.async_create_entry(
                     title=user_input[CONF_DOG_NAME], data=user_input
                 )
@@ -109,7 +117,7 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
         self.config_entry = config_entry
 
     async def async_step_init(
-        self, user_input: dict[str, Any] | None = None
+        self, user_input: PawControlOptionsFlowInput | None = None
     ) -> FlowResult:  # pragma: no cover - Home Assistant handles step name
         """Show and persist module options during configuration."""
 
@@ -125,4 +133,3 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
         return self.async_show_form(
             step_id="init", data_schema=schema, errors=errors
         )
-

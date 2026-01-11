@@ -23,6 +23,7 @@ from .const import (
     CONF_NOTIFICATIONS_ENABLED,
     CONF_WALK_MODULE,
 )
+from .types import PawControlModuleKey, PawControlOptions
 
 if TYPE_CHECKING:
     from homeassistant.config_entries import ConfigEntry
@@ -41,7 +42,7 @@ class Module:
     default: bool = True
 
 
-MODULES: dict[str, Module] = {
+MODULES: dict[PawControlModuleKey, Module] = {
     CONF_GPS_ENABLE: Module(
         setup=gps.setup_gps,
         teardown=gps.teardown_gps,
@@ -70,7 +71,7 @@ MODULES: dict[str, Module] = {
 _LOGGER = logging.getLogger(__name__)
 
 
-def enabled_modules(opts: dict[str, bool]) -> dict[str, Module]:
+def enabled_modules(opts: PawControlOptions) -> dict[PawControlModuleKey, Module]:
     """Return modules that should be enabled based on ``opts``."""
     return {
         key: module
@@ -79,7 +80,7 @@ def enabled_modules(opts: dict[str, bool]) -> dict[str, Module]:
     }
 
 
-def disabled_modules(opts: dict[str, bool]) -> dict[str, Module]:
+def disabled_modules(opts: PawControlOptions) -> dict[PawControlModuleKey, Module]:
     """Return modules explicitly disabled via ``opts``."""
     return {
         key: module
@@ -111,7 +112,7 @@ async def _call_module_func(
         _LOGGER.exception(log_msg, *log_args)
 
 
-async def ensure_helpers(hass: HomeAssistant, opts: dict[str, bool]) -> None:
+async def ensure_helpers(hass: HomeAssistant, opts: PawControlOptions) -> None:
     """Ensure helpers for all enabled modules.
 
     Errors from individual modules are logged but do not halt processing.
@@ -127,7 +128,7 @@ async def ensure_helpers(hass: HomeAssistant, opts: dict[str, bool]) -> None:
 
 
 async def setup_modules(
-    hass: HomeAssistant, entry: ConfigEntry, opts: dict[str, bool]
+    hass: HomeAssistant, entry: ConfigEntry, opts: PawControlOptions
 ) -> None:
     """Set up or tear down modules based on options.
 
@@ -183,4 +184,3 @@ __all__ = [
     "async_setup_modules",
     "async_unload_modules",
 ]
-

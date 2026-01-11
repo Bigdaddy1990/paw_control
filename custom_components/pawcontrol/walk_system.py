@@ -10,6 +10,7 @@ from homeassistant.components.button import ButtonEntity
 from homeassistant.helpers.entity import Entity, EntityCategory
 
 from .const import DOMAIN
+from .helpers.json import JSONMutableMapping, ensure_json_mapping
 from .utils import register_services
 
 if TYPE_CHECKING:
@@ -71,9 +72,9 @@ class PawControlLastWalkSensor(Entity):
         return last_walk["timestamp"] if last_walk else None
 
     @property
-    def extra_state_attributes(self) -> dict[str, Any]:
+    def extra_state_attributes(self) -> JSONMutableMapping:
         last_walk = self._walk_system.get_last_walk()
-        return last_walk or {}
+        return ensure_json_mapping(last_walk or {})
 
 
 class PawControlLogWalkButton(ButtonEntity):
@@ -116,4 +117,3 @@ async def async_unload_entry(_hass: HomeAssistant, _entry: ConfigEntry) -> bool:
     """Unload the walk automation system."""
     _LOGGER.info("Unloading PawControl Walk Automation system")
     return True
-

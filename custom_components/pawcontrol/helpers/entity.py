@@ -6,6 +6,7 @@ from datetime import datetime
 from typing import Any
 
 from ..const import ATTR_DOG_NAME, ATTR_LAST_UPDATED, ICONS
+from .json import JSONMutableMapping, ensure_json_mapping
 
 
 def get_icon_by_status(status: str) -> str:
@@ -28,13 +29,13 @@ def format_name(dog_name: str, key: str) -> str:
     return f"{dog_name.title()} {key.replace('_', ' ').title()}"
 
 
-def build_attributes(dog_name: str | None = None, **extra: Any) -> dict[str, Any]:
+def build_attributes(dog_name: str | None = None, **extra: Any) -> JSONMutableMapping:
     """Erzeuge ein Attribut-Dictionary mit Standardwerten."""
     attrs: dict[str, Any] = {ATTR_LAST_UPDATED: datetime.now().isoformat()}
     if dog_name:
         attrs[ATTR_DOG_NAME] = dog_name
     attrs.update(extra)
-    return attrs
+    return ensure_json_mapping(attrs)
 
 
 def parse_datetime(value: str | None) -> datetime | None:
@@ -79,4 +80,3 @@ def as_bool(value: Any) -> bool:
     if isinstance(value, str):
         return value.lower() in ("true", "on", "1", "yes")
     return bool(value)
-
