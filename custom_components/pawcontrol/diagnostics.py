@@ -31,5 +31,5 @@ async def async_get_config_entry_diagnostics(
                 getattr(coordinator, "last_update_success", None)
             ),
         },
-        "gps_handler": _normalise_json(getattr(gps_handler, "__dict__", None)),
+        "gps_handler": _normalise_json(gps_handler.get_diagnostics_data() if gps_handler else None),
     }
