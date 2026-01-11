@@ -32,7 +32,14 @@ def _normalise_json(value: Any) -> JsonValueType:
     if isinstance(value, (list, tuple, set)):
         return [_normalise_json(item) for item in value]
     if isinstance(value, bytes):
-        return base64.b64encode(value).decode("ascii")
+        try:
+            return value.decode("utf-8")
+        except UnicodeDecodeError:
+            encoded = base64.b64encode(value).decode("ascii")
+            _LOGGER.debug(
+                "Encoding non-UTF8 bytes as base64 for JSON normalization."
+            )
+            return f"base64:{encoded}"
     _LOGGER.debug(
         "Converting unexpected type %s to string: %r", type(value).__name__, value
     )
