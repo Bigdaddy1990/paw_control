@@ -36,9 +36,7 @@ def _normalise_json(value: Any) -> JsonValueType:
             return value.decode("utf-8")
         except UnicodeDecodeError:
             encoded = base64.b64encode(value).decode("ascii")
-            _LOGGER.debug(
-                "Encoding non-UTF8 bytes as base64 for JSON normalization."
-            )
+            _LOGGER.debug("Encoding non-UTF8 bytes as base64 for JSON normalization.")
             return f"base64:{encoded}"
     _LOGGER.debug(
         "Converting unexpected type %s to string: %r", type(value).__name__, value
