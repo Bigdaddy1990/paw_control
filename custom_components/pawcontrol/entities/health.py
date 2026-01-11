@@ -6,11 +6,11 @@ from typing import TYPE_CHECKING
 
 from homeassistant.helpers.entity import Entity
 
-from pawcontrol.const import DOMAIN
-from pawcontrol.helpers.entity import build_attributes
+from ..const import DOMAIN
+from ..helpers.entity import build_attributes
 
 if TYPE_CHECKING:
-    from pawcontrol.helpers.json import JSONMutableMapping
+    from ..helpers.json import JSONMutableMapping
 
 
 class PawControlHealthEntity(Entity):

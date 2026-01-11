@@ -1,7 +1,7 @@
 # entities/number.py
 from homeassistant.components.number import NumberEntity
 
-from pawcontrol.helpers.entity import clamp_value
+from ..helpers.entity import clamp_value
 
 from .base import PawControlBaseEntity
 

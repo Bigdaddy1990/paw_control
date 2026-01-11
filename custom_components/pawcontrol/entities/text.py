@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from homeassistant.components.text import TextEntity, TextMode
 
-from pawcontrol.helpers.entity import clamp_string
+from ..helpers.entity import clamp_string
 
 from .base import PawControlBaseEntity
 

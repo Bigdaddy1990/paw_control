@@ -1,7 +1,7 @@
 # entities/switch.py
 from homeassistant.components.switch import SwitchEntity
 
-from pawcontrol.helpers.entity import as_bool
+from ..helpers.entity import as_bool
 
 from .base import PawControlBaseEntity
 

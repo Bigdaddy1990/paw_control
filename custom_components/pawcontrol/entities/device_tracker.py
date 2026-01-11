@@ -1,8 +1,8 @@
 # entities/device_tracker.py
 from homeassistant.components.device_tracker import TrackerEntity
 
-from pawcontrol.helpers.gps import format_gps_coords, is_valid_gps_coords
-from pawcontrol.helpers.json import JSONMutableMapping
+from ..helpers.gps import format_gps_coords, is_valid_gps_coords
+from ..helpers.json import JSONMutableMapping
 
 from .base import PawControlBaseEntity
 
