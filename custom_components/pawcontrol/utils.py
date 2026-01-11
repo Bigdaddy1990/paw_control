@@ -11,6 +11,16 @@ from typing import TYPE_CHECKING, Any, cast
 from homeassistant.util import slugify
 
 from .const import (
+    CONF_CREATE_DASHBOARD,
+    CONF_DOG_AGE,
+    CONF_DOG_BREED,
+    CONF_DOG_NAME,
+    CONF_DOG_WEIGHT,
+    CONF_FEEDING_TIMES,
+    CONF_VET_CONTACT,
+    CONF_WALK_DURATION,
+    DEFAULT_FEEDING_TIMES,
+    DEFAULT_WALK_DURATION,
     DOG_NAME_PATTERN,
     GPS_ACCURACY_THRESHOLDS,
     MAX_DOG_AGE,
@@ -43,7 +53,20 @@ def merge_entry_options(entry: ConfigEntry) -> PawControlConfigData:
     so callers can modify it without affecting the original entry.
     """
 
-    merged: dict[str, Any] = {**entry.data, **entry.options}
+    from .module_registry import MODULES
+
+    defaults: dict[str, Any] = {
+        CONF_DOG_NAME: entry.data.get(CONF_DOG_NAME, entry.title),
+        CONF_DOG_BREED: "",
+        CONF_DOG_AGE: 0,
+        CONF_DOG_WEIGHT: 0.0,
+        CONF_FEEDING_TIMES: list(DEFAULT_FEEDING_TIMES),
+        CONF_WALK_DURATION: DEFAULT_WALK_DURATION,
+        CONF_VET_CONTACT: "",
+        CONF_CREATE_DASHBOARD: False,
+        **{key: module.default for key, module in MODULES.items()},
+    }
+    merged: dict[str, Any] = {**defaults, **entry.data, **entry.options}
     return cast("PawControlConfigData", merged)
 
 

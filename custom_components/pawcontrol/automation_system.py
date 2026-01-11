@@ -28,6 +28,8 @@ if TYPE_CHECKING:
     from homeassistant.config_entries import ConfigEntry
     from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
+    from .helpers.json import JSONMutableMapping
+
 _LOGGER = logging.getLogger(__name__)
 
 
@@ -164,6 +166,7 @@ class PawControlAutomationManager(RestoreEntity):
     def extra_state_attributes(self) -> JSONMutableMapping:
         """Return extra state attributes."""
         attributes: JSONMutableMapping = {
+        return {
             "automation_registry": list(self._automation_registry.keys()),
             "total_automations": len(self._automation_registry),
             "feeding_automation_active": self._feeding_automation_active,
