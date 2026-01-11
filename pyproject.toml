@@ -252,7 +252,7 @@ disallow_untyped_defs = false
 disallow_untyped_calls = false
 
 
-  
+
 [tool.pylint.MASTER]
 py-version = "3.13"
 lint.ignore = [
